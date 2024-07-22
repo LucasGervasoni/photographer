@@ -64,19 +64,6 @@ body{
   }
 }
 
-.form__input--checkbox{
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.4rem;
-
-  .checkbox__container{
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-}
-
 .login__button{
   color: #E8E8E8;
   font-weight: bold;
