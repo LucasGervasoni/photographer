@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Spotlight - login</title>
+  <link rel="stylesheet" href="/templates/assets/css/login_page.css">
+  <link rel="shortcut icon" type="images/jpg" href="/templates/assets/images/icon-logo.jpg">
+</head>
+<body>
+  <main id="main">
+
+    <section class="main__image--container">
+      <div class="main__image--content">
+        <img class="main__image--img" src="/templates/assets/images/home-login_page.jpg" alt="A photo of a modern house with green vegetation on its lawn and trees surrounding the house">
+      </div>
+    </section>
+
+    <section class="main__login--container">
+
+      <img class="main__login--image" src="/templates/assets/images/Spotlight-logo.webp" alt="Spotlight company logo, but instead of the 'O' is an icon of a white house on a green background">
+
+      <form id="main__login--form" method="post" action="">
+        <h2>Log In to your account</h2>
+
+        <div class="form__input--email">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form__input--password">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" minlength="" required>
+        </div>
+
+        <div class="form__input--checkbox">
+          <div class="checkbox__container">
+            <input type="checkbox" id="rememberMe" name="rememberMe" value="lsRememberMe">
+            <label for="rememberMe">Remember me</label>
+          </div>
+          <a class="link__forgot--password" href="#">Forgot password?</a>
+        </div>
+
+        <button class="login__button" type="submit" value="Login" onclick="lsRememberMe()">Log In</button>
+
+      </form>
+    </section>
+  </main>
+</body>
+</html>
