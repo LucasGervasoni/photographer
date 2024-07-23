@@ -1,6 +1,6 @@
 from django.urls import path
-from pages.views import index
+from .views import IndexView
 
 urlpatterns = [
-  path('', index),
+  path('login/', IndexView.as_view(), name='login'),
 ]

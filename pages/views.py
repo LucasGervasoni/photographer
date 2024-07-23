@@ -1,5 +1,5 @@
 # Create your views here.
-from django.shortcuts import render
+from django.views.generic import TemplateView
 
-def index(request):
-        return render(request, 'login_page.html')
+class IndexView(TemplateView):
+        template_name = "login_page.html"
