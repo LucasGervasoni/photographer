@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+  <link rel="stylesheet" href="{% static 'css/user/user__upload--page.css' %}">
+{% endblock %}
+
+{% block title%}
+<title>Spotlight - Upload</title>
+{% endblock %}
+
+{% block content %}
+<div class="main">
+  <section class="card--container">
+    <div class="card--content">
+      <img src="/static/img/home-login_page.jpg">
+      <p>aaaaaaa.jpg</p>
+    </div>
+  </section>
+
+  <section class="info--container">
+    <div class="drag__drop">
+
+    </div>
+
+    <div class="info--card__container">
+      <div class="items--container">
+        <div class="content">
+          <p class="item">Address: </p><span>1326 Diamond St, San Francisco, CA 94131</span>
+        </div>
+        <div class="content">
+          <p class="item">Date: </p><span>20/04/2024</span>
+        </div>
+        <div class="content">
+          <p class="item">Time: </p><span>1 PM</span>
+        </div>
+        <div class="content">
+          <p class="item">Services: </p>
+          <ul class="list-item">
+            <li> Drone photos</li>
+            <li> 3d scan</li>
+            <li> Vídeos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <form action="" method="post">
+      <label for="">Notes for editor</label>
+      <textarea name="" id=""></textarea>
+    </form>
+
+    <div class="button--container">
+      <button type="submit">Submit</button>
+      <button>Close</button>
+    </div>
+
+  </section>
+</div>
+{% endblock %}

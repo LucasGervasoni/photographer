@@ -1,0 +1,28 @@
+@import url('/static/css/base.css');
+
+.buttons__container{
+  margin-top: 10rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-around;
+  gap: 2rem;
+}
+
+.button{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 100px;
+  color: black;
+  background-color: #F7FAFC;
+  border-radius: 2rem;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.button:hover{
+  font-weight: bold;
+}

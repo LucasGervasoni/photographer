@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+  <link rel="stylesheet" href="{% static 'css/admin/services__list--orders.css' %}">
+{% endblock %}
+
+{% block title%}
+<title>Spotlight - List Orders</title>
+{% endblock %}
+
+{% block content %}
+<div class="top-content">
+  <h2 class="top-title">List Orders:</h2>
+  <a class="top-button" href="{% url 'create_orders' %}" role="button">+ Create Orders</a>
+</div>
+
+<form class="form__search--orders" action="" method="post">
+  <input type="search" name="search" id="search" placeholder="search">
+</form>
+
+<div class="card__container">
+  <div class="items--container">
+    <div class="content">
+      <p class="item">Address: </p><span>1326 Diamond St, San Francisco, CA 94131</span>
+    </div>
+    <div class="content">
+      <p class="item">Date: </p><span>20/04/2024</span>
+    </div>
+    <div class="content">
+      <p class="item">Time: </p><span>1 PM</span>
+    </div>
+    <div class="content">
+      <p class="item">Services: </p>
+      <ul class="list-item">
+        <li> Drone photos</li>
+        <li> 3d scan</li>
+        <li> Vídeos</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="buttons--container">
+    <button class="btn__list--orders btn--upload">Create New Upload</button>
+    <button class="btn__list--orders btn-assets" disabled>View Assets</button>
+    <button class="btn__list--orders btn-notUpload">Not Uploaded</button>
+  </div>
+</div>
+{% endblock %}

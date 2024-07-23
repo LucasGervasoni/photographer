@@ -1,0 +1,58 @@
+@import url('/static/css/base.css');
+
+.top-content{
+  display: flex;
+  justify-content: space-between;
+}
+
+.top-button{
+  text-decoration: none;
+  background-color: #000;
+  color: #FFF;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.form__search--lists{
+  margin: 4rem 0;
+
+  & input{
+    width: 40%;
+    max-width: 60%;
+    height: 35px;
+    border-radius: 0.5rem;
+    border: 2px solid #E8E8E8;
+    padding: 0.5rem;
+  }
+}
+
+.table__container{
+  overflow-x: auto;
+}
+
+.artist__card {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+td {
+  background-color: #dddddd;
+}
+
+.edit__button{
+  margin-bottom: 4rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  width: 10rem;
+  background-color: yellow;
+  border: none;
+  border-radius: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+}

@@ -1,0 +1,60 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  {% block title %}
+  <title>Spotlight - Inicial</title>
+  {% endblock %}
+  {% block style %}
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  {% endblock %}
+  <link rel="shortcut icon" type="images/jpg" href="{% static 'img/icon-logo.jpg' %}">
+</head>
+<body>
+  
+
+  <header id="header">
+    <section class="container">
+
+      <nav id="navigation">
+        <div class="nav--container">
+          <div class="nav--content">
+            <div class="nav__image--container">
+              <img
+                class="logo" src="{% static 'img/icon-logo.jpg' %}"
+                alt="logo Spotlight"
+              />
+            </div>
+            <div>
+              <p class="title--logo">SPOTLIGHT</p>
+            </div>
+          </div>
+          <button id="dropdown-button">Menu</button>
+        </div>
+        <div class="nav-links-container hidden">
+          <a href="#"><p>Welcome, User</p></a>
+          <a href="{% url 'user__orders--page' %}"><p>Orders</p></a>
+          <a href="#"><p>Support</p></a>
+          <a href="{% url 'services' %}"><p>Admin</p></a>
+          <a href="{% url 'login' %}"><p>Logout</p></a>
+        </div>
+      </nav>
+  
+    </section>
+  </header>
+  
+  <main id="main">
+    <section class="container">
+      {% block content %}
+      {% endblock %}
+    </section>
+  </main>
+
+  <script src="{% static 'js/dropdownMenu.js' %}"></script>
+</body>
+</html>
