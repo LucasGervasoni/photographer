@@ -14,72 +14,38 @@
   }
 }
 
-.card__container, .content, .buttons--container{
+.btn__table{
   display: flex;
-  flex-wrap: wrap;
-}
-
-.card__container{
-  max-width: 90%;
-  background-color: #FFF;
-  padding: 4rem;
-  border-radius: 0.5rem;
-  gap: 2rem;
-}
-
-.items--container, .content{
-  gap: 1rem;
-}
-
-.items--container{
-  display: flex;
-  flex-direction: column;
-}
-
-.content{
-  flex-wrap: wrap;
-}
-
-.item{
-  font-weight: bold;
-}
-
-.list-item{
-  margin-left: 1.4rem;
-}
-
-.buttons--container{
-  height: 100%;
-  align-self: flex-end;
-  justify-self: flex-end;
-  flex-direction: row-reverse;
-  gap: 1rem;
-}
-
-.btn__list--orders{
-  color: #000;
-  display: flex;
+  gap:0.2rem;
   align-items: center;
   justify-content: center;
-  text-decoration: none;
-  padding: 1rem;
-  border-radius: 0.5rem;
 }
 
-.btn--upload, .btn-notUpload{
+.btn_list--orders {
+  color: #000;
+  width:8rem;
+  padding: 1rem;
+  border: none;
+  border-radius: 2rem;
+  font-weight: bold;
   cursor: pointer;
+  text-align:center;
+  text-decoration: none;
 }
-.btn--upload{
-  background-color: #b2b2b2;
+
+.edit__button{
+  background-color: yellow;
+}
+
+.delete__button{
+  background-color: red;
+}
+
+.view__button{
+  background-color:#b2b2b2
 }
 
 .btn-notUpload{
   background-color: transparent;
   border: 1px solid #b2b2b2;
-}
-
-@media screen and (min-width: 1180px) {
-  .card__container{
-    max-width: 70%;
-  }
 }
