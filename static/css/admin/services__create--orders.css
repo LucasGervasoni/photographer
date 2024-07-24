@@ -1,6 +1,13 @@
 @import url("/static/css/base.css");
 @import url("/static/css/admin/services__create--artists.css");
 
+.form__create--orders{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  max-width: 80%;
+  margin: 4rem auto 0;
+}
 
 .form__input--date, .form__input--time{
   display: flex;

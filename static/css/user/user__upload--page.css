@@ -27,7 +27,7 @@ body{
 }
 
 .card--container{
-  width: 70%;
+  width: 60%;
   padding-top: 1rem;
   display: flex;
   flex-wrap: wrap;
@@ -43,9 +43,85 @@ body{
 
 }
 
-.info--card__container{
-  width: 30%;
-  padding-top: 1rem;
+.info--container{
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+  width: 40%;
+  padding: 2rem;
   background-color: #fff;
-  position: sticky;
 }
+
+.drag__drop{
+  text-align: center;
+  border: 5px dotted #b2b2b2;
+  padding: 4rem 0;
+}
+
+.items--container{
+  display: flex;
+  flex-direction: column;
+}
+
+.content{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.items--container, .content{
+  gap: 1rem;
+}
+
+.item{
+  font-weight: bold;
+}
+
+.list-item{
+  margin-left: 1.4rem;
+}
+
+.form__notes{
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.button--container{
+  display: flex;
+  align-self: flex-end;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.btn__base{
+  color: #FFF;
+  text-decoration: none;
+  padding: 1rem;
+  border: 1px solid #b2b2b2;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.btn--close{
+  background-color: #b2b2b2;
+}
+
+.btn__upload--submit{
+  background-color: green;
+}
+
+@media screen and (min-width:768px) {
+  .card--container{
+    width: 60%;
+    padding-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .card--content{
+    width: 50%;
+  }
+}
+

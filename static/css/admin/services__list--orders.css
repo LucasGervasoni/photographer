@@ -57,7 +57,11 @@
 }
 
 .btn__list--orders{
-  border: none;
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   padding: 1rem;
   border-radius: 0.5rem;
 }
