@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block style %}
-  <link rel="stylesheet" href="{% static 'css/admin/services__list--artists.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin/services__list--artists.css' %}">
 {% endblock %}
 
 {% block title%}
@@ -19,35 +19,35 @@
   <input type="search" name="search" id="search" placeholder="search">
 </form>
 
-<div>
-  <div class="table__container">
-    <table class="artist__card">
-      <tr class="card--titles">
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>E-mail</th>
-        <th>Phone</th>
-        <th>Emergency Phone</th>
-        <th>Address 1</th>
-        <th>Address 2</th>
-        <th>City</th>
-        <th>State</th>
-        <th>Zip code</th>
-      </tr>
-      <tr class="card--items">
-        <td>Lucas</td>
-        <td>Gervasoni</td>
-        <td>user@mail.com</td>
-        <td>xxxxx-xxx</td>
-        <td>xxxxx-xxx</td>
-        <td>3333 Street left</td>
-        <td>3333 Street right</td>
-        <td>San Francisco</td>
-        <td>CA</td>
-        <td>xxxxx-xxx</td>
-      </tr>
+<div class="table__container">
+  <table class="artist__card">
+    <tr class="card--titles">
+      <th>First Name</th>
+      <th>Last Name</th>
+      <th>E-mail</th>
+      <th>Phone</th>
+      <th>Emergency Phone</th>
+      <th>Address 1</th>
+      <th>Address 2</th>
+      <th>City</th>
+      <th>State</th>
+      <th>Zip code</th>
+      <th>Action</th>
+    </tr>
+    <tr class="card--items">
+      <td>Lucas</td>
+      <td>Gervasoni</td>
+      <td>user@mail.com</td>
+      <td>xxxxx-xxx</td>
+      <td>xxxxx-xxx</td>
+      <td>3333 Street left</td>
+      <td>3333 Street right</td>
+      <td>San Francisco</td>
+      <td>CA</td>
+      <td>xxxxx-xxx</td>
+      <td><button class="edit__button">Edit</button></td>
+    </tr>
     <table>
-  </div>
-  <button class="edit__button">Edit</button>
 </div>
+
 {% endblock %}

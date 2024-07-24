@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block style %}
-  <link rel="stylesheet" href="{% static 'css/user/user__upload--page.css' %}">
+<link rel="stylesheet" href="{% static 'css/user/user__upload--page.css' %}">
 {% endblock %}
 
 {% block title%}
@@ -20,8 +20,9 @@
 
   <section class="info--container">
     <div class="drag__drop">
-
+      <p class="pointer-none"><b>Drag and drop</b> files here or <br /> <input type="file" multiple="multiple"></p>
     </div>
+
 
     <div class="info--card__container">
       <div class="items--container">
@@ -45,14 +46,14 @@
       </div>
     </div>
 
-    <form action="" method="post">
-      <label for="">Notes for editor</label>
-      <textarea name="" id=""></textarea>
+    <form class="form__notes" action="" method="post">
+      <label for="notes">Notes for editor</label>
+      <textarea name="notes" id="notes"></textarea>
     </form>
 
     <div class="button--container">
-      <button type="submit">Submit</button>
-      <button>Close</button>
+      <a class="btn__base btn__upload--submit" role="button" type="submit">Submit</a>
+      <a class="btn__base btn--close" role="button" type="submit">Close</a>
     </div>
 
   </section>

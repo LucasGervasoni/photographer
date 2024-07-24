@@ -62,16 +62,11 @@
   border-radius: 0.5rem;
 }
 
-.btn--upload, .btn-assets, .btn-notUpload{
+.btn--upload, .btn-notUpload{
   cursor: pointer;
 }
 .btn--upload{
   background-color: #b2b2b2;
-}
-
-.btn-assets{
-  background-color: #000;
-  color: #FFF;
 }
 
 .btn-notUpload{

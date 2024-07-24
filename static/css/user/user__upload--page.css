@@ -43,7 +43,7 @@ body{
 
 }
 
-.info--container{
+.info--card__container{
   width: 30%;
   padding-top: 1rem;
   background-color: #fff;

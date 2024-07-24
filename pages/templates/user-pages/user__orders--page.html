@@ -36,9 +36,8 @@
   </div>
 
   <div class="buttons--container">
-    <button class="btn__list--orders btn--upload">Create New Upload</button>
-    <button class="btn__list--orders btn-assets" disabled>View Assets</button>
-    <button class="btn__list--orders btn-notUpload">Not Uploaded</button>
+    <a href="{% url 'user__upload--page' %}" class="btn__list--orders btn--upload">Upload Files</a>
+    <a class="btn__list--orders btn-notUpload">Not Uploaded</a>
   </div>
 </div>
 {% endblock %}
