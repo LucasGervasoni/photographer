@@ -1,32 +1,32 @@
-@import url('/static/css/base.css');
+@import url("/static/css/base.css");
 
-*{
+* {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
 }
 
-html{
-  font-size:62.5%;
+html {
+  font-size: 62.5%;
 }
 
-body{
+body {
   font-size: 1.6rem;
-  font-family: 'Arial',sans-serif;
+  font-family: "Arial", sans-serif;
 }
 
-#main{
+#main {
   padding: 0;
 }
 
-.main{
+.main {
   display: flex;
   gap: 2rem;
   height: 100vh;
   padding-top: 1rem;
 }
 
-.card--container{
+.card--container {
   width: 60%;
   padding-top: 1rem;
   display: flex;
@@ -34,16 +34,15 @@ body{
   gap: 2rem;
 }
 
-.card--content{
+.card--content {
   width: 40%;
 
-  & img{
+  & img {
     width: 100%;
   }
-
 }
 
-.info--container{
+.info--container {
   display: flex;
   flex-direction: column;
   gap: 4rem;
@@ -52,50 +51,48 @@ body{
   background-color: #fff;
 }
 
-.drag__drop{
+.drag__drop {
   text-align: center;
   border: 5px dotted #b2b2b2;
   padding: 4rem 0;
+
+  & input {
+    max-width: 90%;
+    border: 1px solid red;
+  }
 }
 
-.items--container{
+.items--container {
   display: flex;
   flex-direction: column;
 }
 
-.content{
+.content {
   display: flex;
   flex-wrap: wrap;
 }
 
-.items--container, .content{
+.items--container,
+.content {
   gap: 1rem;
 }
 
-.item{
+.item {
   font-weight: bold;
 }
 
-.list-item{
+.list-item {
   margin-left: 1.4rem;
 }
 
-.form__notes{
+.form__notes {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.button--container{
-  display: flex;
-  align-self: flex-end;
-  flex-direction: row-reverse;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.btn__base{
-  color: #FFF;
+.btn__base {
+  color: #fff;
   text-decoration: none;
   padding: 1rem;
   border: 1px solid #b2b2b2;
@@ -103,25 +100,27 @@ body{
   cursor: pointer;
 }
 
-.btn--close{
-  background-color: #b2b2b2;
-}
-
-.btn__upload--submit{
+.btn__upload--submit {
   background-color: green;
+  align-self: flex-end;
 }
 
-@media screen and (min-width:768px) {
-  .card--container{
-    width: 60%;
-    padding-top: 1rem;
-    display: flex;
-    flex-wrap: wrap;
+@media screen and (min-width: 768px) {
+  .main {
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+  }
+
+  .card--container {
+    width: 100%;
     gap: 1rem;
   }
 
-  .card--content{
-    width: 50%;
+  .card--content {
+    width: 48%;
+  }
+
+  .items--container {
+    display: none;
   }
 }
-
