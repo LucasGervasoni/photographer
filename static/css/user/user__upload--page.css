@@ -58,7 +58,6 @@ body {
 
   & input {
     max-width: 90%;
-    border: 1px solid red;
   }
 }
 
@@ -105,7 +104,7 @@ body {
   align-self: flex-end;
 }
 
-@media screen and (min-width: 768px) {
+@media screen and (max-width: 768px) {
   .main {
     flex-direction: column-reverse;
     justify-content: flex-end;
