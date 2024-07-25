@@ -22,6 +22,7 @@
 <div class="table__container">
   <table class="artist__card">
     <tr class="card--titles">
+      <th>User</th>
       <th>Date</th>
       <th>Time</th>
       <th>Address 1</th>
@@ -34,11 +35,12 @@
     </tr>
     <tr class="card--items">
       {% for order in object_list %}
+      <td>{{ order.user }}</td>
       <td>{{ order.date }}</td>
       <td>{{ order.time }}</td>
       <td>{{ order.addressOne }}</td>
-      <td>{{ order.AddressTwo }}</td>
-      <td>{{ order.ZipCode }}</td>
+      <td>{{ order.addressTwo }}</td>
+      <td>{{ order.zipCode }}</td>
       <td>{{ order.city }}</td>
       <td>{{ order.state }}</td>
       <td>
@@ -52,7 +54,7 @@
     </tr>
     <tr>
       <th>Services:</th>
-      <td colspan="8">
+      <td colspan="9">
         <p class="service--items">{{ order.services }}</p></td>
     </tr>
     {% endfor %}

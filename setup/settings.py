@@ -74,7 +74,7 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": "postgres",
+        "NAME": "setup",
         "USER": "postgres",
         "PASSWORD": str(os.getenv('PASSWORD')),
         "HOST": "localhost",
@@ -124,7 +124,7 @@ STATICFILES_DIRS = [
 ]
 
 LOGIN_REDIRECT_URL = 'user__orders--page'
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = 'logout'
 LOGIN_URL = 'login'
 
 # Default primary key field type

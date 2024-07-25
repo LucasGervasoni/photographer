@@ -1,32 +1,52 @@
+from django.db.models.query import QuerySet
 from django.views.generic import CreateView, UpdateView, DeleteView, TemplateView
 from django.views.generic.list import ListView
-from .models import CreateOrders
+from .models import Orders
 from django.urls import reverse_lazy
-        
-class ServicesCreateOrders(CreateView):
-        model = CreateOrders
-        fields = ["date", "time", "addressOne", "AddressTwo", "ZipCode", "city", "state", "services"]
+from django.contrib.auth.mixins import LoginRequiredMixin
+from braces.views import GroupRequiredMixin
+
+#Orders
+class ServicesCreateOrders(GroupRequiredMixin,LoginRequiredMixin,CreateView):
+        login_url = reverse_lazy('login')
+        group_required = [u"Admin" u"EquipMember"]
+        model = Orders
+        fields = ["user", "date", "time", "addressOne", "addressTwo", "zipCode", "city", "state", "services"]
         template_name = "main_crud/admin/services__create--orders.html"
         success_url = reverse_lazy('list__orders')
         
-class ServicesUpdateOrders(UpdateView):
-        model = CreateOrders
-        fields = ["date", "time", "addressOne", "AddressTwo", "ZipCode", "city", "state", "services"]
+class ServicesUpdateOrders(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
+        login_url = reverse_lazy('login')
+        group_required = [u"Admin" u"EquipMember"]
+        model = Orders
+        fields = ["user", "date", "time", "addressOne", "addressTwo", "zipCode", "city", "state", "services"]
         template_name = "main_crud/admin/services__create--orders.html"
         success_url = reverse_lazy('list__orders')
         
-class ServicesDeleteOrders(DeleteView):
-        model = CreateOrders
+class ServicesDeleteOrders(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
+        login_url = reverse_lazy('login')
+        group_required = [u"Admin" u"EquipMember"]
+        model = Orders
         template_name = "main_crud/admin/services__delete--orders.html"
         success_url = reverse_lazy('list__orders')
         
-class ServicesListOrders(ListView):
-        model = CreateOrders
+class ServicesListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
+        login_url = reverse_lazy('login')
+        group_required = [u"Admin" u"EquipMember"]
+        model = Orders
         template_name = "main_crud/admin/services__list--orders.html"
         
-class UserPageOrders(ListView):
-        model = CreateOrders
+class UserPageOrders(LoginRequiredMixin,ListView):
+        login_url = reverse_lazy('login')
+        model = Orders
         template_name = "main_crud/user/user__orders--page.html"
+        
+        def get_queryset(self):
+                self.object_list = Orders.objects.filter(user=self.request.user)
+                
+                return  self.object_list
+        
+#Artists
 
 class ServicesListArtists(TemplateView):
         template_name = "main_crud/admin/services__list--artists.html"
