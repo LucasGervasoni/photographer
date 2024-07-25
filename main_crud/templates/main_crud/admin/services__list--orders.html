@@ -33,27 +33,29 @@
       <th>Action</th>
     </tr>
     <tr class="card--items">
-      <td>20/10/2004</td>
-      <td>3 PM</td>
-      <td>3333 Street left</td>
-      <td>3333 Street right</td>
-      <td>San Francisco</td>
-      <td>CA</td>
-      <td>9999-999</td>
+      {% for order in object_list %}
+      <td>{{ order.date }}</td>
+      <td>{{ order.time }}</td>
+      <td>{{ order.addressOne }}</td>
+      <td>{{ order.AddressTwo }}</td>
+      <td>{{ order.ZipCode }}</td>
+      <td>{{ order.city }}</td>
+      <td>{{ order.state }}</td>
       <td>
         <a class="btn_list--orders btn-notUpload">Not Uploaded</a>
       </td>
       <td class="btn__table">
-        <a class="btn_list--orders edit__button">Edit</a>
-        <a class="btn_list--orders delete__button">Delete</a>
-        <a class="btn_list--orders view__button">View</a>
+        <a href="{% url 'update_orders' order.pk %}" class="btn_list--orders edit__button">Edit</a>
+        <a href="{% url 'delete_orders' order.pk %}" class="btn_list--orders delete__button">Delete</a>
+        <a href="{% url 'user__upload--page' %}" class="btn_list--orders view__button">View</a>
       </td>
     </tr>
     <tr>
       <th>Services:</th>
       <td colspan="8">
-        <p>3d scan; videos; photos</p></td>
+        <p class="service--items">{{ order.services }}</p></td>
     </tr>
+    {% endfor %}
     <table>
 </div>
 {% endblock %}

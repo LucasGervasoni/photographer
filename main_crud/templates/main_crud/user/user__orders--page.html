@@ -14,8 +14,9 @@
   <h2 class="top-title">Orders:</h2>
 </div>
 
-<div class="table__container mg-top">
-  <table class="artist__card">
+<div class="table__container">
+  {% for order in object_list %}
+  <table class="artist__card mg-top">
     <tr class="card--titles">
       <th>Date</th>
       <th>Time</th>
@@ -28,13 +29,13 @@
       <th>Action</th>
     </tr>
     <tr class="card--items">
-      <td>20/10/2004</td>
-      <td>3 PM</td>
-      <td>3333 Street left</td>
-      <td>3333 Street right</td>
-      <td>San Francisco</td>
-      <td>CA</td>
-      <td>9999-999</td>
+      <td>{{ order.date }}</td>
+      <td>{{ order.time }}</td>
+      <td>{{ order.addressOne }}</td>
+      <td>{{ order.AddressTwo }}</td>
+      <td>{{ order.ZipCode }}</td>
+      <td>{{ order.city }}</td>
+      <td>{{ order.state }}</td>
       <td>
         <a class="btn_list--orders btn-notUpload">Not Uploaded</a>
       </td>
@@ -45,8 +46,9 @@
     <tr>
       <th>Services:</th>
       <td colspan="8">
-        <p>3d scan; videos; photos</p></td>
+        <p>{{ order.services }}</p></td>
     </tr>
     <table>
+    {% endfor %}
 </div>
 {% endblock %}
