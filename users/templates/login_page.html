@@ -1,4 +1,5 @@
 {% load static %}
+{% load crispy_forms_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -28,15 +29,7 @@
         {% csrf_token %}
         <h2 class="main__login--title">Log In to your account</h2>
 
-        <div class="form__input--email">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" required>
-        </div>
-
-        <div class="form__input--password">
-          <label for="password">Password</label>
-          <input type="password" id="password" name="password" minlength="" required>
-        </div>
+        {{ form|crispy }}
 
         <button class="login__button" type="submit">Log In</button>
 

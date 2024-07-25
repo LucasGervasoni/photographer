@@ -36,13 +36,17 @@
           </div>
           <button id="dropdown-button">Menu</button>
         </div>
+        {% if request.user.is_authenticated %}
         <div class="nav-links-container hidden">
-          <a href="#"><p>Welcome, User</p></a>
+          <a href="#"><p>Welcome, {{ request.user }}</p></a>
           <a href="{% url 'user__orders--page' %}"><p>Orders</p></a>
           <a href="#"><p>Support</p></a>
           <a href="{% url 'services' %}"><p>Admin</p></a>
           <a href="{% url 'login' %}"><p>Logout</p></a>
+        {% else %}
+          <a href="{% url 'login' %}"><p>Login</p></a>
         </div>
+        {% endif %}
       </nav>
   
     </section>
