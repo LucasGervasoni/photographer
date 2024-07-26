@@ -1,12 +1,13 @@
 from django.urls import path
-from django.contrib.auth import views as auth_views
-from .views import UserCreate
+from users.views import login, register, logout
+from .views import ServicesCreateArtists, ProfileUpdate
 
 urlpatterns = [
-    path('', auth_views.LoginView.as_view(
-            template_name='login_page.html'
-        ), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('register/', UserCreate.as_view(), name='register'),
-    # path('update-data/', ProfileUpdate.as_view(), name='update__data'),
+    path('', login, name='login'),
+    path('logout/', logout, name='logout'),
+    path('register/', register, name='register'),
+    #Create
+    path('services/create/artists', ServicesCreateArtists.as_view(), name='create__artists'),
+    #Update
+    path('services/update/artists/<int:pk>', ProfileUpdate.as_view(), name='update__artists'),
 ]

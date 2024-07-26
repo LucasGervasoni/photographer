@@ -12,7 +12,10 @@
 {% block content %}
 <div class="top-content">
   <h2 class="top-title">List Artists:</h2>
-  <a class="top-button" href="{% url 'create_artists' %}" role="button">+ Create Artists</a>
+  <div>
+    <a class="top-button" href="{% url 'create__artists' %}" role="button">+ Create Artists</a>
+    <a class="top-button" href="{% url 'register' %}" role="button">+ Create Artists Login</a>
+  </div>
 </div>
 
 <form class="form__search--lists" action="" method="post">
@@ -20,37 +23,39 @@
 </form>
 
 <div class="table__container">
-  <table class="artist__card">
+  {% for artist in object_list %}
+  <table style="margin-top: 4rem;" class="artist__card">
     <tr class="card--titles">
+      <th>Username</th>
       <th>First Name</th>
       <th>Last Name</th>
-      <th>E-mail</th>
       <th>Phone</th>
       <th>Emergency Phone</th>
       <th>Address 1</th>
       <th>Address 2</th>
+      <th>Zip code</th>
       <th>City</th>
       <th>State</th>
-      <th>Zip code</th>
       <th>Action</th>
     </tr>
     <tr class="card--items">
-      <td>Lucas</td>
-      <td>Gervasoni</td>
-      <td>user@mail.com</td>
-      <td>xxxxx-xxx</td>
-      <td>xxxxx-xxx</td>
-      <td>3333 Street left</td>
-      <td>3333 Street right</td>
-      <td>San Francisco</td>
-      <td>CA</td>
-      <td>xxxxx-xxx</td>
+      <td>{{ artist.username }}</td>
+      <td>{{ artist.firstName }}</td>
+      <td>{{ artist.lastName }}</td>
+      <td>{{ artist.phoneOne }}</td>
+      <td>{{ artist.phoneTwo }}</td>
+      <td>{{ artist.addressOne }}</td>
+      <td>{{ artist.addressTwo }}</td>
+      <td>{{ artist.zipCode }}</td>
+      <td>{{ artist.city }}</td>
+      <td>{{ artist.state }}</td>
       <td class="btn__table">
-        <button class="btn_list--artist edit__button">Edit</button>
-        <button class="btn_list--artist delete__button">Delete</button>
+        <a href="{% url 'update__artists' artist.pk %}" class="btn_list--artist edit__button">Edit</a>
+        <a class="btn_list--artist delete__button">Delete</a>
       </td>
     </tr>
     <table>
+    {% endfor %}
 </div>
 
 {% endblock %}

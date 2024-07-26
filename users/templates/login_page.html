@@ -29,8 +29,10 @@
         {% csrf_token %}
         <h2 class="main__login--title">Log In to your account</h2>
 
-        {{ form|crispy }}
-
+        {% for field in form.visible_fields %}
+        <label for="{{ field.id_for_label }}">{{field.label}}</label>
+        {{ field }}
+        {% endfor %}
         <button class="login__button" type="submit">Log In</button>
 
       </form>

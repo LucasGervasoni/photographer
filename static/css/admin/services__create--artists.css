@@ -1,4 +1,5 @@
 @import url("/static/css/base.css");
+@import url("/static/css/admin/services__create--orders.css");
 
 .top-content {
   display: flex;
@@ -18,42 +19,15 @@
   color: #fff;
 }
 
-.form__create--artists {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  max-width: 80%;
-  margin: 4rem auto 0;
-}
 
-.form__input--email,
-.form__input--password,
-.form__input--firstName,
-.form__input--lastName,
-.form__input--phone,
-.form__input--emergencyPhone,
-.form__input--address,
-.form__input--address2,
-.form__input--zipcode,
-.form__input--city,
-.form__input--state {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 30rem;
-
-  & label {
-    font-size: 1.4rem;
-  }
-
-  & input {
+select {
     width: 100%;
     height: 35px;
     border-radius: 0.5rem;
     border: 2px solid #e8e8e8;
     padding: 0.5rem;
   }
-}
+
 
 .save__button {
   width: 40rem;

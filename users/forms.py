@@ -1,17 +1,59 @@
-# from django import forms
-# from django.contrib.auth.models import User
-# from django.contrib.auth.forms import UserCreationForm
-# from django.core.exceptions import ValidationError
+from django import forms
 
-# class UserForm(UserCreationForm):
-#   email = forms.EmailField(max_length=100)
-  
-#   class Meta:
-#     model = User
+class LoginForms(forms.Form):
+    login_username=forms.CharField(
+        label='Username', 
+        required=True, 
+        max_length=100,
+    )
+    password=forms.CharField(
+        label='Password', 
+        required=True, 
+        max_length=70,
+        widget=forms.PasswordInput()
+    )
+
+class RegisterForms(forms.Form):
+    username=forms.CharField(
+        label='Username',
+        required=True,
+        max_length=100,
+    )
+    email=forms.EmailField(
+        label='Email',
+        required=True,
+        max_length=100,
+    )
+    password_1=forms.CharField(
+        label='Password', 
+        required=True, 
+        max_length=70,
+        widget=forms.PasswordInput()
+    )
+    password_2=forms.CharField(
+        label='Confirm your Password', 
+        required=True, 
+        max_length=70,
+        widget=forms.PasswordInput()
+    )
     
-#   def clean_email(self):
-#     e = self.cleaned_data['email']
-#     if User.objects.filter(email=e).exists():
-#       raise ValidationError("The E-mail {} is already in use".format(e))
     
-#     return e
+    def clean_username_login(self):
+        nome = self.cleaned_data.get('login_username')
+
+        if nome:
+            nome = nome.strip()
+            if ' ' in nome:
+                raise forms.ValidationError('Spaces are not allowed in this field')
+            else:
+                return nome
+
+    def clean_password(self):
+        password_1 = self.cleaned_data.get('password_1')
+        password_2 = self.cleaned_data.get('password_2')
+
+        if password_1 and password_2:
+            if password_1!= password_2:
+                raise forms.ValidationError('Passwords are not the same')
+            else:
+                return password_2

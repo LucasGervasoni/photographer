@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  ServicesCreateOrders,ServicesUpdateOrders, ServicesDeleteOrders, ServicesListOrders, UserPageOrders
+from .views import  ServicesCreateOrders,ServicesUpdateOrders, ServicesDeleteOrders, ServicesListOrders, UserPageOrders, ServicesListArtists
 
 urlpatterns = [
   #CREATE
@@ -7,7 +7,7 @@ urlpatterns = [
   #UPDATE
   path('services/update/orders/<int:pk>', ServicesUpdateOrders.as_view(), name='update_orders'),
   #LIST
-  # path('services/list/artists', ServicesListArtists.as_view(), name='list__artists'),
+  path('services/list/artists', ServicesListArtists.as_view(), name='list__artists'),
   path('services/list/orders', ServicesListOrders.as_view(), name='list__orders'),
   path('orders/', UserPageOrders.as_view(), name='user__orders--page'),
   #DELETE

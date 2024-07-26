@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block style %}
+  <link rel="stylesheet" href="{% static 'css/admin/services__create--artists.css' %}">
+  <link rel="stylesheet" href="{% static 'css/admin/services__create--orders.css' %}">
+{% endblock %}
+
+{% block title%}
+<title>Spotlight - Create Artists</title>
+{% endblock %}
+
+{% block content %}
+<div class="top-content">
+  <h2 class="top-title">Create Artists Login:</h2>
+
+  <div>
+    <a class="top-button" href="{% url 'list__artists' %}" role="button">+ List Artists</a>
+    <a class="top-button" href="{% url 'create__artists' %}" role="button">+ Create Artists</a>
+  </div>
+</div>
+
+
+
+<form class="form__create--artists" action="" method="post">
+
+  {% csrf_token %}
+
+  {% for field in form.visible_fields %}
+  <label for="{{ field.id_for_label }}">{{field.label}}</label>
+  {{ field }}
+  {% for error in field.errors %}
+  {{error}}
+  {% endfor %}
+  {% endfor %}
+<div class="button__container">
+<button class="save__button" type="submit">Save</button>
+</div>
+</form>
+{% endblock %}
