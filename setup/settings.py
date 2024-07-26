@@ -123,6 +123,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static")
 ]
 
+#Authentication
 LOGIN_REDIRECT_URL = 'user__orders--page'
 LOGOUT_REDIRECT_URL = 'logout'
 LOGIN_URL = 'login'
@@ -132,6 +133,6 @@ LOGIN_URL = 'login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+#Crispy forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
-
 CRISPY_TEMPLATE_PACK = "bootstrap4"

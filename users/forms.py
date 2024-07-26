@@ -1,5 +1,6 @@
 from django import forms
 
+#Login Form
 class LoginForms(forms.Form):
     login_username=forms.CharField(
         label='Username', 
@@ -13,6 +14,7 @@ class LoginForms(forms.Form):
         widget=forms.PasswordInput()
     )
 
+#Register Form
 class RegisterForms(forms.Form):
     username=forms.CharField(
         label='Username',

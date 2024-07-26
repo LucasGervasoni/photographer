@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
+from django.views.generic.edit import CreateView, UpdateView
+from django.urls import reverse_lazy
+
 from .forms import LoginForms, RegisterForms
+from .models import Profile
+
+#Authentication
 from django.contrib.auth.models import User
 from django.contrib import auth
-from django.contrib import messages
-from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView, UpdateView
-from .models import Profile
 from django.contrib.auth.mixins import LoginRequiredMixin
 from braces.views import GroupRequiredMixin
 
@@ -29,17 +31,15 @@ def login(request):
         )
         if user is not None:
             auth.login(request, user)
-            messages.success(request, f'{login_username} successfully logged in!')
             return redirect('user__orders--page')
         else:
-            messages.error(request, 'Error when logging in')
             return redirect('login')
 
     return render(request, 'login_page.html', {'form': form})
 
+#logout 
 def logout(request):
     auth.logout(request)
-    messages.success(request, 'Logout successful!')
     return redirect('login')
 
     
@@ -57,7 +57,6 @@ def register(request):
             password_1=form['password_1'].value()
 
             if User.objects.filter(username=username).exists():
-                messages.error(request, 'User already exist')
                 return redirect('register')
 
             user = User.objects.create_user(
@@ -66,11 +65,11 @@ def register(request):
                 password=password_1,
             )
             user.save()
-            messages.success(request, 'Registration successfully Complete!')
             return redirect('login')
 
     return render(request, 'register.html', {'form': form})
 
+#Create Artists
 class ServicesCreateArtists(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
@@ -78,7 +77,8 @@ class ServicesCreateArtists(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         fields = ["username", "firstName", "lastName", "phoneOne", "phoneTwo", "addressOne", "addressTwo", "zipCode", "city", "state"]
         template_name = "services__create--artists.html"
         success_url = reverse_lazy('list__artists')
-        
+
+#Update Artists 
 class ProfileUpdate(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
     login_url = reverse_lazy('login')
     group_required = [u"Admin" u"EquipMember"]

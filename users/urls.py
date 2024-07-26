@@ -3,6 +3,7 @@ from users.views import login, register, logout
 from .views import ServicesCreateArtists, ProfileUpdate
 
 urlpatterns = [
+    #Authentication
     path('', login, name='login'),
     path('logout/', logout, name='logout'),
     path('register/', register, name='register'),

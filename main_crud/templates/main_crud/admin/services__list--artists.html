@@ -51,7 +51,7 @@
       <td>{{ artist.state }}</td>
       <td class="btn__table">
         <a href="{% url 'update__artists' artist.pk %}" class="btn_list--artist edit__button">Edit</a>
-        <a class="btn_list--artist delete__button">Delete</a>
+        <a href="{% url 'delete_artists' artist.pk %}" class="btn_list--artist delete__button">Delete</a>
       </td>
     </tr>
     <table>
