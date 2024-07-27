@@ -31,7 +31,7 @@ def login(request):
         )
         if user is not None:
             auth.login(request, user)
-            return redirect('user__orders--page')
+            return redirect('userOrders--page')
         else:
             return redirect('login')
 

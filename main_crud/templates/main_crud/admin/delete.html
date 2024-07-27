@@ -1,0 +1,25 @@
+{% extends 'baseAdmin.html' %}
+{% load static %}
+
+
+{% block title%}
+<title>Spotlight - Delete</title>
+{% endblock %}
+
+{% block content %}
+<h2>Delete Order:</h2>
+
+<form action="" method="POST">
+
+  <p class="mt-2">
+      Do you want to delete: <strong>{{ object }}</strong>?
+  </p>
+
+  {% csrf_token %}
+
+  {{ form.as_p }}
+
+  <button class="mt-2" type="submit" class="btn btn-danger">Delete</button>
+
+</form>
+{% endblock %}

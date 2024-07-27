@@ -1,0 +1,41 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--Required Meta tags-->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+  {% block title %}
+  <title>Spotlight - Admin</title>
+  {% endblock %}
+</head>
+<body>
+
+    <!--Navbar-->
+
+{% include 'pages/partials/navbar.html' %}
+
+<div class="container-fluid nav__top-mb" id="main">
+   
+    {% include 'pages/partials/sidebar.html' %}
+
+        <div class="col main pt-5 mt-3">
+            {% block content %}
+            {% endblock %}
+        </div>
+
+    </div> 
+</div>
+
+
+
+ <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+ <script src="https://kit.fontawesome.com/10a2fe62b6.js" crossorigin="anonymous"></script>
+</body>
+</html>

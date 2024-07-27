@@ -39,7 +39,7 @@
         {% if request.user.is_authenticated %}
         <div class="nav-links-container hidden">
           <a href="#"><p>Welcome, {{ request.user }}</p></a>
-          <a href="{% url 'user__orders--page' %}"><p>Orders</p></a>
+          <a href="{% url 'userOrders--page' %}"><p>Orders</p></a>
           <a href="#"><p>Support</p></a>
           <a href="{% url 'services' %}"><p>Admin</p></a>
           <a href="{% url 'logout' %}">Logout</a>

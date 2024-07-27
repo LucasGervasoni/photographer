@@ -15,8 +15,8 @@ class ServicesCreateOrders(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
         fields = ["user", "date", "time", "addressOne", "addressTwo", "zipCode", "city", "state", "services"]
-        template_name = "main_crud/admin/services__create--orders.html"
-        success_url = reverse_lazy('list__orders')
+        template_name = "main_crud/admin/createOrders.html"
+        success_url = reverse_lazy('listOrders')
 
 #Update Orders 
 class ServicesUpdateOrders(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
@@ -24,23 +24,23 @@ class ServicesUpdateOrders(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
         fields = ["user", "date", "time", "addressOne", "addressTwo", "zipCode", "city", "state", "services"]
-        template_name = "main_crud/admin/services__create--orders.html"
-        success_url = reverse_lazy('list__orders')
+        template_name = "main_crud/admin/createOrders.html"
+        success_url = reverse_lazy('listOrders')
 
 #Delete Orders
 class ServicesDeleteOrders(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
-        template_name = "main_crud/admin/services__delete--orders.html"
-        success_url = reverse_lazy('list__orders')
+        template_name = "main_crud/admin/delete.html"
+        success_url = reverse_lazy('listOrders')
 
 #List Orders  
 class ServicesListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
-        template_name = "main_crud/admin/services__list--orders.html"
+        template_name = "main_crud/admin/listOrders.html"
 
 #List Orders for user
 class UserPageOrders(LoginRequiredMixin,ListView):
@@ -61,12 +61,12 @@ class ServicesDeleteArtists(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Profile
-        template_name = "main_crud/admin/services__delete--artists.html"
-        success_url = reverse_lazy('list__artists')
+        template_name = "main_crud/admin/delete.html"
+        success_url = reverse_lazy('listArtists')
 
 #List Artists
 class ServicesListArtists(GroupRequiredMixin,LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Profile
-        template_name = "main_crud/admin/services__list--artists.html"
+        template_name = "main_crud/admin/listArtists.html"

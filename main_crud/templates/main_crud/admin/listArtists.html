@@ -1,0 +1,53 @@
+{% extends 'baseAdmin.html' %}
+{% load static %}
+
+
+
+{% block title %}
+<title>Spotlight - List Artists</title>
+{% endblock %}
+
+
+{% block content %}
+
+<form class="form__search--orders" action="" method="post">
+  <input type="search" name="search" id="search" placeholder="search">
+</form>
+
+<div class="table-responsive">
+  <table class="table table-striped">
+    <tr>
+      <th scope="col">Username</th>
+      <th scope="col">First Name</th>
+      <th scope="col">Last Name</th>
+      <th scope="col">Phone</th>
+      <th scope="col">Emergency Phone</th>
+      <th scope="col">Address 1</th>
+      <th scope="col">Address 2</th>
+      <th scope="col">Zip code</th>
+      <th scope="col">City</th>
+      <th scope="col">State</th>
+      <th scope="col">Action</th>
+    </tr>
+    <tr>
+      {% for artist in object_list %}
+      <td>{{ artist.username }}</td>
+      <td>{{ artist.firstName }}</td>
+      <td>{{ artist.lastName }}</td>
+      <td>{{ artist.phoneOne }}</td>
+      <td>{{ artist.phoneTwo }}</td>
+      <td>{{ artist.addressOne }}</td>
+      <td>{{ artist.addressTwo }}</td>
+      <td>{{ artist.zipCode }}</td>
+      <td>{{ artist.city }}</td>
+      <td>{{ artist.state }}</td>
+      <td class="d-flex align-items-center justify-content-center">
+        <a title="edit" href="{% url 'updateArtists' artist.pk %}" class="btn btn-info"><i class="fa-regular fa-pen-to-square"></i></a>
+
+        <a title="delete" href="{% url 'deleteArtists' artist.pk %}" class="btn btn-danger"><i class="fa-regular fa-trash-can"></i></a>
+      </td>
+    </tr>
+    {% endfor %}
+    </table>
+</div>
+{% endblock %}

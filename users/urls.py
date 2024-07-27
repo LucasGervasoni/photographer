@@ -8,7 +8,7 @@ urlpatterns = [
     path('logout/', logout, name='logout'),
     path('register/', register, name='register'),
     #Create
-    path('services/create/artists', ServicesCreateArtists.as_view(), name='create__artists'),
+    path('create/artists', ServicesCreateArtists.as_view(), name='create__artists'),
     #Update
-    path('services/update/artists/<int:pk>', ProfileUpdate.as_view(), name='update__artists'),
+    path('update/artists/<int:pk>', ProfileUpdate.as_view(), name='updateArtists'),
 ]

@@ -3,17 +3,17 @@ from .views import  ServicesCreateOrders,ServicesUpdateOrders, ServicesDeleteOrd
 
 urlpatterns = [
   #CREATE
-  path('services/create/orders', ServicesCreateOrders.as_view(), name='create_orders'),
+  path('create/orders', ServicesCreateOrders.as_view(), name='createOrders'),
   
   #UPDATE
-  path('services/update/orders/<int:pk>', ServicesUpdateOrders.as_view(), name='update_orders'),
+  path('update/orders/<int:pk>', ServicesUpdateOrders.as_view(), name='updateOrders'),
   
   #LIST
-  path('services/list/artists', ServicesListArtists.as_view(), name='list__artists'),
-  path('services/list/orders', ServicesListOrders.as_view(), name='list__orders'),
-  path('orders/', UserPageOrders.as_view(), name='user__orders--page'),
+  path('list/artists', ServicesListArtists.as_view(), name='listArtists'),
+  path('list/orders', ServicesListOrders.as_view(), name='listOrders'),
+  path('orders/', UserPageOrders.as_view(), name='userOrders--page'),
   
   #DELETE
-  path('services/delete/orders/<int:pk>', ServicesDeleteOrders.as_view(), name='delete_orders'),
-  path('services/delete/artists/<int:pk>', ServicesDeleteArtists.as_view(), name='delete_artists'),
+  path('delete/orders/<int:pk>', ServicesDeleteOrders.as_view(), name='deleteOrders'),
+  path('delete/artists/<int:pk>', ServicesDeleteArtists.as_view(), name='deleteArtists'),
  ]
