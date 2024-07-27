@@ -123,6 +123,8 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static")
 ]
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 #Authentication
 LOGIN_REDIRECT_URL = 'user__orders--page'
 LOGOUT_REDIRECT_URL = 'logout'
