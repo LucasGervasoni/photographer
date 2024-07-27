@@ -1,0 +1,55 @@
+@import url('/static/css/base.css');
+@import url('/static/css/admin/services__list--artists.css');
+
+.form__search--orders{
+  margin: 4rem 0;
+
+  & input{
+    width: 40%;
+    max-width: 60%;
+    height: 35px;
+    border-radius: 0.5rem;
+    border: 2px solid #E8E8E8;
+    padding: 0.5rem;
+  }
+}
+
+.btn__table{
+  display: flex;
+  gap:0.2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn_list--orders {
+  color: #000;
+  width:8rem;
+  padding: 1rem;
+  border: none;
+  border-radius: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-align:center;
+  text-decoration: none;
+}
+
+.edit__button{
+  background-color: yellow;
+}
+
+.delete__button{
+  background-color: red;
+}
+
+.view__button{
+  background-color:#b2b2b2
+}
+
+.btn-notUpload{
+  background-color: transparent;
+  border: 1px solid #b2b2b2;
+}
+
+.service--items{
+  text-transform: capitalize;
+}
