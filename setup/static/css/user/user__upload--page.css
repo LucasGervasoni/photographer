@@ -1,3 +1,9 @@
+.main {
+  display: flex;
+  gap: 2rem;
+  height: 100vh;
+  padding-top: 1rem;
+}
 
 .card--container {
   width: 60%;
