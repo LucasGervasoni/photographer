@@ -46,7 +46,7 @@ class ServicesListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
 class UserPageOrders(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         model = Orders
-        template_name = "main_crud/user/user__orders--page.html"
+        template_name = "main_crud/user/UserOrdersList.html"
         
         #Return the orders by user
         def get_queryset(self):
