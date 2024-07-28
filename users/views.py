@@ -76,7 +76,7 @@ class ServicesCreateArtists(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         model = Profile
         fields = ["username", "firstName", "lastName", "phoneOne", "phoneTwo", "addressOne", "addressTwo", "zipCode", "city", "state"]
         template_name = "services__create--artists.html"
-        success_url = reverse_lazy('list__artists')
+        success_url = reverse_lazy('listArtists')
 
 #Update Artists 
 class ProfileUpdate(GroupRequiredMixin,LoginRequiredMixin,UpdateView):

@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 #Artists Profile
 class Profile(models.Model):
   username = models.OneToOneField(User, on_delete=models.CASCADE)
-  firstName = models.CharField(max_length=150)
-  lastName = models.CharField(max_length=150)
+  firstName = models.CharField(max_length=100)
+  lastName = models.CharField(max_length=100)
   phoneOne = models.CharField(max_length=100)
   phoneTwo = models.CharField(max_length=100)
   addressOne = models.CharField(max_length=150, verbose_name="Address 1")
