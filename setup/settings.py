@@ -1,5 +1,7 @@
 from pathlib import Path, os
 from dotenv import load_dotenv
+import django_heroku
+import dj_database_url
 
 load_dotenv()
 
@@ -71,13 +73,24 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         "NAME": "setup",
+#         "USER": "postgres",
+#         "PASSWORD": str(os.getenv('PASSWORD')),
+#         "HOST": "localhost",
+#         "PORT": "5432",
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": "setup",
-        "USER": "postgres",
-        "PASSWORD": str(os.getenv('PASSWORD')),
-        "HOST": "localhost",
+        "NAME": "d9v1qpg0ub5b11",
+        "USER": "ubirojv3l0tjpk",
+        "PASSWORD": "p7a0e2c8336d154ec33f10e80d696c6ba3be566400ade019d42f8b964f582e02d",
+        "HOST": "ccpa7stkruda3o.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",
         "PORT": "5432",
     }
 }
@@ -123,7 +136,7 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "setup/static")
 ]
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 #Authentication
 LOGIN_REDIRECT_URL = 'user__orders--page'
@@ -138,3 +151,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #Crispy forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
+
+django_heroku.settings(locals())
