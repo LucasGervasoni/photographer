@@ -34,6 +34,13 @@ class ServicesDeleteOrders(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
         model = Orders
         template_name = "main_crud/admin/delete.html"
         success_url = reverse_lazy('listOrders')
+        
+        def get_context_data(self, *args, **kwargs):
+                context = super().get_context_data(*args, **kwargs)
+
+                context['title'] = "Orders"
+
+                return context
 
 #List Orders  
 class ServicesListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
@@ -63,6 +70,13 @@ class ServicesDeleteArtists(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
         model = Profile
         template_name = "main_crud/admin/delete.html"
         success_url = reverse_lazy('listArtists')
+        
+        def get_context_data(self, *args, **kwargs):
+                context = super().get_context_data(*args, **kwargs)
+
+                context['title'] = "Artists"
+
+                return context
 
 #List Artists
 class ServicesListArtists(GroupRequiredMixin,LoginRequiredMixin,ListView):
