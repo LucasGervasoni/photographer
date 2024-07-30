@@ -15,7 +15,7 @@ class ServicesCreateOrders(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
-        form_class = OrderForm
+        form = OrderForm
         template_name = "main_crud/admin/createOrders.html"
         success_url = reverse_lazy('listOrders')
 
@@ -24,7 +24,7 @@ class ServicesUpdateOrders(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
-        fields = ["user", "date", "time", "addressOne", "addressTwo", "zipCode", "city", "state", "services"]
+        form_class = OrderForm
         template_name = "main_crud/admin/createOrders.html"
         success_url = reverse_lazy('listOrders')
 
