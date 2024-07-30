@@ -3,6 +3,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
 from .models import Orders
+from .forms import OrderForm
 from users.models import Profile
 from django.urls import reverse_lazy
 
@@ -14,7 +15,7 @@ class ServicesCreateOrders(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
-        fields = ["user", "date", "time", "addressOne", "addressTwo", "zipCode", "city", "state", "services"]
+        form_class = OrderForm
         template_name = "main_crud/admin/createOrders.html"
         success_url = reverse_lazy('listOrders')
 

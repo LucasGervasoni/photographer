@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 
 class Orders(models.Model):
   user = models.ForeignKey(User, on_delete=models.PROTECT)
-  date = models.DateField(help_text='MM/DD/YY')
-  time = models.TimeField(help_text='Ex: 3:00 to AM or 15:00 to PM')
+  date = models.DateField()
+  time = models.TimeField()
   addressOne = models.CharField(max_length=150, verbose_name="Address 1")
   addressTwo = models.CharField(max_length=150, verbose_name="Address 2", null=True, blank=True)
   zipCode = models.CharField(max_length=50, verbose_name="Zip Code", null=True, blank=True)
