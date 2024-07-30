@@ -10,6 +10,7 @@
 
   <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+  <link rel="stylesheet" href="{% static 'css/datatables.min.css' %}">
   
   <link rel="shortcut icon" type="images/jpg" href="{% static 'img/icon-logo.jpg' %}">
 
@@ -36,6 +37,14 @@
 </div>
 
 
+    <script src="{% static 'js/jquery-3.4.1.min.js' %}"></script>
+    <script src="{% static 'js/popper.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/datatables.min.js' %}"></script>
+
+    {% block scripts %}
+
+    {% endblock %}
 
 </body>
 </html>
