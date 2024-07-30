@@ -1,7 +1,6 @@
 from django.urls import path
-from .views import ServicesView, UserUploadPage
+from .views import ServicesView
 
 urlpatterns = [
   path('services/', ServicesView.as_view(), name='services'),
-  path('upload/', UserUploadPage.as_view(), name='user__upload--page'),
 ]

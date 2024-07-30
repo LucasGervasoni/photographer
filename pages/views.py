@@ -10,7 +10,3 @@ class ServicesView(GroupRequiredMixin,LoginRequiredMixin,TemplateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
         template_name = "baseAdmin.html"
-
-#Upload Page
-class UserUploadPage(TemplateView):
-        template_name = "pages/user-pages/user__upload--page.html"

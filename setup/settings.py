@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'pages.apps.PagesConfig',
     'users.apps.UsersConfig',
     'main_crud.apps.MainCrudConfig',
+    'pictures.apps.PicturesConfig',
     
     "crispy_forms",
     "crispy_bootstrap4",
@@ -137,6 +138,9 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 #Authentication
 LOGIN_REDIRECT_URL = 'user__orders--page'
