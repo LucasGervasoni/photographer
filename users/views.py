@@ -65,7 +65,7 @@ def register(request):
                 password=password_1,
             )
             user.save()
-            return redirect('login')
+            return redirect('create__artists')
 
     return render(request, 'register.html', {'form': form})
 
