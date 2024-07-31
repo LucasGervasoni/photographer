@@ -12,7 +12,7 @@
   <div class="table-responsive">
     <table class="table table-striped">
       <tr>
-        <th scope="col">User</th>
+        <th scope="col">Photographer</th>
         <th scope="col">Date</th>
         <th scope="col">Time</th>
         <th scope="col">Address 1</th>
@@ -37,13 +37,21 @@
           <a class="btn btn-light">Not Uploaded</a>
         </td>
         <td class="d-flex align-items-center justify-content-center">
-          <a href="{% url 'upload' %}" class="btn btn-secondary">View</a>
+          <a onclick="info('listInfo')" class="btn btn-outline-info" id="view">View</a>
+          <a href="{% url 'upload' %}" class="btn btn-outline-secondary ml-2">Upload</a>
         </td>
       </tr>
-      <tr>
+      <tr class="d-none" id="listInfo">
         <th scope="row">Services:</th>
-        <td colspan="9">
+        <td>
           <p class="text-capitalize">{{ order.services }}</p>
+        </td>
+        <th scope="row">Client:</th>
+        <td colspan="6">
+          <p class="text-capitalize">Admin</p>
+        </td>
+        <td>
+          <a href="#" class="btn btn-outline-dark mt-2 disabled">Download</a>
         </td>
       </tr>
       {% endfor %}
