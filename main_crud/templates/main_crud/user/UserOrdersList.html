@@ -42,17 +42,19 @@
         </td>
       </tr>
       <tr class="d-none" id="listInfo">
-        <th scope="row">Services:</th>
-        <td>
-          <p class="text-capitalize">{{ order.services }}</p>
-        </td>
         <th scope="row">Client:</th>
-        <td colspan="6">
+        <td>
           <p class="text-capitalize">Admin</p>
         </td>
+        <th scope="row">Services:</th>
+        <td colspan="7">
+          <p class="text-capitalize">{{ order.services }}</p>
+        </td>
+        {% if request.user.is_superuser %}
         <td>
           <a href="#" class="btn btn-outline-dark mt-2 disabled">Download</a>
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
       </table>
