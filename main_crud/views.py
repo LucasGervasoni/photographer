@@ -49,6 +49,12 @@ class ServicesListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
         group_required = [u"Admin" u"EquipMember"]
         model = Orders
         template_name = "main_crud/admin/listOrders.html"
+        
+class HomeListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
+        login_url = reverse_lazy('login')
+        group_required = [u"Admin" u"EquipMember"]
+        model = Orders
+        template_name = "main_crud/admin/homeOrder.html"       
 
 #List Orders for user
 class UserPageOrders(LoginRequiredMixin,ListView):

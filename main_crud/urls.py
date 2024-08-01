@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  ServicesCreateOrders,ServicesUpdateOrders, ServicesDeleteOrders, ServicesListOrders, UserPageOrders, ServicesListArtists, ServicesDeleteArtists
+from .views import  ServicesCreateOrders,ServicesUpdateOrders, ServicesDeleteOrders, ServicesListOrders, UserPageOrders, ServicesListArtists, ServicesDeleteArtists, HomeListOrders
 
 urlpatterns = [
   #CREATE
@@ -11,6 +11,7 @@ urlpatterns = [
   #LIST
   path('list/artists', ServicesListArtists.as_view(), name='listArtists'),
   path('list/orders', ServicesListOrders.as_view(), name='listOrders'),
+  path('home/orders', HomeListOrders.as_view(), name='homeOrders'),
   path('orders/', UserPageOrders.as_view(), name='userOrders--page'),
   
   #DELETE
