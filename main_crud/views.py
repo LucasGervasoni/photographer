@@ -58,7 +58,11 @@ class UserPageOrders(LoginRequiredMixin,ListView):
         
         #Return the orders by user
         def get_queryset(self):
-                self.object_list = Orders.objects.filter(user=self.request.user)
+                
+                if self.request.user.is_superuser:       
+                        self.object_list = Orders.objects.all()
+                else:
+                        self.object_list = Orders.objects.filter(user=self.request.user)
                 
                 return  self.object_list
 
