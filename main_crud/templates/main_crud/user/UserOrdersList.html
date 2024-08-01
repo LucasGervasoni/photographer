@@ -38,7 +38,9 @@
         </td>
         <td class="d-flex align-items-center justify-content-center">
           <a onclick="info('listInfo')" class="btn btn-outline-info" id="view">View</a>
+          {% if not request.user.is_superuser %}
           <a href="{% url 'upload' %}" class="btn btn-outline-secondary ml-2">Upload</a>
+          {% endif %}
         </td>
       </tr>
       <tr class="d-none" id="listInfo">
@@ -50,11 +52,11 @@
         <td colspan="6">
           <p class="text-capitalize">{{ order.services }}</p>
         </td>
-        {% if request.user.is_superuser %}
         <td>
+          {% if request.user.is_superuser %}
           <a href="#" class="btn btn-outline-dark mt-2 disabled">Download</a>
+          {% endif %}
         </td>
-        {% endif %}
       </tr>
       {% endfor %}
       </table>
