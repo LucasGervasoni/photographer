@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 #Orders
 
-class Orders(models.Model):
+class Order(models.Model):
   
   services_choices = (
     ("Drone","Drone"),

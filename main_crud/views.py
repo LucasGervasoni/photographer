@@ -2,7 +2,7 @@
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
 
-from .models import Orders
+from .models import Order
 from .forms import OrderForm
 from users.models import Profile
 from django.urls import reverse_lazy
@@ -14,7 +14,7 @@ from braces.views import GroupRequiredMixin
 class ServicesCreateOrders(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
-        model = Orders
+        model = Order
         form_class = OrderForm
         template_name = "main_crud/admin/createOrders.html"
         success_url = reverse_lazy('listOrders')
@@ -23,7 +23,7 @@ class ServicesCreateOrders(GroupRequiredMixin,LoginRequiredMixin,CreateView):
 class ServicesUpdateOrders(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
-        model = Orders
+        model = Order
         form_class = OrderForm
         template_name = "main_crud/admin/createOrders.html"
         success_url = reverse_lazy('listOrders')
@@ -32,7 +32,7 @@ class ServicesUpdateOrders(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
 class ServicesDeleteOrders(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
-        model = Orders
+        model = Order
         template_name = "main_crud/admin/delete.html"
         success_url = reverse_lazy('listOrders')
         
@@ -47,28 +47,28 @@ class ServicesDeleteOrders(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
 class ServicesListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
-        model = Orders
+        model = Order
         template_name = "main_crud/admin/listOrders.html"
         
 class HomeListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         group_required = [u"Admin" u"EquipMember"]
-        model = Orders
+        model = Order
         template_name = "main_crud/admin/homeOrder.html"       
 
 #List Orders for user
 class UserPageOrders(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
-        model = Orders
+        model = Order
         template_name = "main_crud/user/UserOrdersList.html"
         
         #Return the orders by user
         def get_queryset(self):
                 
                 if self.request.user.is_superuser:       
-                        self.object_list = Orders.objects.all()
+                        self.object_list = Order.objects.all()
                 else:
-                        self.object_list = Orders.objects.filter(user=self.request.user)
+                        self.object_list = Order.objects.filter(user=self.request.user)
                 
                 return  self.object_list
 

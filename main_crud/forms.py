@@ -1,9 +1,9 @@
 from django import forms
-from .models import Orders
+from .models import Order
 
 class OrderForm(forms.ModelForm):
   class Meta:
-    model = Orders
+    model = Order
     fields = '__all__'
     widgets = {
       'date' : forms.DateInput(attrs={'type' : 'date'}),
