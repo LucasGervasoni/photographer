@@ -21,7 +21,7 @@ class Order(models.Model):
   )
   
   user = models.ForeignKey(User, on_delete=models.PROTECT)
-  date = models.DateField()
+  scheduled = models.DateField(verbose_name="Scheduled", null=True)
   time = models.TimeField()
   addressOne = models.CharField(max_length=150, verbose_name="Address 1")
   addressTwo = models.CharField(max_length=150, verbose_name="Address 2", null=True, blank=True)
@@ -30,6 +30,7 @@ class Order(models.Model):
   state = models.CharField(max_length=50, help_text='Ex: CA')
   services = MultiSelectField(choices=services_choices)
   order_status = models.CharField(choices=status, null=False, blank=False, default="Not Uploaded", verbose_name="Status")
+  date = models.DateTimeField(auto_now_add=True)
 
   def __str__(self):
     return "{} -> {} | {} at {}".format(self.user, self.addressOne, self.date, self.time)
