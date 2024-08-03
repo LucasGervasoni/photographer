@@ -54,7 +54,7 @@
           <p class="text-capitalize"><strong>Services:</strong>  {{ order.services }}</p>
         </td>
         <td colspan="2">
-          <a class="btn btn-light statusBtn"><strong>Status:</strong> {{ order.order_status }}</a>
+          <a class="btn btn-light statusBtn"><strong>Status:</strong> {{order.order_status}}</a>
         </td>
         <td>
           {% if request.user.is_superuser %}

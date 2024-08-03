@@ -3,32 +3,22 @@
 
 
 {% block title%}
-<title>Spotlight - Upload</title>
+<title>Spotlight - List Images</title>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-  <div class="py-5 text-center bg-secondary text-white">
-   <h1 class="mb-3">Upload Image</h1>
-   <form class="d-flex align-center justify-content-center" action="" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{form}}
-    <input type="submit" class="btn btn-danger" value="Upload">
-   </form>
-  </div>
   <div class="row">
    {% for image in object_list%}
     <div class="col-sm-4">
      <div class="card m-2">
       <img src="{{image.photo.url}}" alt="" class="card-img-top" height="200px">
       <div class="card-footer">
-       <small class="text-muted">{{image.url}}</small>
+       <small class="text-muted">{{image.photo.url}}</small>
        <a href="{{image.photo.url}}" download="{{image.photo.url}}" class="btn btn-outline-dark mt-2">Download</a>
       </div>
      </div>
     </div>
    {% endfor %}
   </div>
- </div>
 
 {% endblock %}
