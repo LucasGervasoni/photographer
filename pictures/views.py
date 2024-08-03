@@ -2,9 +2,9 @@ from django.shortcuts import render
 from .forms import ImageForm
 from .models import Image
 
-from django.urls import reverse_lazy
-
 from django.views.generic.list import ListView
+
+from django.urls import reverse_lazy
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from braces.views import GroupRequiredMixin
