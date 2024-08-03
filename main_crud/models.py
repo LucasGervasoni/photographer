@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from multiselectfield import MultiSelectField
 # Create your models here.
 
 #Orders
@@ -27,7 +28,7 @@ class Order(models.Model):
   zipCode = models.CharField(max_length=50, verbose_name="Zip Code", null=True, blank=True)
   city = models.CharField(max_length=50, help_text='Ex: San Francisco')
   state = models.CharField(max_length=50, help_text='Ex: CA')
-  services = models.CharField(choices=services_choices)
+  services = MultiSelectField(choices=services_choices)
   order_status = models.CharField(choices=status, null=False, blank=False, default="Not Uploaded", verbose_name="Status")
 
   def __str__(self):

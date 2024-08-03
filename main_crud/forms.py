@@ -8,6 +8,5 @@ class OrderForm(forms.ModelForm):
     widgets = {
       'date' : forms.DateInput(attrs={'type' : 'date'}),
       'time' : forms.TimeInput(attrs={'type' : 'time'}),
-      'services': forms.Select(attrs={"class":"form-select"}),
       'order_status': forms.Select(attrs={"class":"form-select"})
     }
