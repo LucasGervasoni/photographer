@@ -22,10 +22,10 @@
         <th scope="col">State</th>
         <th scope="col">Action</th>
       </tr>
+      {% for order in object_list %}
       <tr>
-        {% for order in object_list %}
         <td>{{ order.user }}</td>
-        <td>{{ order.date }}</td>
+        <td>{{ order.scheduled }}</td>
         <td>{{ order.time }}</td>
         <td>{{ order.addressOne }}</td>
         <td>{{ order.addressTwo }}</td>

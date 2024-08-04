@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'main_crud.apps.MainCrudConfig',
     'pictures.apps.PicturesConfig',
-
+    'rangefilter',
     "crispy_forms",
     "crispy_bootstrap4",
 ]

@@ -33,6 +33,6 @@ class Order(models.Model):
   date = models.DateTimeField(auto_now_add=True)
 
   def __str__(self):
-    return "{} -> {} | {} at {}".format(self.user, self.addressOne, self.date, self.time)
+    return "{} -> {} | {} at {}".format(self.user, self.addressOne, self.scheduled, self.time)
 
   
