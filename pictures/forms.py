@@ -5,7 +5,7 @@ class ImageForm(forms.ModelForm):
   photo = forms.FileField(widget = forms.TextInput(attrs={
             "name": "images",
             "type": "File",
-            "class": "form-control",
+            "class": "form-control align-self-center w-50 formFiles ml-auto mr-auto",
             "multiple": "True",
         }))
   class Meta:

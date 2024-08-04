@@ -20,4 +20,4 @@ def uploadPage(request):
 def listImages(request):
     images = Image.objects.all()
     context = {'images': images}
-    return render(request, "uploadPage.html", context)
+    return render(request, "listImage.html", context)

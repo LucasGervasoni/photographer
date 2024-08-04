@@ -8,17 +8,17 @@
 
 {% block content %}
   <div class="row">
-   {% for image in images %}
-    <div class="col-sm-4">
-     <div class="card m-2">
-      <img src="{{image.photo.url}}" alt="" class="card-img-top" height="200px">
-      <div class="card-footer">
-       <small class="text-muted">{{image.photo.url}}</small>
-       <a href="{{image.photo.url}}" download="{{image.photo.url}}" class="btn btn-outline-dark mt-2">Download</a>
+    <div class="d-flex flex-wrap">
+    {% for image in images %}
+     <div class="card m-2" style="width: 18rem;">
+      <img src="{{image.photo.url}}" class="card-img-top">
+      <div class="d-flex flex-column card-body">
+       <small class="card-text">{{image.photo.url}}</small>
+       <a href="{{image.photo.url}}" download="{{image.photo.url}}" class="btn btn-outline-dark mt-2 align-self-start">Download</a>
       </div>
      </div>
+     {% endfor %}
     </div>
-   {% endfor %}
   </div>
 
 {% endblock %}
