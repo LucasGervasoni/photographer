@@ -1,26 +1,23 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from .forms import ImageForm
 from .models import Image
 
-from django.views.generic.list import ListView
-
-from django.urls import reverse_lazy
-
-from django.contrib.auth.mixins import LoginRequiredMixin
-from braces.views import GroupRequiredMixin
 
 # Create your views here.
 def uploadPage(request):
- if request.method == "POST":
   form = ImageForm(request.POST, request.FILES)
-  if form.is_valid():
-   form.save()
- form = ImageForm()
- img = Image.objects.all()
- return render(request, 'uploadPage.html', {'img':img, 'form':form})
+  if request.method == "POST":
+    images = request.FILES.getlist('photo')
+    for image in images:
+          image_ins = Image(photo = image)
+          image_ins.save()
+          
+    return redirect('listImages')
+  
+  context = {'form': form} 
+  return render(request, 'uploadPage.html', context)
 
-class ListImages(GroupRequiredMixin,LoginRequiredMixin,ListView):
-        login_url = reverse_lazy('login')
-        group_required = [u"Admin" u"EquipMember"]
-        model = Image
-        template_name = "listImage.html"
+def listImages(request):
+    images = Image.objects.all()
+    context = {'images': images}
+    return render(request, "uploadPage.html", context)

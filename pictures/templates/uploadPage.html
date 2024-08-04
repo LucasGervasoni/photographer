@@ -10,12 +10,26 @@
 <div class="container">
   <div class="py-5 text-center bg-secondary text-white">
    <h1 class="mb-3">Upload Image</h1>
-   <form class="d-flex align-center justify-content-center" action="" method="post" enctype="multipart/form-data">
+   <form class="d-flex align-center justify-content-center" action="" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     {{form}}
-    <input type="submit" class="btn btn-danger" value="Upload">
+    <button type="submit" class="btn btn-outline-primary ">Submit</button>
    </form>
   </div>
+ </div>
+
+ <div class="row">
+  {% for image in images %}
+   <div class="col-sm-4">
+    <div class="card m-2">
+     <img src="{{image.photo.url}}" alt="" class="card-img-top" height="200px">
+     <div class="card-footer">
+      <small class="text-muted">{{image.photo.url}}</small>
+      <a href="{{image.photo.url}}" download="{{image.photo.url}}" class="btn btn-outline-dark mt-2">Download</a>
+     </div>
+    </div>
+   </div>
+  {% endfor %}
  </div>
 
 {% endblock %}
