@@ -8,20 +8,33 @@
 
 {% block content %}
   <div class="row">
-    <div class="d-flex flex-wrap">
-    {% for image in object_list %}
-     <div class="card m-2" style="width: 18rem;">
-      <img src="{{image.photo.url}}" class="card-img-top">
-      <div class="d-flex flex-column card-body">
-       <small class="card-text">{{image.photo.url}}</small>
-       <p class="card-text">Photographer: {{image.user}}</p>
-       <p class="card-text">Order Address: {{image.order}}</p>
-       <p class="card-text">Created at: {{image.created_date}}</p>
-       <p class="card-text">Notes for editor: {{image.editor_notes}}</p>
-       <a href="{{image.photo.url}}" download="{{image.photo.url}}" class="btn btn-outline-dark mt-2 align-self-start">Download</a>
-      </div>
-     </div>
-     {% endfor %}
+    <div class="table-responsive">
+      <table class="table table-striped">
+        <tr>
+          <th scope="col">Photographer</th>
+          <th scope="col">Order Address</th>
+          <th scope="col">File Url</th>
+          <th scope="col">Create at</th>
+          <th scope="col">Action</th>
+        </tr>
+        {% for file in object_list %}
+        <tr>
+          <td>{{ file.author }}</td>
+          <td>{{ file.order }}</td>
+          <td>{{ file.photo.url }}</td>
+          <td>{{ file.created_date }}</td>
+
+          <td class="d-flex align-items-center justify-content-center">
+            <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
+            <a href="{{ file.photo.url }}" download="{{ file.photo.url }}" class="btn btn-outline-dark">Download</a>
+          </td>
+        </tr>
+        <tr class="listInfo">
+            <th scope="col">Editor Notes</th>
+            <td colspan="6">{{ file.editor_notes }}</td>
+        </tr>
+        {% endfor %}
+        </table>
     </div>
   </div>
 

@@ -35,7 +35,7 @@
         <td class="d-flex align-items-center justify-content-center">
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
           {% if not request.user.is_superuser %}
-          <a href="{% url 'upload' %}" class="btn btn-outline-secondary ml-2">Upload</a>
+          <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary ml-2">Upload</a>
           {% endif %}
         </td>
       </tr>
