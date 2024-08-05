@@ -143,7 +143,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 #Authentication
-LOGIN_REDIRECT_URL = 'user__orders--page'
+LOGIN_REDIRECT_URL = 'userOrders--page'
 LOGOUT_REDIRECT_URL = 'logout'
 LOGIN_URL = 'login'
 
