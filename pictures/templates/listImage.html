@@ -9,7 +9,7 @@
 {% block content %}
   <div class="row">
     <div class="d-flex flex-wrap">
-    {% for image in images %}
+    {% for image in object_list %}
      <div class="card m-2" style="width: 18rem;">
       <img src="{{image.photo.url}}" class="card-img-top">
       <div class="d-flex flex-column card-body">

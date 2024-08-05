@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load crispy_forms_tags %}
 
 
 {% block title%}
@@ -9,9 +10,9 @@
 {% block content %}
 <div class="container">
   <div class="py-5 text-center text-white">
-   <form class="d-flex flex-column align-center justify-content-center" action="" method="POST" enctype="multipart/form-data">
+   <form class="d-flex flex-column align-center justify-content-center w-50 ml-auto mr-auto text-body" action="" method="POST" enctype="multipart/form-data">
     {% csrf_token %}
-    {{form}}
+    {{form|crispy}}
     <button type="submit" class="btn btn-success align-self-center mt-4 w-25 ">Submit</button>
    </form>
   </div>
