@@ -23,17 +23,10 @@ def uploadPage(request):
   context = {'form': form} 
   return render(request, 'uploadPage.html', context)
 
-def listImages(request,id):
-  image = Image.objects.get(id=id)
-  template = loader.get_template('listImage.html')
-  context = {
-    'images': image
-    }
-  return HttpResponse(template.render(context, request))
 class UploadList(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         model = Image
-        template_name = "uploadLists.html"
+        template_name = "listImage.html"
         
         #Return the orders by user
         def get_queryset(self):
