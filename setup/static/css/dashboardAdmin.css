@@ -34,3 +34,7 @@ header#header a:link, header#header a:visited, button,div.breadcrumbs, div.bread
 #navBar ul li:first-child{
   font-weight: bold;
 }
+
+a.deletelink, a.cancel-link{
+  height: 40px !important;
+}
