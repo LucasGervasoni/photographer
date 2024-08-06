@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import  UploadList
+from .views import  OrderImageListView, OrderImageUploadView
 
 urlpatterns = [
-    path('upload/lists', UploadList.as_view(), name="uploadLists"),
+    path('orders/<int:pk>/upload/', OrderImageUploadView.as_view(), name='order_image_upload'),
+    path('orders/<int:pk>/images/', OrderImageListView.as_view(), name='order_images'),
 ]

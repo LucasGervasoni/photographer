@@ -7,35 +7,17 @@
 {% endblock %}
 
 {% block content %}
-  <div class="row">
-    <div class="table-responsive">
-      <table class="table table-striped">
-        <tr>
-          <th scope="col">Photographer</th>
-          <th scope="col">Order Address</th>
-          <th scope="col">File Url</th>
-          <th scope="col">Create at</th>
-          <th scope="col">Action</th>
-        </tr>
-        {% for file in object_list %}
-        <tr>
-          <td>{{ file.author }}</td>
-          <td>{{ file.order }}</td>
-          <td>{{ file.photo.url }}</td>
-          <td>{{ file.created_date }}</td>
-
-          <td class="d-flex align-items-center justify-content-center">
-            <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
-            <a href="{{ file.photo.url }}" download="{{ file.photo.url }}" class="btn btn-outline-dark">Download</a>
-          </td>
-        </tr>
-        <tr class="listInfo">
-            <th scope="col">Editor Notes</th>
-            <td colspan="6">{{ file.editor_notes }}</td>
-        </tr>
-        {% endfor %}
-        </table>
+<h2 class="mb-4 h5">{{ order }}</h2>
+  <div class="d-flex flex-row flex-wrap">
+    {% for image in images %}
+    <div class="d-flex flex-column justify-content-between card mr-2" style="width: 20rem;">
+      <img src="{{ image.image.url }}" class="card-img-top" alt="">
+      <a href="{{ image.image.url }}" download="{{ image.image.url }}" class="btn btn-outline-dark">Download</a>
     </div>
+    {% endfor %}
   </div>
-
+  <br>
+  <div>
+    <a href="{% url 'order_image_upload' order.id %}">Upload More Images</a>
+  </div>
 {% endblock %}

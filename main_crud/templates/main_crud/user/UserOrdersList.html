@@ -33,9 +33,10 @@
         <td>{{ order.city }}</td>
         <td>{{ order.state }}</td>
         <td class="d-flex align-items-center justify-content-center">
+          <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Images</a>
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
           {% if not request.user.is_superuser %}
-          <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary ml-2">Upload</a>
+          <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2">Upload</a>
           {% endif %}
         </td>
       </tr>
