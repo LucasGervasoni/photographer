@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load group_tags %}
+
 
 
 {% block title %}
@@ -35,7 +37,7 @@
         <td class="d-flex align-items-center justify-content-center">
           <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Images</a>
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
-          {% if not request.user.is_superuser %}
+          {% if not request.user.is_superuser and not request.user|has_group:"Editor" %}
           <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2">Upload</a>
           {% endif %}
         </td>
@@ -51,8 +53,8 @@
           <a class="btn btn-light statusBtn"><strong>Status:</strong> {{ order.order_status }}</a>
         </td>
         <td colspan="3">
-          {% if request.user.is_superuser %}
-          <a href="#" class="btn btn-outline-dark disabled">Download</a>
+          {% if request.user.is_superuser or request.user|has_group:"Editor" %}
+          <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>
           {% endif %}
         </td>
       </tr>

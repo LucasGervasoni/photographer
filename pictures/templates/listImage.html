@@ -8,16 +8,22 @@
 
 {% block content %}
 <h2 class="mb-4 h5">{{ order }}</h2>
-  <div class="d-flex flex-row flex-wrap">
-    {% for image in images %}
-    <div class="d-flex flex-column justify-content-between card mr-2" style="width: 20rem;">
-      <img src="{{ image.image.url }}" class="card-img-top" alt="">
-      <a href="{{ image.image.url }}" download="{{ image.image.url }}" class="btn btn-outline-dark">Download</a>
+  <div class="row">
+    <div class="col">
+      <div class="d-flex flex-row flex-wrap">
+        {% for image in images %}
+        <figure class="figure mr-4 mt-2" style="width: 18rem;">
+          <img src="{{ image.image.url }}" class="figure-img img-fluid rounded" style="height: 100%;">
+        </figure>
+        {% endfor %}
+      </div>
+      <br>
+      <div>
+        <a href="{% url 'order_image_upload' order.id %}">Upload More Images</a>
+      </div>
     </div>
-    {% endfor %}
-  </div>
-  <br>
-  <div>
-    <a href="{% url 'order_image_upload' order.id %}">Upload More Images</a>
+    <div class="col-2">
+
+    </div>
   </div>
 {% endblock %}
