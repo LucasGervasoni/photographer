@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import OrderImage
+from .models import OrderImage, UserAction
 from .forms import OrderImageForm, PhotographerImageForm
 from main_crud.models import Order
 
@@ -22,6 +22,13 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
     def get(self, request, pk): 
         order = get_object_or_404(Order, pk=pk)  
         images = order.image.all() 
+        
+        # Log the download action
+        UserAction.objects.create(
+            user=request.user,
+            action_type='download',
+            order=order
+        )
 
         # Create a zip file in memory
         buffer = io.BytesIO()  # Create an in-memory byte-stream buffer to store the ZIP file
@@ -35,6 +42,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         response['Content-Disposition'] = f'attachment; filename="order_{pk}_images.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
         return response  # Return the HTTP response
 
+# Upload with Editor note
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -49,12 +57,20 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         form = OrderImageForm(request.POST, request.FILES)
         if form.is_valid():
             for f in files:
-                OrderImage.objects.create(order=order, image=f, editor_note=form.cleaned_data.get('editor_note', ''))
+                image = OrderImage.objects.create(order=order, image=f, editor_note=form.cleaned_data.get('editor_note', ''))
+                # Log the download action
+                UserAction.objects.create(
+                    user=request.user,
+                    action_type='upload',
+                    order=order,
+                    order_image=image
+                )
                 messages.success(request, 'Images uploaded successfully!')
             return redirect('order_images', pk=order.pk)
         messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadPage.html', {'form': form, 'order': order})
 
+# Upload just new photos
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -69,7 +85,13 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         form = PhotographerImageForm(request.POST, request.FILES)
         if form.is_valid():
             for f in files:
-                OrderImage.objects.create(order=order, image=f)
+                image = OrderImage.objects.create(order=order, image=f)
+                UserAction.objects.create(
+                    user=request.user,
+                    action_type='upload',
+                    order=order,
+                    order_image=image
+                )
                 messages.success(request, 'Images uploaded successfully!')
             return redirect('order_images', pk=order.pk)
         messages.error(request, 'Error uploading images. Please try again.')
