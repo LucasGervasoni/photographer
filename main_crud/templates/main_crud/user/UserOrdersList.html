@@ -81,7 +81,7 @@ l{% extends 'base.html' %}
             </select>
         </form>
         {% else %}
-        {{ order.order_status }}
+        <p><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
         </td>
         <td colspan="3">
