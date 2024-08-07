@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import OrderImage
-from .forms import OrderImageForm
+from .forms import OrderImageForm, PhotographerImageForm
 from main_crud.models import Order
 
 from django.views.generic import View
@@ -47,9 +47,27 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         form = OrderImageForm(request.POST, request.FILES)
         if form.is_valid():
             for f in files:
-                OrderImage.objects.create(order=order, image=f)
+                OrderImage.objects.create(order=order, image=f, editor_note=form.cleaned_data.get('editor_note', ''))
             return redirect('order_images', pk=order.pk)
         return render(request, 'uploadPage.html', {'form': form, 'order': order})
+
+class PhotographerImageUploadView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('login')
+
+    def get(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        form = PhotographerImageForm()
+        return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})
+
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        files = request.FILES.getlist('image')
+        form = PhotographerImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            for f in files:
+                OrderImage.objects.create(order=order, image=f)
+            return redirect('order_images', pk=order.pk)
+        return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})
 
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
@@ -59,3 +77,4 @@ class OrderImageListView(LoginRequiredMixin, View):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.all()
         return render(request, 'listImage.html', {'order': order, 'images': images})
+    

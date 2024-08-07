@@ -11,8 +11,10 @@
 <hr>
 <br>
 <div class="w-50" style="min-width: 300px;">
+  {% if images %}
   <h4>Editor Notes:</h4>
-  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quos maiores ipsam totam beatae fugit temporibus mollitia suscipit voluptate fuga aliquid, illum nisi neque dolorem obcaecati reiciendis tempora saepe iusto optio!</p>
+  <p>{{ images.0.editor_note }}</p>
+  {% endif %}
 </div>
 <br>
   <div class="d-flex flex-wrap-reverse">
@@ -23,9 +25,6 @@
           <img src="{{ image.image.url }}" class="figure-img img-fluid rounded" style="height: 100%;">
         </figure>
         {% endfor %}
-      </div>
-      <div>
-        <a href="{% url 'order_image_upload' order.id %}">Upload More Images</a>
       </div>
     </div>
   </div>

@@ -1,25 +1,28 @@
-# from django.db.models.query import QuerySet
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.generic.list import ListView
-
 from .models import Order
 from django.urls import reverse_lazy
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from braces.views import GroupRequiredMixin
 
 #List Orders for user
 class UserPageOrders(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         model = Order
         template_name = "main_crud/user/UserOrdersList.html"
+        paginate_by = 3
         
         #Return the orders by user
         def get_queryset(self):
+                user = self.request.user
+                queryset = Order.objects.all()
+
+                # Check if the user is not an editor or superuser
+                if not user.is_superuser and not user.groups.filter(name='Editor').exists():
+                        queryset = queryset.filter(user=user)
+
+                # Filter by status
+                status = self.request.GET.get('status')
+                if status:
+                 queryset = queryset.filter(order_status=status)
                 
-                if self.request.user.is_superuser:       
-                        self.object_list = Order.objects.all()
-                else:
-                        self.object_list = Order.objects.filter(user=self.request.user)
-                
-                return  self.object_list
+                return queryset.order_by('-date')

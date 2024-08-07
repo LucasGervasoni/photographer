@@ -17,6 +17,7 @@ class OrderImage(models.Model):
     order = models.ForeignKey(Order, related_name='image', on_delete=models.CASCADE)
     image = models.FileField(upload_to=order_image_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    editor_note = models.TextField(blank=True, null=True) 
     
     def __str__(self):
         return f"Image for {self.order}"
