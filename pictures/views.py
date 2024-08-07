@@ -7,6 +7,8 @@ from django.views.generic import View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
+from django.contrib import messages  # Import the messages module
+
 import zipfile  # Import the zipfile module to create and manipulate ZIP files
 import io  # Import the io module for handling byte streams
 from django.http import HttpResponse  # Import HttpResponse to send HTTP responses
@@ -48,7 +50,9 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         if form.is_valid():
             for f in files:
                 OrderImage.objects.create(order=order, image=f, editor_note=form.cleaned_data.get('editor_note', ''))
+                messages.success(request, 'Images uploaded successfully!')
             return redirect('order_images', pk=order.pk)
+        messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadPage.html', {'form': form, 'order': order})
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
@@ -66,7 +70,9 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         if form.is_valid():
             for f in files:
                 OrderImage.objects.create(order=order, image=f)
+                messages.success(request, 'Images uploaded successfully!')
             return redirect('order_images', pk=order.pk)
+        messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})
 
 # View to display all images related to an order

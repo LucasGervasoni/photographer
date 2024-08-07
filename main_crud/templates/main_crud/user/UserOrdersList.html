@@ -9,6 +9,16 @@ l{% extends 'base.html' %}
 {% endblock %}
 
 {% block content %}
+  {% if messages %}
+      <div class="messages mb-4">
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
   <h2 class="mb-4">Your Orders:</h2>
 
   <!-- Filter form -->
@@ -57,7 +67,11 @@ l{% extends 'base.html' %}
           <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
           {% if not request.user.is_superuser and not request.user|has_group:"Editor" %}
-          <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Photos</a>
+          {% if order.order_status == "Production" or order.order_status == "Completed" %}
+            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Photos</a>
+          {% else %}
+            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2 disabled">+ Photos</a>
+          {% endif %}
           <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2">Upload</a>
           {% endif %}
         </td>
