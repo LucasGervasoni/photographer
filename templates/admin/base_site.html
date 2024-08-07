@@ -32,10 +32,10 @@
       <a class="nav-link text-secondary" href="{% url 'logout' %}">Logout </a>
     </li>
     <li class="nav-item mt-2">
-      <button class="d-none">
-        <div class="">Toggle theme (current theme: auto)</div>
-        <div class="">Toggle theme (current theme: light)</div>
-        <div class="">Toggle theme (current theme: dark)</div>
+      <button class="theme-toggle">
+        <div class="visually-hidden theme-label-when-auto">Toggle theme (current theme: auto)</div>
+        <div class="visually-hidden theme-label-when-light">Toggle theme (current theme: light)</div>
+        <div class="visually-hidden theme-label-when-dark">Toggle theme (current theme: dark)</div>
         <svg aria-hidden="true" class="theme-icon-when-auto">
           <use xlink:href="#icon-auto"></use>
         </svg>
