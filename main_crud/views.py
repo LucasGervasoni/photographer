@@ -1,6 +1,9 @@
+from django.shortcuts import redirect
 from django.views.generic.list import ListView
+from django.views.generic.edit import UpdateView
 from .models import Order
 from django.urls import reverse_lazy
+
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -26,3 +29,12 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                  queryset = queryset.filter(order_status=status)
                 
                 return queryset.order_by('-date')
+
+class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):
+    login_url = reverse_lazy('login')
+    model = Order
+    fields = ['order_status']
+
+    def form_valid(self, form):
+        form.save()
+        return redirect('userOrders--page')

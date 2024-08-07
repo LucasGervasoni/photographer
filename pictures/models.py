@@ -2,6 +2,10 @@ from django.db import models
 from main_crud.models import Order
 import os
 from django.utils.text import slugify
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 # # Create your models here.
 
 def order_image_path(instance, filename):
@@ -25,3 +29,10 @@ class OrderImage(models.Model):
     
     def __str__(self):
         return f"Image for {self.order}"
+    
+@receiver(post_save, sender=OrderImage)
+def update_order_status(sender, instance, **kwargs):
+    order = instance.order
+    if order.order_status == "Not Uploaded":
+        order.order_status = "Production"
+        order.save()
