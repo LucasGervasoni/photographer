@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load crispy_forms_tags %}
 
 {% block title%}
 <title>Spotlight - Upload</title>
@@ -13,8 +12,10 @@
   <div class="box__input mb-4">
     <input class="fileInput" type="file" name="image" multiple>
   </div>
-  <label for="id_editor_note">Editor note:</label>
-  <textarea name="editor_note" id="id_editor_note"></textarea>
+  <div class="d-flex flex-column mb-2">
+    <label for="id_editor_note"><strong>Instructions for Editors:<strong></label>
+    <textarea class="w-25 rounded" name="editor_note" id="id_editor_note"></textarea>
+  </div>
   <button class="btn btn-success" type="submit">Upload</button>
 </form>
 <br>

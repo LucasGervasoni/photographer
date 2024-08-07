@@ -85,8 +85,12 @@ l{% extends 'base.html' %}
         {% endif %}
         </td>
         <td colspan="3">
-          {% if request.user.is_superuser or request.user|has_group:"Editor" %}
-          <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>
+          {% if request.user.is_superuser or request.user|has_group:"Editor"%}
+            {% if order.order_status == "Production" or order.order_status == "Completed" %}
+                <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>
+            {% else %}
+                <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
+            {% endif %}
           {% endif %}
         </td>
       </tr>
