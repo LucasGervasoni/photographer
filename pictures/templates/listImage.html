@@ -23,6 +23,7 @@
         {% for image in images %}
         <figure class="figure mr-4 mt-2" style="width: 18rem;">
           <img src="{{ image.image.url }}" class="figure-img img-fluid rounded" style="height: 100%;">
+          <small>{{ image.image}}</small>
         </figure>
         {% endfor %}
       </div>

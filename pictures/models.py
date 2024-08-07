@@ -7,9 +7,13 @@ from django.utils.text import slugify
 def order_image_path(instance, filename):
     # Define your custom folder structure and file name
     order_id = instance.order.id
-    order_name = slugify(instance.order)  # Assuming 'Order' has a 'name' field
+    order_name = "Spotlight" 
     ext = filename.split('.')[-1]
-    new_filename = f"{order_name}_{order_id}.{ext}"
+    
+    # Count the number of images already uploaded for this order
+    count = OrderImage.objects.filter(order=instance.order).count() + 1
+    
+    new_filename = f"{order_name}.{count:02d}.{ext}"
     return os.path.join('orders', str(order_id), new_filename)
 
 
