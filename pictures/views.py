@@ -65,7 +65,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     order=order,
                     order_image=image
                 )
-                messages.success(request, 'Images uploaded successfully!')
             return redirect('order_images', pk=order.pk)
         messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadPage.html', {'form': form, 'order': order})
@@ -92,7 +91,6 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                     order=order,
                     order_image=image
                 )
-                messages.success(request, 'Images uploaded successfully!')
             return redirect('order_images', pk=order.pk)
         messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})
