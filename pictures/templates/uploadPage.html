@@ -7,7 +7,7 @@
 
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
-<form action="" method="post" enctype="multipart/form-data">
+<form id="uploadForm"  action="" method="post" enctype="multipart/form-data">
   {% csrf_token %}
   <div class="box__input mb-4">
     <input class="fileInput" type="file" name="image" multiple>
@@ -18,5 +18,20 @@
   </div>
   <button class="btn btn-success" type="submit">Upload</button>
 </form>
+
+<!-- Spinner element -->
+<div id="loadingSpinner" style="display: none;">
+  <div class="spinner-border" role="status">
+    <span class="sr-only">Loading...</span>
+  </div>
+</div>
+
+<script>
+  document.getElementById('uploadForm').onsubmit = function() {
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.querySelector('button[type="submit"]').disabled = true;
+  };
+</script>
+
 <br>
 {% endblock %}
