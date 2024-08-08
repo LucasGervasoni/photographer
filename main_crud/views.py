@@ -30,6 +30,7 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                 
                 return queryset.order_by('-date')
 
+# Update orders by select button in html
 class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):
     login_url = reverse_lazy('login')
     model = Order

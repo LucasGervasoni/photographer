@@ -21,8 +21,8 @@
     <div class="w-100">
       <div class="d-flex flex-wrap">
         {% for image in images %}
-        <figure class="figure mr-4 mt-2" style="width: 18rem;">
-          <img src="{{ image.image.url }}" class="figure-img img-fluid rounded" style="height: 100%;">
+        <figure class="figure mr-4 mt-4 mb-4" style="width: 18rem;">
+          <img src="{{ image.image.url }}" class="figure-img img-fluid rounded">
           <small>{{ image.image}}</small>
         </figure>
         {% endfor %}
