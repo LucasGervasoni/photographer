@@ -12,7 +12,7 @@ from django.dispatch import receiver
 # create a path and rename the images
 def order_image_path(instance, filename):
     # Define your custom folder structure and file name
-    order_id = instance.order.id
+    order_id = instance.order.addressOne
     order_name = "Spotlight" 
     ext = filename.split('.')[-1]
     
