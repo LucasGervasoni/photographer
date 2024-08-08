@@ -10,11 +10,14 @@
 <h2 class="mb-4 h5">{{ order }}</h2>
 <hr>
 <br>
-<div class="w-50" style="min-width: 300px;">
+<div class="d-flex justify-content-between flex-wrap" style="min-width: 300px;">
+  <div class="w-50" >
   {% if images %}
   <h4>Editor Notes:</h4>
   <p>{{ images.0.editor_note }}</p>
   {% endif %}
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'userOrders--page' %}">Back to Orders</a>
 </div>
 <br>
   <div class="d-flex flex-wrap-reverse">

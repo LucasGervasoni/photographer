@@ -27,6 +27,12 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                 status = self.request.GET.get('status')
                 if status:
                  queryset = queryset.filter(order_status=status)
+                 
+                 # Filter by date range
+                start_date = self.request.GET.get('start_date')
+                end_date = self.request.GET.get('end_date')
+                if start_date and end_date:
+                 queryset = queryset.filter(date__range=[start_date, end_date])
                 
                 return queryset.order_by('-date')
 
