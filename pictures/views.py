@@ -39,7 +39,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         buffer.seek(0)  # Rewind the buffer to the beginning
         response = HttpResponse(buffer, content_type='application/zip')  # Create an HTTP response with the ZIP file content
-        response['Content-Disposition'] = f'attachment; filename="order_{pk}_images.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
+        response['Content-Disposition'] = f'attachment; filename="order_{order.addressOne}_{order.services}.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
         return response  # Return the HTTP response
 
 # Upload with Editor note
