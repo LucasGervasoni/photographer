@@ -12,7 +12,8 @@ from django.dispatch import receiver
 # create a path and rename the images
 def order_image_path(instance, filename):
     # Define your custom folder structure and file name
-    order_id = instance.order.addressOne
+    order_address = instance.order.addressOne
+    order_service = instance.order.services
     order_name = "Spotlight" 
     ext = filename.split('.')[-1]
     
@@ -20,7 +21,7 @@ def order_image_path(instance, filename):
     count = OrderImage.objects.filter(order=instance.order).count() + 1
     
     new_filename = f"{order_name}.{count:02d}.{ext}"
-    return os.path.join('orders', str(order_id), new_filename)
+    return os.path.join('orders', str(order_address), str(order_service), new_filename)
 
 # Model base for image
 class OrderImage(models.Model):
