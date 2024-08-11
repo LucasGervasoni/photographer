@@ -24,7 +24,7 @@ l{% extends 'base.html' %}
   <!-- Filter form -->
   <form method="get" action="{% url 'userOrders--page' %}" class="mb-4">
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label for="status">Status</label>
         <select name="status" id="status" class="form-control">
           <option value="">All</option>
@@ -33,15 +33,15 @@ l{% extends 'base.html' %}
           <option value="Completed">Completed</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label for="start_date">Start Date</label>
         <input type="date" name="start_date" id="start_date" class="form-control">
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label for="end_date">End Date</label>
         <input type="date" name="end_date" id="end_date" class="form-control">
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label>&nbsp;</label>
         <button type="submit" class="btn btn-primary form-control">Filter</button>
       </div>
@@ -76,9 +76,9 @@ l{% extends 'base.html' %}
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
           {% if not request.user.is_superuser and not request.user|has_group:"Editor" %}
           {% if order.order_status == "Production" or order.order_status == "Completed" %}
-            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Photos</a>
+            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Files</a>
           {% else %}
-            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2 disabled">+ Photos</a>
+            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2 disabled">+ Files</a>
           {% endif %}
             {% if order.order_status == "Production" or order.order_status == "Completed" %}
               <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2 disabled">Upload</a>

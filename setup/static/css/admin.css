@@ -19,6 +19,11 @@ ul.errorlist{
   display: none;
 }
 
+.loader{
+  width: 4rem;
+  height: 4rem;
+}
+
 @media screen and (max-width:767px){
   .nav__aside-height{
     height: 30% !important;

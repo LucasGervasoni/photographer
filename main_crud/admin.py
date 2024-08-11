@@ -6,7 +6,6 @@ from rangefilter.filters import (
 )
 
 # Register your models here.
-
 @admin.register(Order)
 class ProfileAdmin(admin.ModelAdmin):
  list_display = ['user','scheduled', 'time','addressOne', 'addressTwo','zipCode','city', 'state','services', 'order_status', 'date']
