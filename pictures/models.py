@@ -7,7 +7,6 @@ from django.utils.text import slugify
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from django.core.validators import URLValidator
 from multiselectfield import MultiSelectField
 
 # # Create your models here.
@@ -43,12 +42,16 @@ class OrderImage(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     editor_note = models.TextField(blank=True, null=True) 
     services = MultiSelectField(choices=select_services, blank=True)
-    scan_url = models.URLField(max_length=200, blank=True, null=True, validators=[URLValidator()])
-    photos_sent = models.IntegerField(default=0)
-    photos_returned = models.IntegerField(default=0)
+    scan_url = models.CharField(max_length=200, blank=True, null=True)
+    photos_sent = models.CharField(verbose_name="Assets to be uploaded")
+    photos_returned = models.CharField(verbose_name="Assets to be uploaded")
     
     def __str__(self):
         return f"Image for {self.order} - Service: {self.services}"
+    
+    class Meta:
+        verbose_name = "Order File"  # Singular name
+        verbose_name_plural = "Order Files"  # Plural name (optional)
 
 # Upload automatic for order status    
 @receiver(post_save, sender=OrderImage)

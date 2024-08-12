@@ -63,8 +63,8 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     editor_note=form.cleaned_data.get('editor_note', ''),
                     services=form.cleaned_data.get('services', []),
                     scan_url=form.cleaned_data.get('scan_url', ''),
-                    photos_sent=form.cleaned_data.get('photos_sent', ''),
-                    photos_returned=form.cleaned_data.get('photos_returned', ''))
+                    photos_sent=form.cleaned_data.get('photos_sent', 0),
+                    photos_returned=form.cleaned_data.get('photos_returned', 0))
                 # Log the upload action
                 UserAction.objects.create(
                     user=request.user,
