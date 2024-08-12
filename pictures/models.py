@@ -21,7 +21,7 @@ def order_image_path(instance, filename):
     count = OrderImage.objects.filter(order=instance.order).count() + 1
     
     new_filename = f"{order_name}.{count:02d}.{ext}"
-    return os.path.join('orders', str(order_address), str(order_service), new_filename)
+    return os.path.join('media', str(order_address), str(order_service), new_filename)
 
 # Model base for image
 class OrderImage(models.Model):
