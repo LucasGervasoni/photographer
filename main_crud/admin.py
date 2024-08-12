@@ -12,3 +12,4 @@ class ProfileAdmin(admin.ModelAdmin):
  list_filter = (("date", DateRangeFilterBuilder()), 'order_status','state')
  search_fields = ['addressOne', 'addressTwo','zipCode','city', 'state', 'services']
  ordering = ('-date',)
+ list_editable = ['order_status']

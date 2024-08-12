@@ -58,7 +58,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         if form.is_valid():
             for f in files:
                 image = OrderImage.objects.create(order=order, image=f, editor_note=form.cleaned_data.get('editor_note', ''))
-                # Log the download action
+                # Log the upload action
                 UserAction.objects.create(
                     user=request.user,
                     action_type='upload',

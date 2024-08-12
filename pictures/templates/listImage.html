@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 
 {% block title%}
@@ -17,19 +18,39 @@
   <p>{{ images.0.editor_note }}</p>
   {% endif %}
   </div>
-  <a class="btn btn-info align-self-start" href="{% url 'userOrders--page' %}">Back to Orders</a>
 </div>
 <br>
-  <div class="d-flex flex-wrap-reverse">
-    <div class="w-100">
-      <div class="d-flex flex-wrap">
-        {% for image in images %}
-        <figure class="figure mr-4 mt-4 mb-4" style="width: 18rem;">
-          <img src="{{ image.image.url }}" class="figure-img img-fluid rounded">
-          <small>{{ image.image}}</small>
-        </figure>
-        {% endfor %}
-      </div>
+
+  <div class="container-fluid">
+    <div class="row flex-wrap-reverse">
+        <div class="col-lg-9 col-md-8 col-12">
+            <div class="row">
+                {% for image in images %}
+                <div class="col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
+                    <img src="{{ image.image.url }}" class="img-fluid" alt="Image 1">
+                    <small>{{ image.image.url|filename }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <hr>
+                    <p class="card-text">Created date: <b>Jul 9 2024, 06:26PM</b></p>
+                    <hr>
+                    <p class="card-text">Updated date: <b>Jul 9 2024, 06:28PM</b></p>
+                    <hr>
+                    <p class="card-text">Total uploaded files: <b>39</b></p>
+                    <hr>
+                    <p class="card-text">Assets to be uploaded: <b>39</b></p>
+                    <hr>
+                    <p class="card-text">Assets to be returned: <b>34</b></p>
+                    <hr>
+                    <a class="btn btn-info btn-block" href="{% url 'userOrders--page' %}">Back to Orders</a>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
 {% endblock %}
