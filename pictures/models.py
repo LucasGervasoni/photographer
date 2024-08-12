@@ -7,12 +7,15 @@ from django.utils.text import slugify
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from django.core.validators import URLValidator
+from multiselectfield import MultiSelectField
+
 # # Create your models here.
 
 # create a path and rename the images
 def order_image_path(instance, filename):
     # Define your custom folder structure and file name
-    order_address = instance.order.addressOne
+    order_address = instance.order.address
     order_service = instance.order.services
     order_name = "Spotlight" 
     ext = filename.split('.')[-1]
@@ -25,13 +28,27 @@ def order_image_path(instance, filename):
 
 # Model base for image
 class OrderImage(models.Model):
+    
+    select_services = (
+        ("Drone","Drone"),
+        ("Photo","Photo"),
+        ("3d scan","3d scan"),
+        ("Vídeo","Vídeo"),
+        ("Floor Plan","Floor Plan")
+    )
+    
+    
     order = models.ForeignKey(Order, related_name='image', on_delete=models.CASCADE)
     image = models.FileField(upload_to=order_image_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     editor_note = models.TextField(blank=True, null=True) 
+    services = MultiSelectField(choices=select_services, blank=True)
+    scan_url = models.URLField(max_length=200, blank=True, null=True, validators=[URLValidator()])
+    photos_sent = models.IntegerField(default=0)
+    photos_returned = models.IntegerField(default=0)
     
     def __str__(self):
-        return f"Image for {self.order}"
+        return f"Image for {self.order} - Service: {self.services}"
 
 # Upload automatic for order status    
 @receiver(post_save, sender=OrderImage)

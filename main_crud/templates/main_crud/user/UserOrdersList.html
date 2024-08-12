@@ -53,23 +53,14 @@ l{% extends 'base.html' %}
       <tr>
         <th scope="col">Photographer</th>
         <th scope="col">Scheduled</th>
-        <th scope="col">Time</th>
-        <th scope="col">Address 1</th>
-        <th scope="col">Address 2</th>
-        <th scope="col">Zip code</th>
-        <th scope="col">City</th>
-        <th scope="col">State</th>
-        <th scope="col">Action</th>
+        <th scope="col">Address</th>
+        <th scope="col" colspan="2">Action</th>
       </tr>
       {% for order in object_list %}
       <tr>
         <td>{{ order.user }}</td>
         <td>{{ order.scheduled }}</td>
-        <td>{{ order.time }}</td>
-        <td>{{ order.addressOne }}</td>
-        <td>{{ order.addressTwo }}</td>
-        <td>{{ order.zipCode }}</td>
-        <td>{{ order.city }}</td>
+        <td>{{ order.address }}</td>
         <td>{{ order.state }}</td>
         <td class="d-flex align-items-center justify-content-center">
           <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
@@ -89,13 +80,13 @@ l{% extends 'base.html' %}
         </td>
       </tr>
       <tr class="d-none listInfo" id="listInfo">
-        <td colspan="2">
-          <p class="text-capitalize"><strong>Client:</strong> Admin</p>
+        <td>
+          <p class="text-capitalize"><strong>Client:</strong> {{ order.customer }}</p>
         </td>
-        <td colspan="2">
+        <td>
           <p class="text-capitalize"><strong>Services:</strong>  {{ order.services }}</p>
         </td>
-        <td colspan="2">
+        <td>
           {% if request.user.is_superuser %}
           <form class="d-flex" method="post" action="{% url 'update_order_status' order.id %}">
             {% csrf_token %}
@@ -110,7 +101,7 @@ l{% extends 'base.html' %}
         <p><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
         </td>
-        <td colspan="3">
+        <td colspan="2">
           {% if request.user.is_superuser or request.user|has_group:"Editor"%}
             {% if order.order_status == "Production" or order.order_status == "Completed" %}
                 <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>

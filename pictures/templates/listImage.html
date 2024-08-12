@@ -37,16 +37,16 @@
             <div class="card">
                 <div class="card-body">
                     <hr>
-                    <p class="card-text">Created date: <b>Jul 9 2024, 06:26PM</b></p>
+                    {% if images %}
+                    <p class="card-text">Created date: <b>{{ images.0.uploaded_at }}</b></p>
                     <hr>
-                    <p class="card-text">Updated date: <b>Jul 9 2024, 06:28PM</b></p>
+                    <p class="card-text">Total uploaded files: <b>{{ image_count }}</b></p>
                     <hr>
-                    <p class="card-text">Total uploaded files: <b>39</b></p>
+                    <p class="card-text">Assets to be uploaded: <b>{{ images.0.photos_sent }}</b></p>
                     <hr>
-                    <p class="card-text">Assets to be uploaded: <b>39</b></p>
+                    <p class="card-text">Assets to be returned: <b>{{ images.0.photos_returned }}</b></p>
                     <hr>
-                    <p class="card-text">Assets to be returned: <b>34</b></p>
-                    <hr>
+                    {% endif %}
                     <a class="btn btn-info btn-block" href="{% url 'userOrders--page' %}">Back to Orders</a>
                 </div>
             </div>

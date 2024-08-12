@@ -7,17 +7,48 @@
 
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
-<form id="uploadForm"  action="" method="post" enctype="multipart/form-data">
+<form id="uploadForm" action="" method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  <div class="box__input mb-4">
-    <input class="fileInput" type="file" name="image" multiple>
+  <div class="d-flex flex-column w-50 mr-auto ml-auto">
+    <div class="box__input mb-4 align-self-center">
+      <input class="fileInput" type="file" name="image" multiple>
+    </div>
+
+
+    <!-- Editor Note -->
+    <div class="form-group">
+      <label for="id_editor_note">Editor Note:</label>
+      <textarea name="editor_note" id="id_editor_note" rows="2" cols="40" class="form-control"></textarea>
+    </div>
+
+    <!-- Selected Service -->
+    <div class="form-group">
+        <label for="id_services">Services:</label>
+        {{ form.services }}
+    </div>
+
+    <!-- 3D Scan URL -->
+    <div class="form-group">
+      <label for="id_scan_url">3D Scan URL (if applicable):</label>
+      <input type="url" name="scan_url" id="id_scan_url" class="form-control" placeholder="Enter URL for 3d scan" value="{{ form.scan_url.value }}">
+    </div>
+
+    <!-- Photos Sent -->
+    <div class="form-group">
+      <label for="id_photos_sent">Assets to be uploaded:</label>
+      <input type="number" name="photos_sent" id="id_photos_sent" class="form-control" min="0" value="{{ form.photos_sent.value }}">
+    </div>
+
+    <!-- Photos Returned -->
+    <div class="form-group">
+      <label for="id_photos_returned">Assets to be returned:</label>
+      <input type="number" name="photos_returned" id="id_photos_returned" class="form-control" min="0" value="{{ form.photos_returned.value }}">
+    </div>
+    <div class="d-flex flex-wrap align-self-end">
+      <a class="btn btn-info mr-2" href="{% url 'userOrders--page' %}">Back to Orders</a>
+      <button class="btn btn-success" type="submit">Upload</button>
+    </div>
   </div>
-  <div class="d-flex flex-column mb-2">
-    <label for="id_editor_note"><strong>Instructions for Editors:<strong></label>
-    <textarea class="w-25 rounded" name="editor_note" id="id_editor_note"></textarea>
-  </div>
-  <a class="btn btn-info align-self-start" href="{% url 'userOrders--page' %}">Back to Orders</a>
-  <button class="btn btn-success" type="submit">Upload</button>
 </form>
 
 <!-- Spinner element -->
@@ -28,10 +59,12 @@
 </div>
 
 <script>
-  document.getElementById('uploadForm').onsubmit = function() {
+
+  document.getElementById('uploadForm').onsubmit = function () {
     document.getElementById('loadingSpinner').style.display = 'block';
     document.querySelector('button[type="submit"]').disabled = true;
   };
+
 </script>
 
 <br>

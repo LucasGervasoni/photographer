@@ -6,7 +6,7 @@ from rangefilter.filters import (
 # Register your models here.
 @admin.register(OrderImage)
 class OrderImageAdmin(admin.ModelAdmin):
- list_display = ['order','image', 'uploaded_at']
+ list_display = ['order','image', 'uploaded_at','services','scan_url','photos_sent','photos_returned']
  list_filter = (("uploaded_at", DateRangeFilterBuilder()),)
  ordering = ('-uploaded_at',)
  

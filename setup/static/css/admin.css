@@ -3,7 +3,7 @@
 }
 
 .box__input{
-  width: 30%;
+  max-width: 60%;
   height: 250px;
   padding: 100px 0 0 40px;
   border: 5px dotted gray;

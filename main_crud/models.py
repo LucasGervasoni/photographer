@@ -12,6 +12,7 @@ class Order(models.Model):
     ("Photo","Photo"),
     ("3d scan","3d scan"),
     ("Vídeo","Vídeo"),
+    ("Floor Plan","Floor Plan")
   )
   
   status = (
@@ -20,19 +21,15 @@ class Order(models.Model):
     ("Completed","Completed"),
   )
   
-  user = models.ForeignKey(User, on_delete=models.PROTECT)
-  scheduled = models.DateField(verbose_name="Scheduled", null=True)
-  time = models.TimeField()
-  addressOne = models.CharField(max_length=150, verbose_name="Address 1")
-  addressTwo = models.CharField(max_length=150, verbose_name="Address 2", null=True, blank=True)
-  zipCode = models.CharField(max_length=50, verbose_name="Zip Code", null=True, blank=True)
-  city = models.CharField(max_length=50, help_text='Ex: San Francisco')
-  state = models.CharField(max_length=50, help_text='Ex: CA')
+  user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Photographer")
+  customer = models.CharField(max_length=150, verbose_name="Customer")
+  scheduled = models.DateTimeField(verbose_name="Scheduled", null=True)
+  address = models.CharField(max_length=200, verbose_name="Address")
   services = MultiSelectField(choices=services_choices)
   order_status = models.CharField(choices=status, null=False, blank=False, default="Not Uploaded", verbose_name="Status")
   date = models.DateTimeField(auto_now_add=True)
 
   def __str__(self):
-    return "Photographer: {}, Order: {}, {}, {} | Scheduled: {} at {}".format(self.user, self.addressOne,self.zipCode,self.state, self.scheduled, self.time)
+    return "Photographer: {}, Order: {}".format(self.user, self.address)
 
   

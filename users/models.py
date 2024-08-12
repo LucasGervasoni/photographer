@@ -10,11 +10,7 @@ class Profile(models.Model):
   lastName = models.CharField(max_length=100, null=True, verbose_name="Last Name")
   phoneOne = models.CharField(max_length=100, verbose_name="Phone 1")
   phoneTwo = models.CharField(max_length=100, verbose_name="Phone 2", null=True, blank=True)
-  addressOne = models.CharField(max_length=150, verbose_name="Address 1")
-  addressTwo = models.CharField(max_length=150, verbose_name="Address 2", null=True, blank=True)
-  zipCode = models.CharField(max_length=50, verbose_name="Zip Code", null=True, blank=True)
-  city = models.CharField(max_length=50, help_text='Ex: San Francisco')
-  state = models.CharField(max_length=50, help_text='Ex: CA')
+  address = models.CharField(max_length=300, verbose_name="Address")
 
   def __str__(self):
     return "{}".format(self.username)

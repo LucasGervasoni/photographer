@@ -39,7 +39,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         buffer.seek(0)  # Rewind the buffer to the beginning
         response = HttpResponse(buffer, content_type='application/zip')  # Create an HTTP response with the ZIP file content
-        response['Content-Disposition'] = f'attachment; filename="order_{order.addressOne}_{order.services}.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
+        response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.services}.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
         return response  # Return the HTTP response
 
 # Upload with Editor note
@@ -57,7 +57,14 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         form = OrderImageForm(request.POST, request.FILES)
         if form.is_valid():
             for f in files:
-                image = OrderImage.objects.create(order=order, image=f, editor_note=form.cleaned_data.get('editor_note', ''))
+                image = OrderImage.objects.create(
+                    order=order, 
+                    image=f, 
+                    editor_note=form.cleaned_data.get('editor_note', ''),
+                    services=form.cleaned_data.get('services', []),
+                    scan_url=form.cleaned_data.get('scan_url', ''),
+                    photos_sent=form.cleaned_data.get('photos_sent', ''),
+                    photos_returned=form.cleaned_data.get('photos_returned', ''))
                 # Log the upload action
                 UserAction.objects.create(
                     user=request.user,
@@ -102,5 +109,6 @@ class OrderImageListView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.all()
-        return render(request, 'listImage.html', {'order': order, 'images': images})
+        image_count = images.count()
+        return render(request, 'listImage.html', {'order': order, 'images': images, 'image_count':image_count})
     
