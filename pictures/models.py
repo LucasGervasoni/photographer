@@ -15,7 +15,7 @@ from multiselectfield import MultiSelectField
 def order_image_path(instance, filename):
     # Define your custom folder structure and file name
     order_address = instance.order.address
-    order_service = instance.order.services
+    order_service = instance.order.appointment_items
     order_name = "Spotlight" 
     ext = filename.split('.')[-1]
     

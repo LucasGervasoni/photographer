@@ -158,3 +158,5 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 django_heroku.settings(locals())
+
+DATA_UPLOAD_MAX_NUMBER_FILES = 1000 # or any number you need

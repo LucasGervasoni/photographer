@@ -21,15 +21,15 @@ class Order(models.Model):
     ("Completed","Completed"),
   )
   
-  user = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Photographer")
-  customer = models.CharField(max_length=150, verbose_name="Customer")
-  scheduled = models.DateTimeField(verbose_name="Scheduled", null=True)
+  appointment_team_members = models.CharField(max_length=300,verbose_name="Appointment Team Members")
+  customer = models.CharField(max_length=200, verbose_name="Customer")
+  appointment_date = models.CharField(max_length=150,verbose_name="Appointment Date", null=True)
   address = models.CharField(max_length=200, verbose_name="Address")
-  services = MultiSelectField(choices=services_choices)
+  appointment_items = models.CharField(max_length=200, verbose_name="Appointment Items")
   order_status = models.CharField(choices=status, null=False, blank=False, default="Not Uploaded", verbose_name="Status")
-  date = models.DateTimeField(auto_now_add=True)
+  order_created_at = models.CharField(max_length=150,verbose_name="Created At")
 
   def __str__(self):
-    return "Photographer: {}, Order: {}".format(self.user, self.address)
+    return "Photographer: {}, Order: {}".format(self.appointment_team_members, self.address)
 
   

@@ -58,10 +58,9 @@ l{% extends 'base.html' %}
       </tr>
       {% for order in object_list %}
       <tr>
-        <td>{{ order.user }}</td>
-        <td>{{ order.scheduled }}</td>
+        <td>{{ order.appointment_team_members }}</td>
+        <td>{{ order.appointment_date }}</td>
         <td>{{ order.address }}</td>
-        <td>{{ order.state }}</td>
         <td class="d-flex align-items-center justify-content-center">
           <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
@@ -84,7 +83,7 @@ l{% extends 'base.html' %}
           <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
         </td>
         <td>
-          <p class="text-capitalize"><strong>Services:</strong>  {{ order.services }}</p>
+          <p class="text-capitalize"><strong>Services:</strong>  {{ order.appointment_items }}</p>
         </td>
         <td>
           {% if request.user.is_superuser %}

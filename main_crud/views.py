@@ -18,10 +18,15 @@ class UserPageOrders(LoginRequiredMixin,ListView):
         def get_queryset(self):
                 user = self.request.user
                 queryset = Order.objects.all()
+                
+                 # Construct the full name of the user
+                full_name = f"{user.first_name} {user.last_name}"
+                
 
                 # Check if the user is not an editor or superuser
                 if not user.is_superuser and not user.groups.filter(name='Editor').exists():
-                        queryset = queryset.filter(user=user)
+                        # Filter orders by checking if the username is in the appointment_team_members field
+                        queryset = queryset.filter(appointment_team_members__icontains=full_name)
 
                 # Filter by status
                 status = self.request.GET.get('status')
@@ -32,9 +37,9 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                 start_date = self.request.GET.get('start_date')
                 end_date = self.request.GET.get('end_date')
                 if start_date and end_date:
-                 queryset = queryset.filter(date__range=[start_date, end_date])
+                 queryset = queryset.filter(order_created_at=[start_date, end_date])
                 
-                return queryset.order_by('-date')
+                return queryset.order_by('-order_created_at')
 
 # Update orders by select button in html
 class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):
