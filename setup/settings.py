@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'rangefilter',
     "crispy_forms",
     "crispy_bootstrap4",
+    "import_export",
 ]
 
 

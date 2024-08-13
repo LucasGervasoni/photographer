@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
+{% load group_tags %}
 
 
 {% block title%}
@@ -13,10 +14,13 @@
 <br>
 <div class="d-flex justify-content-between flex-wrap" style="min-width: 300px;">
   <div class="w-50" >
-  {% if images %}
-  <h4>Editor Notes:</h4>
-  <p>{{ images.0.editor_note }}</p>
-  {% endif %}
+    {% if request.user.is_superuser or request.user|has_group:"Editor"%}
+        {% if images %}
+        <h4>Editor Notes:</h4>
+        <p>{{ images.0.editor_note }}</p>
+        {% endif %}
+    {% else %}
+    {% endif %}
   </div>
 </div>
 <br>

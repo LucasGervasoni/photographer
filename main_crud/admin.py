@@ -5,8 +5,10 @@ from rangefilter.filters import (
     DateRangeFilterBuilder
 )
 
+from import_export.admin import ImportExportModelAdmin
+
 # Register your models here.
-@admin.register(Order)
+admin.site.register(Order,ImportExportModelAdmin)
 class ProfileAdmin(admin.ModelAdmin):
  list_display = ['user','scheduled','address','services', 'order_status', 'date']
  list_filter = (("date", DateRangeFilterBuilder()), 'order_status')
