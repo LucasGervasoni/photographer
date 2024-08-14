@@ -7,14 +7,6 @@ from multiselectfield import MultiSelectField
 
 class Order(models.Model):
   
-  services_choices = (
-    ("Drone","Drone"),
-    ("Photo","Photo"),
-    ("3d scan","3d scan"),
-    ("Vídeo","Vídeo"),
-    ("Floor Plan","Floor Plan")
-  )
-  
   status = (
     ("Not Uploaded","Not Uploaded"),
     ("Production","Production"),

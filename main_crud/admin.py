@@ -20,7 +20,7 @@ class OrderResoucers(resources.ModelResource):
 class ProfileAdmin(ImportExportModelAdmin):
  resource_classes = [OrderResoucers]
  list_display = ['customer','appointment_team_members','appointment_date','address','appointment_items', 'order_status', 'order_created_at']
- list_filter = (("order_created_at", DateRangeFilterBuilder()), 'order_status')
- search_fields = ['address', 'appointment_items']
- ordering = ('-order_created_at',)
+ list_filter = ('order_status',)
+ search_fields = ['address', 'appointment_items', 'order_created_at','appointment_date',]
+ ordering = ('-id',)
  list_editable = ['order_status']

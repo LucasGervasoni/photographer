@@ -12,7 +12,7 @@ class UserPageOrders(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         model = Order
         template_name = "main_crud/user/UserOrdersList.html"
-        paginate_by = 3
+        paginate_by = 10
         
         #Return the orders by user
         def get_queryset(self):
@@ -39,7 +39,7 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                 if start_date and end_date:
                  queryset = queryset.filter(order_created_at=[start_date, end_date])
                 
-                return queryset.order_by('-order_created_at')
+                return queryset.order_by('-id')
 
 # Update orders by select button in html
 class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):
