@@ -39,7 +39,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         buffer.seek(0)  # Rewind the buffer to the beginning
         response = HttpResponse(buffer, content_type='application/zip')  # Create an HTTP response with the ZIP file content
-        response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.services}.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
+        response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.appointment_items}.zip"'  # Set the Content-Disposition header to indicate a file attachment with a specified filename
         return response  # Return the HTTP response
 
 # Upload with Editor note
@@ -56,22 +56,35 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         files = request.FILES.getlist('image')
         form = OrderImageForm(request.POST, request.FILES)
         if form.is_valid():
+            images = []
             for f in files:
-                image = OrderImage.objects.create(
+                images.append(OrderImage(
                     order=order, 
                     image=f, 
                     editor_note=form.cleaned_data.get('editor_note', ''),
                     services=form.cleaned_data.get('services', []),
                     scan_url=form.cleaned_data.get('scan_url', ''),
                     photos_sent=form.cleaned_data.get('photos_sent', 0),
-                    photos_returned=form.cleaned_data.get('photos_returned', 0))
-                # Log the upload action
-                UserAction.objects.create(
+                    photos_returned=form.cleaned_data.get('photos_returned', 0)
+                ))
+            OrderImage.objects.bulk_create(images)
+            
+            # Update order status 
+            order.order_status = 'Production'
+            order.save()
+            
+            # Log the upload actions
+            user_actions = [
+                UserAction(
                     user=request.user,
                     action_type='upload',
                     order=order,
                     order_image=image
-                )
+                ) for image in images
+            ]
+            UserAction.objects.bulk_create(user_actions)
+            
+            
             return redirect('order_images', pk=order.pk)
         messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadPage.html', {'form': form, 'order': order})
@@ -90,14 +103,25 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         files = request.FILES.getlist('image')
         form = PhotographerImageForm(request.POST, request.FILES)
         if form.is_valid():
+            images = []
             for f in files:
-                image = OrderImage.objects.create(order=order, image=f)
-                UserAction.objects.create(
+                images.append(OrderImage(
+                    order=order, 
+                    image=f
+                ))
+            OrderImage.objects.bulk_create(images)
+            
+            # Log the upload actions
+            user_actions = [
+                UserAction(
                     user=request.user,
                     action_type='upload',
                     order=order,
                     order_image=image
-                )
+                ) for image in images
+            ]
+            UserAction.objects.bulk_create(user_actions)
+            
             return redirect('order_images', pk=order.pk)
         messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})

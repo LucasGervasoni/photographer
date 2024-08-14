@@ -15,15 +15,19 @@ from multiselectfield import MultiSelectField
 def order_image_path(instance, filename):
     # Define your custom folder structure and file name
     order_address = instance.order.address
-    order_service = instance.order.appointment_items
     order_name = "Spotlight" 
     ext = filename.split('.')[-1]
     
     # Count the number of images already uploaded for this order
-    count = OrderImage.objects.filter(order=instance.order).count() + 1
+    # Count the number of uploads for this order
+    upload_count = OrderImage.objects.filter(order=instance.order).count() + 1
     
-    new_filename = f"{order_name}.{count:02d}.{ext}"
-    return os.path.join('media', str(order_address), str(order_service), new_filename)
+    # Create the subfolder name
+    subfolder_name = f"{order_address}{upload_count:02d}"
+    
+    # Generate the new filename
+    new_filename = f"{order_name}.{upload_count:02d}.{ext}"
+    return os.path.join('media', order_address, subfolder_name, new_filename)
 
 # Model base for image
 class OrderImage(models.Model):
@@ -53,13 +57,6 @@ class OrderImage(models.Model):
         verbose_name = "Order File"  # Singular name
         verbose_name_plural = "Order Files"  # Plural name (optional)
 
-# Upload automatic for order status    
-@receiver(post_save, sender=OrderImage)
-def update_order_status(sender, instance, **kwargs):
-    order = instance.order
-    if order.order_status == "Not Uploaded":
-        order.order_status = "Production"
-        order.save()
         
 # Create User actions that will take automatic the user that did Upload or Download
 class UserAction(models.Model):

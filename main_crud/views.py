@@ -7,6 +7,8 @@ from django.urls import reverse_lazy
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 
+from django.db.models import Q
+
 #List Orders for user
 class UserPageOrders(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
@@ -33,11 +35,18 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                 if status:
                  queryset = queryset.filter(order_status=status)
                  
-                 # Filter by date range
-                start_date = self.request.GET.get('start_date')
-                end_date = self.request.GET.get('end_date')
-                if start_date and end_date:
-                 queryset = queryset.filter(order_created_at=[start_date, end_date])
+                 # Filter by search query
+                search_query = self.request.GET.get('search')
+                if search_query:
+                 queryset = queryset.filter(
+                        Q(appointment_team_members__icontains=search_query) |
+                        Q(customer__icontains=search_query) |
+                        Q(appointment_date__icontains=search_query) |
+                        Q(address__icontains=search_query) |
+                        Q(appointment_items__icontains=search_query) |
+                        Q(order_status__icontains=search_query) |
+                        Q(order_created_at__icontains=search_query)
+                )
                 
                 return queryset.order_by('-id')
 
