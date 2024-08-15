@@ -10,11 +10,34 @@
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
 <form id="uploadForm" action="" method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  <div class="box__input mb-4">
-    <input class="fileInput" type="file" name="image" multiple>
+  <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
+    <div class="box__input mb-4 align-self-center">
+      <input class="fileInput" type="file" name="image" multiple>
+    </div>
+
+    <!-- Editor Note -->
+    <div class="form-group w-50">
+      <label for="id_editor_note">Editor Note:</label>
+      <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
+    </div>
+
+    <!-- Selected Service -->
+    <div class="form-group w-50">
+        <label for="id_services">Services:</label>
+        {{ group_form.services }}
+    </div>
+
+    <!-- 3D Scan URL -->
+    <div class="form-group w-50">
+      <label for="id_scan_url">3D Scan URL (if applicable):</label>
+      <input class="form-control" type="url" name="scan_url" placeholder="Enter URL for 3d scan" maxlength="200" id="id_scan_url" disabled="">
+    </div>
+
+    <div class="d-flex justify-content-between w-50">
+      <a class="btn btn-info" href="{% url 'userOrders--page' %}">Back to Orders</a>
+      <button class="btn btn-success" type="submit">Upload</button>
+    </div>
   </div>
-  <a class="btn btn-info align-self-start" href="{% url 'userOrders--page' %}">Back to Orders</a>
-  <button class="btn btn-success" type="submit">Upload</button>
 </form>
 
 <!-- Spinner element -->
@@ -25,6 +48,30 @@
 </div>
 
 <script>
+  document.addEventListener('DOMContentLoaded', function() {
+  // Get the elements
+  var servicesField = document.getElementById('id_services');
+  var scanUrlField = document.getElementById('id_scan_url');
+  
+  // Function to enable or disable the URL field based on the services selection
+  function updateScanUrlField() {
+    var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
+      .map(checkbox => checkbox.value);
+    if (selectedServices.includes('3d scan')) {
+      scanUrlField.disabled = false;
+    } else {
+      scanUrlField.disabled = true;
+      scanUrlField.value = ''; // Optionally clear the field if not enabled
+    }
+  }
+  
+  // Attach event listeners to checkboxes
+  servicesField.addEventListener('change', updateScanUrlField);
+  
+  // Initial check on page load
+  updateScanUrlField();
+});
+
   document.getElementById('uploadForm').onsubmit = function() {
     document.getElementById('loadingSpinner').style.display = 'block';
     document.querySelector('button[type="submit"]').disabled = true;

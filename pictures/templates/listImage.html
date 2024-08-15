@@ -14,11 +14,15 @@
 <br>
 <div class="d-flex justify-content-between flex-wrap" style="min-width: 300px;">
   <div class="w-50" >
-    {% if request.user.is_superuser or request.user|has_group:"Editor"%}
-        {% if images %}
+    {% if request.user.is_superuser or request.user|has_group:"Editor" %}
+    {% if order.orderimagegroup_set.exists %}
         <h4>Editor Notes:</h4>
-        <p>{{ images.0.editor_note }}</p>
-        {% endif %}
+        {% for group in order.orderimagegroup_set.all %}
+        <div class="card mb-2">
+            <p class="card-body">{{ group.editor_note|linebreaksbr }}</p>
+        </div>
+        {% endfor %}
+    {% endif %}
     {% else %}
     {% endif %}
   </div>

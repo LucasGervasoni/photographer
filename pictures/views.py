@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import OrderImage, UserAction, OrderImageGroup
-from .forms import OrderImageForm, PhotographerImageForm
+from .forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
 from main_crud.models import Order
 
 from django.views.generic import View
@@ -50,38 +50,38 @@ class OrderImageUploadView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         form = OrderImageForm()
-        return render(request, 'uploadPage.html', {'form': form, 'order': order})
+        group_form = OrderImageGroupForm()
+        return render(request, 'uploadPage.html', {'form': form, 'group_form': group_form, 'order': order})
 
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         files = request.FILES.getlist('image')
         form = OrderImageForm(request.POST, request.FILES)
-        if form.is_valid():
-            # create a group of images
-            image_group = OrderImageGroup.objects.create(order=order)
+        group_form = OrderImageGroupForm(request.POST)
+
+        if form.is_valid() and group_form.is_valid():
+            # Create a group image
+            image_group = group_form.save(commit=False)
+            image_group.order = order
+            image_group.save()
             
             images = []
             for index, f in enumerate(files):
-                # Rename images
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
-                
                 images.append(OrderImage(
                     order=order,
                     image=f,
-                    editor_note=form.cleaned_data.get('editor_note', ''),
-                    services=form.cleaned_data.get('services', []),
-                    scan_url=form.cleaned_data.get('scan_url', ''),
-                    photos_sent=form.cleaned_data.get('photos_sent', 0),
-                    photos_returned=form.cleaned_data.get('photos_returned', 0),
-                    group=image_group  # Connect the image to group
+                    group=image_group,
+                    photos_sent=form.cleaned_data['photos_sent'],
+                    photos_returned=form.cleaned_data['photos_returned']
                 ))
             OrderImage.objects.bulk_create(images)
             
-            # Update order status 
+            # Update order status
             order.order_status = 'Production'
             order.save()
             
-            # Log the upload actions
+            # Register user actions
             user_actions = [
                 UserAction(
                     user=request.user,
@@ -92,10 +92,12 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
-            
             return redirect('order_images', pk=order.pk)
+        
         messages.error(request, 'Error uploading images. Please try again.')
-        return render(request, 'uploadPage.html', {'form': form, 'order': order})
+        return render(request, 'uploadPage.html', {'form': form, 'group_form': group_form, 'order': order})
+
+
 
 # Upload just new photos
 class PhotographerImageUploadView(LoginRequiredMixin, View):
@@ -104,26 +106,30 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         form = PhotographerImageForm()
-        return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})
+        group_form = OrderImageGroupForm()
+        return render(request, 'uploadNewPhotos.html', {'form': form, 'group_form': group_form, 'order': order})
 
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         files = request.FILES.getlist('image')
         form = PhotographerImageForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Create a group of images
-            image_group = OrderImageGroup.objects.create(order=order)
-            
+        group_form = OrderImageGroupForm(request.POST)
+        
+        if form.is_valid() and group_form.is_valid():
+            # Create a group of images with services, scan_url, and editor note
+            image_group = group_form.save(commit=False)
+            image_group.order = order
+            image_group.save()
+
             images = []
             for index, f in enumerate(files):
                 # Rename image
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
                 
-            for f in files:
                 images.append(OrderImage(
                     order=order, 
                     image=f,
-                    group=image_group  # AConnect image to group
+                    group=image_group  # Connect image to group
                 ))
             OrderImage.objects.bulk_create(images)
             
@@ -139,8 +145,10 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             UserAction.objects.bulk_create(user_actions)
             
             return redirect('order_images', pk=order.pk)
+        
         messages.error(request, 'Error uploading images. Please try again.')
-        return render(request, 'uploadNewPhotos.html', {'form': form, 'order': order})
+        return render(request, 'uploadNewPhotos.html', {'form': form, 'group_form': group_form, 'order': order})
+
 
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):

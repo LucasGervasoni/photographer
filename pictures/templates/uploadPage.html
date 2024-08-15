@@ -9,43 +9,45 @@
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
 <form id="uploadForm" action="" method="post" enctype="multipart/form-data">
   {% csrf_token %}
-  <div class="d-flex flex-column w-50 mr-auto ml-auto">
+  <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
     <div class="box__input mb-4 align-self-center">
       <input class="fileInput" type="file" name="image" multiple>
     </div>
 
-
     <!-- Editor Note -->
-    <div class="form-group">
+    <div class="form-group w-50">
       <label for="id_editor_note">Editor Note:</label>
-      <textarea name="editor_note" id="id_editor_note" rows="2" cols="40" class="form-control"></textarea>
+      <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
     </div>
 
     <!-- Selected Service -->
-    <div class="form-group">
+    <div class="form-group w-50">
         <label for="id_services">Services:</label>
-        {{ form.services }}
+        {{ group_form.services }}
     </div>
 
     <!-- 3D Scan URL -->
-    <div class="form-group">
+    <div class="form-group w-50">
       <label for="id_scan_url">3D Scan URL (if applicable):</label>
-      <input type="url" name="scan_url" id="id_scan_url" class="form-control" placeholder="Enter URL for 3d scan" disabled>
+      <input class="form-control" type="url" name="scan_url" placeholder="Enter URL for 3d scan" maxlength="200" id="id_scan_url" disabled="">
     </div>
 
-    <!-- Photos Sent -->
-    <div class="form-group">
-      <label for="id_photos_sent">Assets to be uploaded:</label>
-      <input type="number" name="photos_sent" id="id_photos_sent" class="form-control" min="0" value="{{ form.photos_sent.value }}">
-    </div>
+     <div class="d-flex flex-wrap w-50">
+        <!-- Photos Sent -->
+        <div class="form-group mr-2">
+          <label for="id_photos_sent">Assets to be uploaded:</label>
+          <input class="form-control" type="number" name="photos_sent" min="0" required="" id="id_photos_sent">
+        </div>
+    
+        <!-- Photos Returned -->
+        <div class="form-group">
+          <label for="id_photos_returned">Assets to be returned:</label>
+          <input class="form-control" type="number" name="photos_returned" min="0" required="" id="id_photos_returned">
+        </div>
+     </div>
 
-    <!-- Photos Returned -->
-    <div class="form-group">
-      <label for="id_photos_returned">Assets to be returned:</label>
-      <input type="number" name="photos_returned" id="id_photos_returned" class="form-control" min="0" value="{{ form.photos_returned.value }}">
-    </div>
-    <div class="d-flex flex-wrap align-self-end">
-      <a class="btn btn-info mr-2" href="{% url 'userOrders--page' %}">Back to Orders</a>
+    <div class="d-flex justify-content-between w-50">
+      <a class="btn btn-info" href="{% url 'userOrders--page' %}">Back to Orders</a>
       <button class="btn btn-success" type="submit">Upload</button>
     </div>
   </div>
