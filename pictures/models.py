@@ -2,34 +2,23 @@ from django.db import models
 from main_crud.models import Order
 from django.contrib.auth.models import User
 import os
-from django.utils.text import slugify
-
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 from multiselectfield import MultiSelectField
 
 # # Create your models here.
 
-# create a path and rename the images
+# Function to generate the upload path
 def order_image_path(instance, filename):
-    # Define your custom folder structure and file name
-    order_address = instance.order.address
-    order_name = "Spotlight" 
-    ext = filename.split('.')[-1]
-    
-    # Count the number of images already uploaded for this order
-    # Count the number of uploads for this order
-    upload_count = OrderImage.objects.filter(order=instance.order).count() + 1
-    
-    # Create the subfolder name
-    subfolder_name = f"{order_address}{upload_count:02d}"
-    
-    # Generate the new filename
-    new_filename = f"{order_name}.{upload_count:02d}.{ext}"
-    return os.path.join('media', order_address, subfolder_name, new_filename)
+    order_address = instance.order.address.replace(' ', '_')
+    group_count = OrderImageGroup.objects.filter(order=instance.order).count()
+    return os.path.join('media', order_address, f'{order_address}.{group_count:02d}', filename)
+
 
 # Model base for image
+class OrderImageGroup(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 class OrderImage(models.Model):
     
     select_services = (
@@ -49,6 +38,7 @@ class OrderImage(models.Model):
     scan_url = models.CharField(max_length=200, blank=True, null=True)
     photos_sent = models.CharField(verbose_name="Assets to be uploaded")
     photos_returned = models.CharField(verbose_name="Assets to be uploaded")
+    group = models.ForeignKey(OrderImageGroup, on_delete=models.CASCADE, related_name='images')
     
     def __str__(self):
         return f"Image for {self.order} - Service: {self.services}"

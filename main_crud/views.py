@@ -27,8 +27,11 @@ class UserPageOrders(LoginRequiredMixin,ListView):
 
                 # Check if the user is not an editor or superuser
                 if not user.is_superuser and not user.groups.filter(name='Editor').exists():
-                        # Filter orders by checking if the username is in the appointment_team_members field
-                        queryset = queryset.filter(appointment_team_members__icontains=full_name)
+                        # Filter orders by checking if the username or full name is in the appointment_team_members field
+                        queryset = queryset.filter(
+                                Q(appointment_team_members__icontains=user.username) |
+                                Q(appointment_team_members__icontains=full_name)
+                        )
 
                 # Filter by status
                 status = self.request.GET.get('status')
