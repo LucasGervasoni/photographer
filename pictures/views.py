@@ -43,7 +43,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.pk}.zip"'
         return response
 
-# Upload with Editor note
+# Upload 
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -57,12 +57,12 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         files = request.FILES.getlist('image')
         form = OrderImageForm(request.POST, request.FILES)
         if form.is_valid():
-            # Criar um grupo de imagens
+            # create a group of images
             image_group = OrderImageGroup.objects.create(order=order)
             
             images = []
             for index, f in enumerate(files):
-                # Renomear a imagem
+                # Rename images
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
                 
                 images.append(OrderImage(
@@ -73,7 +73,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     scan_url=form.cleaned_data.get('scan_url', ''),
                     photos_sent=form.cleaned_data.get('photos_sent', 0),
                     photos_returned=form.cleaned_data.get('photos_returned', 0),
-                    group=image_group  # Associar a imagem ao grupo
+                    group=image_group  # Connect the image to group
                 ))
             OrderImage.objects.bulk_create(images)
             
@@ -111,19 +111,19 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         files = request.FILES.getlist('image')
         form = PhotographerImageForm(request.POST, request.FILES)
         if form.is_valid():
-            # Criar um grupo de imagens
+            # Create a group of images
             image_group = OrderImageGroup.objects.create(order=order)
             
             images = []
             for index, f in enumerate(files):
-                # Renomear a imagem
+                # Rename image
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
                 
             for f in files:
                 images.append(OrderImage(
                     order=order, 
                     image=f,
-                    group=image_group  # Associar a imagem ao grupo
+                    group=image_group  # AConnect image to group
                 ))
             OrderImage.objects.bulk_create(images)
             
