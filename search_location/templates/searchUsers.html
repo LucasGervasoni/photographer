@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load group_tags %}
+
+{% block title %}
+<title>Spotlight - Search</title>
+{% endblock %}
+
+{% block content %}
+  {% if messages %}
+      <div class="messages mb-4">
+        {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+  {% endif %}
+
+  <h2 class="mb-4">Search Nearby Users:</h2>
+  <form method="GET" action="{% url 'search_nearby_users' %}">
+    <div class="row">
+      <div class="col-md-4 form-group">
+        <label for="address">Order Address:</label>
+        <input class="form-control" type="text" id="address" name="address" value="{{ request.GET.address }}">
+      </div>
+      <div class="col-md-2 form-group">
+        <label for="max_distance">Max Distance (km):</label>
+        <input class="form-control" type="number" id="max_distance" name="max_distance" value="{{ request.GET.max_distance }}">
+      </div>
+      <div class="col-md-2">
+        <label>&nbsp;</label>
+        <button type="submit" class="btn btn-primary form-control">Search</button>
+      </div>
+    </div>
+  </form>
+  
+  <h3 class="mb-4 mt-4">Results:</h3>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <tr>
+        <th scope="col">Photographer</th>
+        <th scope="col">Address</th>
+        <th scope="col" colspan="2">Action</th>
+      </tr>
+      {% if page_obj %}
+      {% for profile, distance in page_obj %}
+      <tr>
+        <td>{{ profile.firstName }} {{ profile.lastName }}</td>
+        <td>{{ profile.address }} ({{ distance|floatformat:2 }} km)</td>
+        <td>
+          <a class="btn btn-outline-secondary" href="{% url 'admin:main_crud_order_add' %}?appointment_team_members={{ profile.firstName }}+{{ profile.lastName }}&address={{ address }}" target="_blank">
+          Add Order
+         </a>
+        </td>
+      </tr>
+      {% endfor %}
+      {% elif error %}
+      <p>{{ error }}</p>
+      {% else %}
+      <p>No users found.</p>
+      {% endif %}
+      </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <nav aria-label="Page navigation">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?address={{ address }}&max_distance={{ request.GET.max_distance }}&page=1">&laquo; First</a></li>
+        <li class="page-item"><a class="page-link" href="?address={{ address }}&max_distance={{ request.GET.max_distance }}&page={{ page_obj.previous_page_number }}">&lsaquo; Previous</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+        <li class="page-item disabled"><span class="page-link">&lsaquo; Previous</span></li>
+      {% endif %}
+
+      <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?address={{ address }}&max_distance={{ request.GET.max_distance }}&page={{ page_obj.next_page_number }}">Next &rsaquo;</a></li>
+        <li class="page-item"><a class="page-link" href="?address={{ address }}&max_distance={{ request.GET.max_distance }}&page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next &rsaquo;</span></li>
+        <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+{% endblock %}

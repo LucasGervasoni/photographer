@@ -2,15 +2,26 @@
   font-size: 14px !important;
 }
 
-.formFiles{
+.box__input{
+  max-width: 60%;
   height: 250px;
   padding: 100px 0 0 40px;
   border: 5px dotted gray;
   background-color: lightgray;
 }
 
+.fileInput{
+  width: 100%;
+  height: 100%;
+}
+
 ul.errorlist{
   display: none;
+}
+
+.loader{
+  width: 4rem;
+  height: 4rem;
 }
 
 @media screen and (max-width:767px){

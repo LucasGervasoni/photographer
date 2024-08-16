@@ -24,3 +24,10 @@ class ProfileAdmin(ImportExportModelAdmin):
  search_fields = ['address', 'appointment_items', 'order_created_at','appointment_date',]
  ordering = ('-id',)
  list_editable = ['order_status']
+ 
+ def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if request.GET.get('appointment_team_members') and request.GET.get('address'):
+            form.base_fields['appointment_team_members'].initial = request.GET['appointment_team_members']
+            form.base_fields['address'].initial = request.GET['address']
+        return form

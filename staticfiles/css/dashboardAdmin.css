@@ -13,13 +13,28 @@ header#header a:link, header#header a:visited, button,div.breadcrumbs, div.bread
   color: black !important;
 }
 
-header#header button.theme-toggle{
-  display: none;
-}
-
 .app-main_crud caption, .app-auth caption, .app-pictures caption, .app-users caption, div.breadcrumbs{
   background-color: #f8f8f8 !important;
 } 
 .app-main_crud caption a, .app-auth caption a, .app-pictures caption a, .app-users caption a{
   color: #666 !important;
 } 
+
+#content-related{
+  display: none;
+}
+
+#navBar ul li{
+  list-style: none;
+  margin-right: 10px;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+}
+
+#navBar ul li:first-child{
+  font-weight: bold;
+}
+
+a.deletelink, a.cancel-link{
+  height: 40px !important;
+}
