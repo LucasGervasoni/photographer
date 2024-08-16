@@ -21,7 +21,8 @@ class OrderImageGroup(models.Model):
     editor_note = models.TextField(blank=True, null=True)
     
     select_services = (
-        ("Drone", "Drone"),
+        ("Drone Vídeo", "Drone Vídeo"),
+        ("Drone Photo", "Drone Photo"),
         ("Photo", "Photo"),
         ("3d scan", "3d scan"),
         ("Video", "Video"),
@@ -35,8 +36,8 @@ class OrderImageGroup(models.Model):
         return f"Group for {self.order} - Created at {self.created_at}"
     
     class Meta:
-        verbose_name = "Order File"  # Singular name
-        verbose_name_plural = "Order Files"  # Plural name (optional)
+        verbose_name = "Order File Created "  # Singular name
+        verbose_name_plural = "Order Files Created"  # Plural name (optional)
 
 class OrderImage(models.Model):
     
@@ -51,8 +52,8 @@ class OrderImage(models.Model):
         return f"Image for {self.order}"
     
     class Meta:
-        verbose_name = "List File"  # Singular name
-        verbose_name_plural = "List Files"  # Plural name (optional)
+        verbose_name = "File uploaded"  # Singular name
+        verbose_name_plural = "Files uploaded"  # Plural name (optional)
 
         
 # Create User actions that will take automatic the user that did Upload or Download

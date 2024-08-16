@@ -41,6 +41,11 @@ l{% extends 'base.html' %}
         <label>&nbsp;</label>
         <button type="submit" class="btn btn-primary form-control">Filter</button>
       </div>
+      {% if request.user.is_superuser %}
+      <div class="col-md-2 align-self-end">
+        <a href="/admin/main_crud/order/import/" class="btn btn-secondary">Import Orders</a>
+      </div>
+      {% endif %}
     </div>
   </form>
 
