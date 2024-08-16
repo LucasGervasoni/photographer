@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from django.utils.dateparse import parse_date
 from django.db.models import Q
 
 #List Orders for user
@@ -51,7 +51,17 @@ class UserPageOrders(LoginRequiredMixin,ListView):
                         Q(order_created_at__icontains=search_query)
                 )
                 
-                return queryset.order_by('-id')
+                 # Filtro por data de criação (intervalo)
+                start_date = self.request.GET.get('start_date')
+                end_date = self.request.GET.get('end_date')
+                start_date_parsed = parse_date(start_date) if start_date else None
+                end_date_parsed = parse_date(end_date) if end_date else None
+
+                if start_date_parsed and end_date_parsed:
+                 queryset = queryset.filter(order_created_at__date__range=[start_date_parsed, end_date_parsed])
+
+                # Ordena pelo campo order_created_at
+                return queryset.order_by('-order_created_at')
 
 # Update orders by select button in html
 class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):

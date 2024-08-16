@@ -33,11 +33,19 @@ l{% extends 'base.html' %}
           <option value="Completed">Completed</option>
         </select>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-2">
         <label for="search">Search</label>
         <input type="text" name="search" id="search" class="form-control" placeholder="Search...">
       </div>
       <div class="col-md-2">
+        <label for="start_date">Start Date</label>
+        <input type="date" name="start_date" id="start_date" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label for="end_date">End Date</label>
+        <input type="date" name="end_date" id="end_date" class="form-control">
+      </div>
+      <div class="col-md-1">
         <label>&nbsp;</label>
         <button type="submit" class="btn btn-primary form-control">Filter</button>
       </div>
@@ -55,6 +63,7 @@ l{% extends 'base.html' %}
         <th scope="col">Photographer</th>
         <th scope="col">Scheduled</th>
         <th scope="col">Address</th>
+        <th scope="col">Created At</th>
         <th scope="col" colspan="2">Action</th>
       </tr>
       {% for order in object_list %}
@@ -62,6 +71,7 @@ l{% extends 'base.html' %}
         <td>{{ order.appointment_team_members }}</td>
         <td>{{ order.appointment_date }}</td>
         <td>{{ order.address }}</td>
+        <td>{{ order.order_created_at }}</td>
         <td class="d-flex align-items-center justify-content-center">
           <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
           <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
