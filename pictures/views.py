@@ -12,8 +12,8 @@ from django.contrib import messages  # Import the messages module
 import zipfile  # Import the zipfile module to create and manipulate ZIP files
 import io  # Import the io module for handling byte streams
 from django.http import HttpResponse  # Import HttpResponse to send HTTP responses
-
 import os
+from django.conf import settings
 
 # Create your views here.
 class OrderImageDownloadView(LoginRequiredMixin, View):
@@ -44,6 +44,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         return response
 
 # Upload 
+
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -60,27 +61,36 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
 
         if form.is_valid() and group_form.is_valid():
-            # Create a group image
             image_group = group_form.save(commit=False)
             image_group.order = order
             image_group.save()
-            
+
             images = []
             for index, f in enumerate(files):
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
-                images.append(OrderImage(
+                
+                order_image = OrderImage(
                     order=order,
                     image=f,
                     group=image_group,
-                    photos_sent=form.cleaned_data['photos_sent'],
-                    photos_returned=form.cleaned_data['photos_returned']
-                ))
-            OrderImage.objects.bulk_create(images)
+                    photos_sent=form.cleaned_data.get('photos_sent'),
+                    photos_returned=form.cleaned_data.get('photos_returned')
+                )
+                order_image.save()
+                
+                # Convert the image if necessary
+                converted_image_url = order_image.convert_to_jpeg()
+                
+                # Save the order image with the converted image
+                if converted_image_url:
+                    order_image.save()
+                
+                images.append(order_image)
             
             # Update order status
             order.order_status = 'Production'
             order.save()
-            
+
             # Register user actions
             user_actions = [
                 UserAction(
@@ -97,9 +107,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         messages.error(request, 'Error uploading images. Please try again.')
         return render(request, 'uploadPage.html', {'form': form, 'group_form': group_form, 'order': order})
 
-
-
-# Upload just new photos
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -116,22 +123,29 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
         
         if form.is_valid() and group_form.is_valid():
-            # Create a group of images with services, scan_url, and editor note
             image_group = group_form.save(commit=False)
             image_group.order = order
             image_group.save()
 
             images = []
             for index, f in enumerate(files):
-                # Rename image
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
                 
-                images.append(OrderImage(
+                order_image = OrderImage(
                     order=order, 
                     image=f,
                     group=image_group  # Connect image to group
-                ))
-            OrderImage.objects.bulk_create(images)
+                )
+                order_image.save()
+                
+                # Convert the image if necessary
+                converted_image_url = order_image.convert_to_jpeg()
+                
+                # Save the order image with the converted image
+                if converted_image_url:
+                    order_image.save()
+                
+                images.append(order_image)
             
             # Log the upload actions
             user_actions = [
@@ -158,5 +172,4 @@ class OrderImageListView(LoginRequiredMixin, View):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.all()
         image_count = images.count()
-        return render(request, 'listImage.html', {'order': order, 'images': images, 'image_count':image_count})
-    
+        return render(request, 'listImage.html', {'order': order, 'images': images, 'image_count': image_count})

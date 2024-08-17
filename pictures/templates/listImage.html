@@ -3,7 +3,6 @@
 {% load custom_filters %}
 {% load group_tags %}
 
-
 {% block title%}
 <title>Spotlight - List Images</title>
 {% endblock %}
@@ -35,7 +34,11 @@
             <div class="row">
                 {% for image in images %}
                 <div class="col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-                    <img src="{{ image.image.url }}" class="img-fluid" alt="Image 1">
+                    {% if image.converted_image %}
+                        <img src="{{ image.converted_image.url }}" class="img-fluid" alt="Converted Image">
+                    {% else %}
+                        <img src="{{ image.image.url }}" class="img-fluid" alt="Image">
+                    {% endif %}
                     <small>{{ image.image.url|filename }}</small>
                 </div>
                 {% endfor %}

@@ -145,6 +145,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Directory for saving converted images
+CONVERTED_IMAGES_DIR = os.path.join(MEDIA_ROOT, 'converted_images')
+os.makedirs(CONVERTED_IMAGES_DIR, exist_ok=True)
+
 #Authentication
 LOGIN_REDIRECT_URL = 'userOrders--page'
 LOGOUT_REDIRECT_URL = 'logout'

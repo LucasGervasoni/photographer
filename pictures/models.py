@@ -4,7 +4,10 @@ from django.contrib.auth.models import User
 import os
 
 from multiselectfield import MultiSelectField
-
+from django.conf import settings
+import rawpy
+from PIL import Image
+from django.core.files.base import ContentFile
 # # Create your models here.
 
 # Function to generate the upload path
@@ -47,6 +50,7 @@ class OrderImage(models.Model):
     photos_sent = models.CharField(verbose_name="Assets to be uploaded")
     photos_returned = models.CharField(verbose_name="Assets to be returned")
     group = models.ForeignKey(OrderImageGroup, on_delete=models.CASCADE, related_name='images')
+    converted_image = models.ImageField(upload_to='converted_images/', blank=True, null=True)
     
     def __str__(self):
         return f"Image for {self.order}"
@@ -54,6 +58,20 @@ class OrderImage(models.Model):
     class Meta:
         verbose_name = "File uploaded"  # Singular name
         verbose_name_plural = "Files uploaded"  # Plural name (optional)
+        
+    def convert_to_jpeg(self):
+        file_extension = self.image.name.split('.')[-1].lower()
+        if file_extension in ['raw', 'dng', 'arw']:
+            with rawpy.imread(self.image.path) as raw:
+                rgb = raw.postprocess()
+
+            image = Image.fromarray(rgb)
+            image_io = ContentFile(b'')
+            image.save(image_io, format='JPEG')
+
+            self.converted_image.save(f'{self.image.name.split(".")[0]}.jpeg', image_io, save=False)
+            return self.converted_image.url
+        return None
 
         
 # Create User actions that will take automatic the user that did Upload or Download
