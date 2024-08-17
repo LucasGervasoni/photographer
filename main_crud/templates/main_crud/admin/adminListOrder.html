@@ -1,12 +1,7 @@
-l{% extends 'base.html' %}
+l{% extends 'baseAdmin.html' %}
 {% load static %}
 {% load group_tags %}
 
-
-
-{% block title %}
-<title>Spotlight - Orders</title>
-{% endblock %}
 
 {% block content %}
   {% if messages %}
@@ -19,12 +14,10 @@ l{% extends 'base.html' %}
       </div>
   {% endif %}
 
-  <h2 class="mb-4">Your Orders:</h2>
-
   <!-- Filter form -->
   <form method="get" action="{% url 'userOrders--page' %}" class="mb-4">
     <div class="row">
-      <div class="col-md-2">
+      <div class="col-lg-2">
         <label for="status">Status</label>
         <select name="status" id="status" class="form-control">
           <option value="">All</option>
@@ -33,27 +26,25 @@ l{% extends 'base.html' %}
           <option value="Completed">Completed</option>
         </select>
       </div>
-      <div class="col-md-2">
+      <div class="col-lg-2">
         <label for="search">Search</label>
         <input type="text" name="search" id="search" class="form-control" placeholder="Search...">
       </div>
-      <div class="col-md-2">
+      <div class="col-lg-2">
         <label for="start_date">Start Date</label>
         <input type="date" name="start_date" id="start_date" class="form-control">
       </div>
-      <div class="col-md-2">
+      <div class="col-lg-2">
         <label for="end_date">End Date</label>
         <input type="date" name="end_date" id="end_date" class="form-control">
       </div>
-      <div class="col-md-1">
+      <div class="col-lg-1">
         <label>&nbsp;</label>
         <button type="submit" class="btn btn-primary form-control">Filter</button>
       </div>
-      {% if request.user.is_superuser %}
-      <div class="col-md-2 align-self-end">
+      <div class="d-flex flex-wrap col-lg-3 align-self-end">
         <a href="{% url 'order-create' %}" class="btn btn-outline-primary">+ Create Order</a>
       </div>
-      {% endif %}
     </div>
   </form>
 

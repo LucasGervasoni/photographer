@@ -1,0 +1,17 @@
+{% load static %}
+
+<div class="user-info">
+  <a class="navbar-brand" href="#">
+    <img src="{% static 'img/Spotlight-logo.webp' %}" width="100%" height="60" alt="">
+  </a>
+</div>
+<i class="fas fa-bars hamburger-btn inside" id="hamburger-btn-inside"></i>
+<a class="sideLink"  href="#">Welcome, {{ request.user }}</a>
+<a class="sideLink"  href="{% url 'userOrders--page' %}">Home</a>
+<a class="sideLink"  href="#">Users</a>
+<a class="sideLink"  href="{% url 'adminOrders--page' %}">Orders</a>
+<a  class="sideLink" href="#">Files</a>
+<a class="sideLink"  href="#">Log Actions</a>
+<a class="sideLink"  href="{% url 'search_nearby_users' %}">Search</a>
+<a class="sideLink"  href="#">Support</a>
+<a  class="sideLink" href="{% url 'logout' %}">Logout</a>

@@ -1,3 +1,70 @@
+.sidebar {
+  height: 100vh;
+  background-color: #5eb1a7;
+  padding: 10px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000;
+}
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+.sidebar .user-info {
+  text-align: center;
+  color: white;
+  margin-bottom: 30px;
+}
+.sidebar a {
+  color: white;
+  display: block;
+  padding: 10px 15px;
+  text-decoration: none;
+}
+.sidebar .sideLink:hover {
+  background-color: #4b9d91;
+}
+.hamburger-btn {
+  position: absolute;
+  top: 10px;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+.hamburger-btn.outside {
+  left: 10px;
+  color: #5eb1a7;
+  z-index: 1001;
+}
+.hamburger-btn.inside {
+  right: 10px;
+}
+.main-content {
+  margin-left: 250px;
+  padding: 20px;
+  transition: margin-left 0.3s ease-in-out;
+}
+.main-content.fullwidth {
+  margin-left: 0;
+}
+@media (max-width: 768px) {
+  .sidebar {
+      transform: translateX(-100%);
+  }
+  .main-content {
+      margin-left: 0;
+  }
+  .main-content.fullwidth {
+      margin-left: 0;
+  }
+}
+
+
+
+
+
 .statusBtn{
   font-size: 14px !important;
 }
