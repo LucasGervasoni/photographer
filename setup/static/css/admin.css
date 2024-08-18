@@ -88,6 +88,10 @@ ul.errorlist{
   height: 4rem;
 }
 
+#hint_id_username{
+  display: none;
+}
+
 @media screen and (max-width:767px){
   .nav__aside-height{
     height: 30% !important;

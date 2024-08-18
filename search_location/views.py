@@ -1,5 +1,4 @@
 from django.shortcuts import render  # For rendering HTML templates
-from users.models import Profile  # Import the Profile model from the users app
 from main_crud.models import Order  # Import the Order model from the main_crud app
 from django.contrib.auth.decorators import login_required  # To enforce that a user must be logged in to access certain views
 from django.core.paginator import Paginator  # For paginating querysets

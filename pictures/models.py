@@ -1,6 +1,5 @@
 from django.db import models
 from main_crud.models import Order
-from django.contrib.auth.models import User
 import os
 
 from multiselectfield import MultiSelectField
@@ -81,7 +80,7 @@ class UserAction(models.Model):
         ('upload', 'Upload'),
     ]
     
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     action_type = models.CharField(max_length=50, choices=ACTION_CHOICES)
     action_date = models.DateTimeField(auto_now_add=True)
     order_image = models.ForeignKey(OrderImage, on_delete=models.CASCADE, null=True, blank=True)

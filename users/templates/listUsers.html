@@ -1,0 +1,71 @@
+l{% extends 'baseAdmin.html' %}
+{% load static %}
+{% load group_tags %}
+
+
+{% block content %}
+
+  <!-- Filter form -->
+  <form method="get" class="mb-4">
+    <div class="row w-80">
+      <div class="col-lg-3">
+        <label for="search">Search</label>
+        <input type="text" class="form-control"  name="q" value="{{ search_query }}" placeholder="Search users...">
+      </div>
+      <div class="d-flex flex-wrap col-lg-4 align-items-end">
+        <label>&nbsp;</label>
+        <button type="submit" class="btn btn-primary  mr-2">Search</button>
+        <a href="{% url 'register' %}" class="btn btn-outline-info ">+ Create User</a>
+      </div>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <tr>
+        <th scope="col">Username</th>
+        <th scope="col">Full Name</th>
+        <th scope="col">E-mail</th>
+        <th scope="col">Address</th>
+        <th scope="col">Phone 1</th>
+        <th scope="col">Phone 2</th>
+        <th scope="col" colspan="2">Action</th>
+      </tr>
+      {% for user in object_list %}
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>{{ user.first_name }} {{ user.last_name }}</td>
+        <td>{{ user.address }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.phone_1 }}</td>
+        <td>{{ user.phone_2 }}</td>
+        <td>
+          <a title="edit" href="{% url 'updateUser' user.pk %}" class="btn btn-outline-info"><i class="fas fa-pen"></i></a>
+          <a title="delete" href="{% url 'deleteUser' user.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>
+        </td>
+      </tr>
+      {% endfor %}
+      </table>
+  </div>
+
+  {% if is_paginated %}
+    <div class="pagination">
+      <span class="step-links">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ search_query }}&page=1">&laquo; first</a>
+          <a href="?q={{ search_query }}&page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ search_query }}&page={{ page_obj.next_page_number }}">next</a>
+          <a href="?q={{ search_query }}&page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+      </span>
+    </div>
+  {% endif %}
+
+{% endblock %}

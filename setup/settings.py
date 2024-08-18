@@ -170,3 +170,5 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 10000 # or any number you need
 DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024 * 1024  # 500 GB
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+AUTH_USER_MODEL = 'users.CustomUser'
