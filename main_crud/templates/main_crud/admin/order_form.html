@@ -3,14 +3,15 @@
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between">
-  <h2>Create New Order</h2>
+  <h2>{{ title }}</h2>
   <a href="/admin/main_crud/order/import/" class="btn btn-secondary mr-2 align-self-center">Import Orders</a>
 </div>
 <div class="w-50 mr-auto ml-auto mt-4">
   <form method="post">
     {% csrf_token %}
     {{ form|crispy }}
-    <button type="submit" class="btn btn-primary">Create</button>
+    <button type="submit" class="btn btn-primary">{{ button }}</button>
+    <a href="{% url 'adminOrders--page' %}" class="btn btn-dark">Back</a>
   </form>
 </div>
 {% endblock %}

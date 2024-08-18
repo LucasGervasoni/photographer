@@ -102,7 +102,7 @@ l{% extends 'baseAdmin.html' %}
         <p><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
         </td>
-        <td colspan="2">
+        <td >
           {% if request.user.is_superuser or request.user|has_group:"Editor"%}
             {% if order.order_status == "Production" or order.order_status == "Completed" %}
                 <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>
@@ -110,6 +110,10 @@ l{% extends 'baseAdmin.html' %}
                 <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
             {% endif %}
           {% endif %}
+        </td>
+        <td colspan="2">
+              <a title="edit" href="{% url 'order-update' order.pk %}" class="btn btn-outline-info"><i class="fas fa-pen    "></i></a>
+              <a title="delete" href="{% url 'order-delete' order.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>
         </td>
       </tr>
       {% endfor %}

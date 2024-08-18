@@ -1,6 +1,6 @@
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
-from django.views.generic.edit import UpdateView, CreateView
+from django.views.generic.edit import UpdateView, CreateView, DeleteView
 from .models import Order
 from .forms import OrderForm
 from django.urls import reverse_lazy
@@ -12,8 +12,14 @@ from django.db.models import Q
 class OrderCreateView(CreateView):
     model = Order
     form_class = OrderForm
-    template_name = 'main_crud/admin/createOrder_form.html'
-    success_url = reverse_lazy('userOrders--page')
+    template_name = 'main_crud/admin/order_form.html'
+    success_url = reverse_lazy('adminOrders--page')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Create Order'
+        context['button'] = 'Create'
+        return context
 
 
 #List Order for Admin
@@ -69,6 +75,33 @@ class AdminListOrders(LoginRequiredMixin,ListView):
 
                 # Ordena pelo campo order_created_at
                 return queryset.order_by('-order_created_at')
+
+#Update Order
+
+class OrderUpdateView(UpdateView):
+    model = Order
+    form_class = OrderForm
+    template_name = 'main_crud/admin/order_form.html'
+    success_url = reverse_lazy('adminOrders--page')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Update Order'
+        context['button'] = 'Update'
+        return context
+    
+#Delete
+
+class OrderDeleteView(DeleteView):
+    model = Order
+    template_name = 'main_crud/admin/deleteOrder.html'
+    success_url = reverse_lazy('adminOrders--page')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Delete Order'
+        context['button'] = 'Confirm Delete'
+        return context
 
 #List Orders for user
 class UserPageOrders(LoginRequiredMixin,ListView):
