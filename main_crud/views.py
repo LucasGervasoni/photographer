@@ -5,11 +5,14 @@ from .models import Order
 from .forms import OrderForm
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from braces.views import GroupRequiredMixin
 from django.utils.dateparse import parse_date
 from django.db.models import Q
 
 #Create
-class OrderCreateView(CreateView):
+class OrderCreateView(GroupRequiredMixin,LoginRequiredMixin,CreateView):
+    group_required = ['Admin']
+    login_url = reverse_lazy('login')
     model = Order
     form_class = OrderForm
     template_name = 'main_crud/admin/order_form.html'
@@ -23,7 +26,8 @@ class OrderCreateView(CreateView):
 
 
 #List Order for Admin
-class AdminListOrders(LoginRequiredMixin,ListView):
+class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
+        group_required = ['Admin']
         login_url = reverse_lazy('login')
         model = Order
         template_name = "main_crud/admin/adminListOrder.html"
@@ -78,7 +82,9 @@ class AdminListOrders(LoginRequiredMixin,ListView):
 
 #Update Order
 
-class OrderUpdateView(UpdateView):
+class OrderUpdateView(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
+    group_required = ['Admin']
+    login_url = reverse_lazy('login')
     model = Order
     form_class = OrderForm
     template_name = 'main_crud/admin/order_form.html'
@@ -92,7 +98,9 @@ class OrderUpdateView(UpdateView):
     
 #Delete
 
-class OrderDeleteView(DeleteView):
+class OrderDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
+    group_required = ['Admin']
+    login_url = reverse_lazy('login')
     model = Order
     template_name = 'main_crud/admin/deleteOrder.html'
     success_url = reverse_lazy('adminOrders--page')
