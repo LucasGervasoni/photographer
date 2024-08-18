@@ -1,4 +1,4 @@
-l{% extends 'baseAdmin.html' %}
+{% extends 'baseAdmin.html' %}
 {% load static %}
 {% load group_tags %}
 
@@ -15,7 +15,7 @@ l{% extends 'baseAdmin.html' %}
   {% endif %}
 
   <!-- Filter form -->
-  <form method="get" action="{% url 'userOrders--page' %}" class="mb-4">
+  <form method="get" class="mb-4">
     <div class="row">
       <div class="col-lg-2">
         <label for="status">Status</label>
@@ -104,6 +104,13 @@ l{% extends 'baseAdmin.html' %}
       </table>
   </div>
 
+  <div id="loading-spinner" class="d-none" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+
+
   <div class="pagination">
     <ul class="pagination">
       {% if is_paginated %}
@@ -123,5 +130,21 @@ l{% extends 'baseAdmin.html' %}
       {% endif %}
       </ul>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        form.addEventListener('submit', function () {
+            loadingSpinner.classList.remove('d-none');
+        });
+
+        window.addEventListener('pageshow', function () {
+            loadingSpinner.classList.add('d-none');
+        });
+    });
+</script>
+
 
 {% endblock %}

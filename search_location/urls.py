@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import search_nearby_users
+from .views import SearchNearbyUsersView
 
 urlpatterns = [
-    path('search/', search_nearby_users, name='search_nearby_users'),
+    path('search/', SearchNearbyUsersView.as_view(), name='search_nearby_users'),
 ]

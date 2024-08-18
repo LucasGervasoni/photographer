@@ -1,10 +1,6 @@
-{% extends 'base.html' %}
+{% extends 'baseAdmin.html' %}
 {% load static %}
 {% load group_tags %}
-
-{% block title %}
-<title>Spotlight - Search</title>
-{% endblock %}
 
 {% block content %}
   {% if messages %}
@@ -41,26 +37,32 @@
       <tr>
         <th scope="col">Photographer</th>
         <th scope="col">Address</th>
+        <th scope="col">Distance (km)</th>
         <th scope="col" colspan="2">Action</th>
       </tr>
       {% if page_obj %}
       {% for profile, distance in page_obj %}
       <tr>
-        <td>{{ profile.firstName }} {{ profile.lastName }}</td>
-        <td>{{ profile.address }} ({{ distance|floatformat:2 }} km)</td>
+        <td>{{ profile.first_name }} {{ profile.last_name }}</td>
+        <td>{{ profile.address }}</td>
+        <td>{{ distance|floatformat:2 }}</td>
         <td>
-          <a class="btn btn-outline-secondary" href="{% url 'admin:main_crud_order_add' %}?appointment_team_members={{ profile.firstName }}+{{ profile.lastName }}&address={{ address }}" target="_blank">
+          <a class="btn btn-outline-secondary" href="{% url 'admin:main_crud_order_add' %}?appointment_team_members={{ profile.first_name }}+{{ profile.last_name }}&address={{ address }}" target="_blank">
           Add Order
          </a>
         </td>
       </tr>
       {% endfor %}
       {% elif error %}
-      <p>{{ error }}</p>
+      <tr>
+        <td colspan="4">{{ error }}</td>
+      </tr>
       {% else %}
-      <p>No users found.</p>
+      <tr>
+        <td colspan="4">No users found.</td>
+      </tr>
       {% endif %}
-      </table>
+    </table>
   </div>
 
   {% if page_obj.has_other_pages %}

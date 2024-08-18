@@ -125,6 +125,13 @@ l{% extends 'base.html' %}
       </table>
   </div>
 
+  <div id="loading-spinner" class="d-none" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+</div>
+
+
   <div class="pagination">
     <ul class="pagination">
       {% if is_paginated %}
@@ -144,5 +151,21 @@ l{% extends 'base.html' %}
       {% endif %}
       </ul>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('form');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        form.addEventListener('submit', function () {
+            loadingSpinner.classList.remove('d-none');
+        });
+
+        window.addEventListener('pageshow', function () {
+            loadingSpinner.classList.add('d-none');
+        });
+    });
+</script>
+
 
 {% endblock %}

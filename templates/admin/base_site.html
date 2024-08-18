@@ -20,21 +20,8 @@
 <div id="navBar">
   <ul class="d-flex flex-row navbar-nav ml-auto">
     <li class="nav-item mr-2">
-      <a class="nav-link text-body" href="">Welcome, {{ request.user }}</a>
+      <a class="nav-link text-body" href="{% url 'listUsers' %}">Back to Dashboard</a>
     </li>
-    <li class="nav-item">
-      <a class="nav-link text-secondary" href="{% url 'userOrders--page' %}">Orders</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-secondary" href="{% url 'search_nearby_users' %}">Search</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-secondary" href="#">Support</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-secondary" href="{% url 'logout' %}">Logout </a>
-    </li>
-    <li class="nav-item mt-2">
       <button class="theme-toggle">
         <div class="visually-hidden theme-label-when-auto">Toggle theme (current theme: auto)</div>
         <div class="visually-hidden theme-label-when-light">Toggle theme (current theme: light)</div>
