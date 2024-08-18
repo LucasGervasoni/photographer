@@ -29,24 +29,24 @@ class OrderResoucers(resources.ModelResource):
                 row[model_field] = row.pop(xls_column)
         
         
-          # Processamento da coluna 'appointment_date'
+          # Processing the 'appointment_date' column
         if 'appointment_date' in row:
             appointment_date = row['appointment_date']
-            if appointment_date:  # Verifica se a data não é None ou vazia
+            if appointment_date:  # Check if the date is not None or empty
                 try:
-                    # Tenta fazer o parsing da data usando o dateutil.parser
+                    # Try to parse the date using dateutil.parser
                     parsed_date = parser.parse(appointment_date, ignoretz=True)
-                    # Formata a data no formato desejado "2024-08-07 08:00:00"
+                    # Format the date in the desired format "2024-08-07 08:00:00"
                     row['appointment_date'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
                 except (ValueError, TypeError) as e:
                     print(f"Error parsing appointment_date '{appointment_date}': {e}")
-                    row['appointment_date'] = None  # Ou você pode escolher manter o valor original, dependendo do caso de uso
+                    row['appointment_date'] = None  
             else:
                 print("Appointment date is empty or None.")
-                row['appointment_date'] = None  # Definir como None se a data for vazia
+                row['appointment_date'] = None  # Set to None if date is empty
         else:
             print("Appointment date column not found.")
-            row['appointment_date'] = None  # Definir como None se a chave não existir
+            row['appointment_date'] = None  # Set to None if key does not exist
 
        # Check and set order_created_at if not defined
         if 'order_created_at' not in row or not row['order_created_at']:
