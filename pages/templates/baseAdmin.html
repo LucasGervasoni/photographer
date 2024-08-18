@@ -1,8 +1,7 @@
 {% load static %}
-
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,20 +18,21 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar closed" id="sidebar">
-      {% include 'pages/partials/sidebar.html' %}
+        {% include 'pages/partials/sidebar.html' %}
     </div>
 
     <!-- Main content -->
     <div class="main-content fullwidth" id="main-content">
         <!-- Hamburger button outside the sidebar -->
-        <i class="fas fa-bars hamburger-btn outside" id="hamburger-btn-outside"></i>
-        
+        <i class="fas fa-bars hamburger-btn outside mt-3" id="hamburger-btn-outside"></i>
+
         <div class="container-fluid">
-          {% block content %}
-          {% endblock %}
+            {% block content %}
+            {% endblock %}
         </div>
     </div>
 
@@ -42,20 +42,28 @@
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
     <script src="{% static 'js/orderPage.js' %}"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const hamburgerBtnInside = document.getElementById('hamburger-btn-inside');
             const hamburgerBtnOutside = document.getElementById('hamburger-btn-outside');
 
-            function toggleSidebar() {
-                sidebar.classList.toggle('closed');
-                mainContent.classList.toggle('fullwidth');
+            function openSidebar() {
+                sidebar.classList.remove('closed');
+                mainContent.classList.remove('fullwidth');
+                hamburgerBtnOutside.style.display = 'none';
             }
 
-            hamburgerBtnInside.addEventListener('click', toggleSidebar);
-            hamburgerBtnOutside.addEventListener('click', toggleSidebar);
+            function closeSidebar() {
+                sidebar.classList.add('closed');
+                mainContent.classList.add('fullwidth');
+                hamburgerBtnOutside.style.display = 'block';
+            }
+
+            hamburgerBtnOutside.addEventListener('click', openSidebar);
+            hamburgerBtnInside.addEventListener('click', closeSidebar);
         });
+
     </script>
 </body>
 </html>

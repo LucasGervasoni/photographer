@@ -43,7 +43,7 @@ class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
                 
 
                 # Check if the user is not an editor or superuser
-                if not user.is_superuser and not user.groups.filter(name='Editor').exists():
+                if not user.is_superuser and not user.groups.filter(name='Admin').exists():
                         # Filter orders by checking if the username or full name is in the appointment_team_members field
                         queryset = queryset.filter(
                                 Q(appointment_team_members__icontains=user.username) |

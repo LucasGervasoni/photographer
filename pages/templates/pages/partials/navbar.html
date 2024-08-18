@@ -1,4 +1,5 @@
 {% load static %}
+{% load group_tags %}
 
 <nav class="navbar fixed-top navbar-expand-md bg-light mb-3 shadow">
   <a class="navbar-brand font-weight-bold text-dark" href="#">
@@ -20,7 +21,7 @@
       <li class="nav-item">
         <a class="nav-link text-secondary" href="#">Support</a>
       </li>
-      {% if request.user.is_superuser %}
+      {% if request.user.is_superuser or request.user|has_group:"Admin" %}
       <li class="nav-item">
         <a class="nav-link text-secondary" href="{% url 'adminOrders--page' %}">Dashboard</a>
       </li>

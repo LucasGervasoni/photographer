@@ -49,6 +49,7 @@
 .main-content.fullwidth {
   margin-left: 0;
 }
+
 @media (max-width: 768px) {
   .sidebar {
       transform: translateX(-100%);
@@ -60,10 +61,6 @@
       margin-left: 0;
   }
 }
-
-
-
-
 
 .statusBtn{
   font-size: 14px !important;
