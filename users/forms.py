@@ -1,24 +1,28 @@
 from django import forms
+from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 #Login Form
 class LoginForms(forms.Form):
-    login_username=forms.CharField(
-        label='Username', 
-        required=True, 
-        max_length=100,
+    login_username = forms.CharField(
+        label="Username or Email",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    password=forms.CharField(
-        label='Password', 
-        required=True, 
-        max_length=70,
-        widget=forms.PasswordInput()
+    password = forms.CharField(
+        label="Password",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
     )
+    
 
 #Register Form
 class RegisterForms(forms.ModelForm):
+    group = forms.ModelChoiceField(
+        queryset=Group.objects.all(),
+        label="Select Group",
+        required=True
+    )
     password_1 = forms.CharField(
         label='Password',
         required=False,  # Initially set to False; we'll adjust this in __init__

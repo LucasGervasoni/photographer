@@ -172,3 +172,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 500 * 1024 * 1024 * 1024  # 500 GB
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 AUTH_USER_MODEL = 'users.CustomUser'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend', 
+    'users.authentication.EmailOrUsernameModelBackend',  
+]

@@ -24,19 +24,19 @@ def login(request):
         form = LoginForms(request.POST)
 
         if form.is_valid():
-            login_username = form['login_username'].value()
-            password = form['password'].value()
+            login_username = form.cleaned_data['login_username']
+            password = form.cleaned_data['password']
 
-        user = auth.authenticate(
-            request,
-            username=login_username,
-            password=password
-        )
-        if user is not None:
-            auth.login(request, user)
-            return redirect('userOrders--page')
-        else:
-            return redirect('login')
+            user = auth.authenticate(
+                request,
+                username=login_username,
+                password=password
+            )
+            if user is not None:
+                auth.login(request, user)
+                return redirect('userOrders--page')
+            else:
+                return redirect('login')
 
     return render(request, 'login_page.html', {'form': form})
 
@@ -63,6 +63,7 @@ class RegisterView(LoginRequiredMixin, GroupRequiredMixin, FormView):
         phone_1 = form.cleaned_data['phone_1']
         phone_2 = form.cleaned_data['phone_2']
         address = form.cleaned_data['address']
+        group = form.cleaned_data['group']
 
         if User.objects.filter(username=username).exists():
             return redirect('register')
@@ -79,6 +80,9 @@ class RegisterView(LoginRequiredMixin, GroupRequiredMixin, FormView):
             address=address
         )
         user.save()
+
+        # Add user to the selected group
+        group.user_set.add(user)
 
         return super().form_valid(form)
 
@@ -135,6 +139,12 @@ class UserUpdateView(GroupRequiredMixin, LoginRequiredMixin, UpdateView):
                 form.add_error('password_2', 'Passwords do not match')
                 return self.form_invalid(form)
         # Else, if no password provided, we don't change the existing password
+        
+        # Atualiza o grupo do usuário
+        group = form.cleaned_data['group']
+        user.groups.clear()
+        user.groups.add(group)
+        
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):

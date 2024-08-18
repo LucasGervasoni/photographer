@@ -1,4 +1,4 @@
-l{% extends 'baseAdmin.html' %}
+{% extends 'baseAdmin.html' %}
 {% load static %}
 {% load group_tags %}
 
@@ -15,7 +15,8 @@ l{% extends 'baseAdmin.html' %}
       <div class="d-flex flex-wrap col-lg-4 align-items-end">
         <label>&nbsp;</label>
         <button type="submit" class="btn btn-primary  mr-2">Search</button>
-        <a href="{% url 'register' %}" class="btn btn-outline-info ">+ Create User</a>
+        <a href="{% url 'register' %}" class="btn btn-outline-info mr-2">+ Create User</a>
+        <a href="/admin/auth/group/add/" class="btn btn-outline-info ">+ Add Group</a>
       </div>
     </div>
   </form>
