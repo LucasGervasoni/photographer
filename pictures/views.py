@@ -20,8 +20,10 @@ from django.utils.timezone import make_aware
 from datetime import datetime
 from django.utils.dateparse import parse_date
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
-
+import time
 
 # Create your views here.
 class OrderImageDownloadView(LoginRequiredMixin, View):
@@ -62,6 +64,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm()
         return render(request, 'uploadPage.html', {'form': form, 'group_form': group_form, 'order': order})
 
+    @method_decorator(csrf_exempt)
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         form = OrderImageForm(request.POST, request.FILES)
@@ -166,7 +169,6 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')

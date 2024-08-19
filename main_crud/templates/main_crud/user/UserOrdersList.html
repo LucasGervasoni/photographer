@@ -114,9 +114,9 @@ l{% extends 'base.html' %}
         <td colspan="2">
           {% if request.user.is_superuser or request.user|has_group:"Editor"%}
             {% if order.order_status == "Production" or order.order_status == "Completed" %}
-                <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>
+            <a href="#" class="btn btn-outline-dark download-btn" data-order-id="{{ order.pk }}">Download</a>
             {% else %}
-                <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
+            <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
             {% endif %}
           {% endif %}
         </td>
@@ -154,18 +154,47 @@ l{% extends 'base.html' %}
 
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const form = document.querySelector('form');
-        const loadingSpinner = document.getElementById('loading-spinner');
+    const downloadButtons = document.querySelectorAll('.download-btn');
 
-        form.addEventListener('submit', function () {
-            loadingSpinner.classList.remove('d-none');
-        });
+    downloadButtons.forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            const orderId = this.getAttribute('data-order-id');
+            const spinner = document.getElementById('loading-spinner');
 
-        window.addEventListener('pageshow', function () {
-            loadingSpinner.classList.add('d-none');
+            spinner.classList.remove('d-none');
+
+            // Trigger the download
+            fetch(`/orders/${orderId}/download/`)
+                .then(response => {
+                    if (response.status === 200) {
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        const fileName = contentDisposition.split('filename=')[1].trim().replace(/"/g, '');
+                        return response.blob().then(blob => ({ blob, fileName }));
+                    } else {
+                        throw new Error('Download failed');
+                    }
+                })
+                .then(({ blob, fileName }) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = fileName; // Use the dynamic filename
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    alert('Error preparing the download. Please try again.');
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    spinner.classList.add('d-none');
+                });
         });
     });
-</script>
+});
 
-
+  </script>
 {% endblock %}
