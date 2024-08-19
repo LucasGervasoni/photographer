@@ -48,32 +48,30 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-  // Get the elements
-  var servicesField = document.getElementById('id_services');
-  var scanUrlField = document.getElementById('id_scan_url');
-  
-  // Function to enable or disable the URL field based on the services selection
-  function updateScanUrlField() {
-    var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
-      .map(checkbox => checkbox.value);
-    if (selectedServices.includes('3d scan')) {
-      scanUrlField.disabled = false;
-    } else {
-      scanUrlField.disabled = true;
-      scanUrlField.value = ''; // Optionally clear the field if not enabled
-    }
-  }
-  
-  // Attach event listeners to checkboxes
-  servicesField.addEventListener('change', updateScanUrlField);
-  
-  // Initial check on page load
-  updateScanUrlField();
-});
-
-
   document.addEventListener('DOMContentLoaded', function () {
+      // Get the elements
+      var servicesField = document.getElementById('id_services');
+      var scanUrlField = document.getElementById('id_scan_url');
+      
+      // Function to enable or disable the URL field based on the services selection
+      function updateScanUrlField() {
+          var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value);
+          if (selectedServices.includes('3d scan')) {
+              scanUrlField.disabled = false;
+          } else {
+              scanUrlField.disabled = true;
+              scanUrlField.value = ''; // Optionally clear the field if not enabled
+          }
+      }
+      
+      // Attach event listeners to checkboxes
+      servicesField.addEventListener('change', updateScanUrlField);
+      
+      // Initial check on page load
+      updateScanUrlField();
+
+      // File upload batching logic
       document.getElementById('uploadForm').onsubmit = function (e) {
           e.preventDefault();  // Prevent the default form submission
 
@@ -130,6 +128,7 @@
       }
   });
 </script>
+
 
 <br>
 {% endblock %}
