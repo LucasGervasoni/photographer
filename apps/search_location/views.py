@@ -4,7 +4,7 @@ from django.views import View
 from braces.views import GroupRequiredMixin
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
-from users.models import CustomUser
+from apps.users.models import CustomUser
 from django.core.paginator import Paginator  # For paginating querysets
 from django.contrib.auth.models import Group  # To work with user groups
 from geopy.distance import geodesic  # For calculating distances between geographic coordinates

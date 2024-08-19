@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import OrderImage, UserAction, OrderImageGroup
-from .forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
-from main_crud.models import Order
+from apps.pictures.models import OrderImage, UserAction, OrderImageGroup
+from apps.pictures.forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
+from apps.main_crud.models import Order
 
 from django.views.generic import View, ListView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -26,6 +26,8 @@ from django.core.paginator import Paginator
 import time
 
 # Create your views here.
+
+# Download
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -115,6 +117,8 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'redirect_url': reverse('order_images', args=[order.pk])})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
+    
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -169,6 +173,8 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
+    
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
@@ -231,7 +237,7 @@ class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
         return context
     
     
-#Delete
+#Delete Files uploaded
 
 class FileDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
     group_required = ['Admin']
@@ -288,7 +294,7 @@ class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
         return context
     
 
-#Delete
+#Delete Logs
 
 class LogDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
     group_required = ['Admin']

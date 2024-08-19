@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Order
+from apps.main_crud.models import Order
 
 from import_export.admin import ImportExportModelAdmin
 from import_export import resources

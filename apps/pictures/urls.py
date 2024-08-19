@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import  OrderImageListView, OrderImageUploadView, OrderImageDownloadView, PhotographerImageUploadView, FilesListView, FileDeleteView, LogListView, LogDeleteView
+from apps.pictures.views import  OrderImageListView, OrderImageUploadView, OrderImageDownloadView, PhotographerImageUploadView, FilesListView, FileDeleteView, LogListView, LogDeleteView
 
 urlpatterns = [
     #UPLOAD

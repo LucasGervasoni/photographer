@@ -1,5 +1,5 @@
 
 from django.contrib import admin
-from pictures.models import OrderImage
+from apps.pictures.models import OrderImage
 
 admin.site.register(OrderImage)

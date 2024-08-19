@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserPageOrders, UpdateOrderStatusView,OrderCreateView,AdminListOrders,OrderUpdateView, OrderDeleteView
+from apps.main_crud.views import UserPageOrders, UpdateOrderStatusView,OrderCreateView,AdminListOrders,OrderUpdateView, OrderDeleteView
 
 urlpatterns = [
   #CREATE

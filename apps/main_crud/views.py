@@ -1,8 +1,8 @@
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
 from django.views.generic.edit import UpdateView, CreateView, DeleteView
-from .models import Order
-from .forms import OrderForm
+from apps.main_crud.models import Order
+from apps.main_crud.forms import OrderForm
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from braces.views import GroupRequiredMixin

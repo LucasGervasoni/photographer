@@ -1,5 +1,5 @@
 from django import forms
-from .models import OrderImage, OrderImageGroup
+from apps.pictures.models import OrderImage, OrderImageGroup
 
 class OrderImageForm(forms.ModelForm):
     class Meta:

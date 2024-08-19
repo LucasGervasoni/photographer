@@ -7,9 +7,13 @@ from django.conf.urls.static import static
 
 urlpatterns = [
         path('admin/', admin.site.urls),
-        path('', include('pages.urls')),
-        path('', include('users.urls')),
-        path('', include('main_crud.urls')),
-        path('', include('pictures.urls')),
-        path('', include('search_location.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+        path('', include('apps.pages.urls')),
+        path('', include('apps.users.urls')),
+        path('', include('apps.main_crud.urls')),
+        path('', include('apps.pictures.urls')),
+        path('', include('apps.search_location.urls')),
+] 
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

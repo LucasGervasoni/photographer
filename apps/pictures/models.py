@@ -1,5 +1,5 @@
 from django.db import models
-from main_crud.models import Order
+from apps.main_crud.models import Order
 import os
 
 from multiselectfield import MultiSelectField

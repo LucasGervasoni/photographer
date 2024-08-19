@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 
-from .forms import LoginForms, RegisterForms
-from .models import CustomUser
+from apps.users.forms import LoginForms, RegisterForms
+from apps.users.models import CustomUser
 from django.contrib.auth import get_user_model
 #Authentication
 from django.contrib.auth.models import User

@@ -30,11 +30,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'pages.apps.PagesConfig',
-    'users.apps.UsersConfig',
-    'main_crud.apps.MainCrudConfig',
-    'pictures.apps.PicturesConfig',
-    'search_location.apps.SearchLocationConfig',
+    'apps.pages.apps.PagesConfig',
+    'apps.users.apps.UsersConfig',
+    'apps.main_crud.apps.MainCrudConfig',
+    'apps.pictures.apps.PicturesConfig',
+    'apps.search_location.apps.SearchLocationConfig',
     'rangefilter',
     "crispy_forms",
     "crispy_bootstrap4",
@@ -77,27 +77,27 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         "NAME": "setup",
-#         "USER": "postgres",
-#         "PASSWORD": str(os.getenv('PASSWORD')),
-#         "HOST": "localhost",
-#         "PORT": "5432",
-#     }
-# }
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": "d32j7nh0t3pgmt",
-        "USER": "ua53crts74evtq",
-        "PASSWORD": "p476354ab3b72ee648ef468d50df96e14a00c36b51d31d1fd7a7e49f3f0c7a194",
-        "HOST": "c6sfjnr30ch74e.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",
+        "NAME": "setup",
+        "USER": "postgres",
+        "PASSWORD": str(os.getenv('PASSWORD')),
+        "HOST": "localhost",
         "PORT": "5432",
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         "NAME": "d32j7nh0t3pgmt",
+#         "USER": "ua53crts74evtq",
+#         "PASSWORD": "p476354ab3b72ee648ef468d50df96e14a00c36b51d31d1fd7a7e49f3f0c7a194",
+#         "HOST": "c6sfjnr30ch74e.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",
+#         "PORT": "5432",
+#     }
+# }
 
 
 # Password validation
@@ -176,5 +176,5 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend', 
-    'users.authentication.EmailOrUsernameModelBackend',  
+    'apps.users.authentication.EmailOrUsernameModelBackend',  
 ]
