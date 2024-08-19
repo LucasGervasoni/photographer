@@ -6,7 +6,7 @@ from main_crud.models import Order
 from django.views.generic import View, ListView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from braces.views import GroupRequiredMixin
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 
 from django.contrib import messages  # Import the messages module
 
@@ -19,6 +19,9 @@ from django.db.models import Q
 from django.utils.timezone import make_aware
 from datetime import datetime
 from django.utils.dateparse import parse_date
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+
 
 # Create your views here.
 class OrderImageDownloadView(LoginRequiredMixin, View):
@@ -61,7 +64,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        files = request.FILES.getlist('image')
         form = OrderImageForm(request.POST, request.FILES)
         group_form = OrderImageGroupForm(request.POST)
 
@@ -71,7 +73,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             image_group.save()
 
             images = []
-            for index, f in enumerate(files):
+            for index, f in enumerate(request.FILES.getlist('image')):
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
                 
                 order_image = OrderImage(
@@ -82,7 +84,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
                 order_image.save()
-                
+
                 # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
                 
@@ -91,7 +93,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     order_image.save()
                 
                 images.append(order_image)
-            
+
             # Update order status
             order.order_status = 'Production'
             order.save()
@@ -107,11 +109,9 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
-            return redirect('order_images', pk=order.pk)
+            return JsonResponse({'status': 'success', 'redirect_url': reverse('order_images', args=[order.pk])})
         
-        messages.error(request, 'Error uploading images. Please try again.')
-        return render(request, 'uploadPage.html', {'form': form, 'group_form': group_form, 'order': order})
-
+        return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -126,7 +126,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         files = request.FILES.getlist('image')
         form = PhotographerImageForm(request.POST, request.FILES)
         group_form = OrderImageGroupForm(request.POST)
-        
+
         if form.is_valid() and group_form.is_valid():
             image_group = group_form.save(commit=False)
             image_group.order = order
@@ -135,23 +135,23 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             images = []
             for index, f in enumerate(files):
                 f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
-                
+
                 order_image = OrderImage(
-                    order=order, 
+                    order=order,
                     image=f,
                     group=image_group  # Connect image to group
                 )
                 order_image.save()
-                
+
                 # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
-                
+
                 # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
-                
+
                 images.append(order_image)
-            
+
             # Log the upload actions
             user_actions = [
                 UserAction(
@@ -162,22 +162,25 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 ) for image in images
             ]
             UserAction.objects.bulk_create(user_actions)
-            
-            return redirect('order_images', pk=order.pk)
-        
-        messages.error(request, 'Error uploading images. Please try again.')
-        return render(request, 'uploadNewPhotos.html', {'form': form, 'group_form': group_form, 'order': order})
 
+            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
+        return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.all()
+        images = order.image.all().order_by('uploaded_at') 
+        paginator = Paginator(images, 20) 
+        
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
         image_count = images.count()
-        return render(request, 'listImage.html', {'order': order, 'images': images, 'image_count': image_count})
+        return render(request, 'listImage.html', {'order': order, 'page_obj': page_obj, 'image_count': image_count})
 
 
 #List Group of Files uploaded

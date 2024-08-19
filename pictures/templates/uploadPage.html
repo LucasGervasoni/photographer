@@ -61,85 +61,54 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-      // Get the elements
-      var servicesField = document.getElementById('id_services');
-      var scanUrlField = document.getElementById('id_scan_url');
-      
-      // Function to enable or disable the URL field based on the services selection
-      function updateScanUrlField() {
-          var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
-            .map(checkbox => checkbox.value);
-          if (selectedServices.includes('3d scan')) {
-              scanUrlField.disabled = false;
-          } else {
-              scanUrlField.disabled = true;
-              scanUrlField.value = ''; // Optionally clear the field if not enabled
-          }
+  document.addEventListener('DOMContentLoaded', function() {
+    var servicesField = document.getElementById('id_services');
+    var scanUrlField = document.getElementById('id_scan_url');
+    
+    function updateScanUrlField() {
+      var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
+        .map(checkbox => checkbox.value);
+      if (selectedServices.includes('3d scan')) {
+        scanUrlField.disabled = false;
+      } else {
+        scanUrlField.disabled = true;
+        scanUrlField.value = ''; // Optionally clear the field if not enabled
       }
-      
-      // Attach event listeners to checkboxes
-      servicesField.addEventListener('change', updateScanUrlField);
-      
-      // Initial check on page load
-      updateScanUrlField();
-
-      // File upload batching logic
-      document.getElementById('uploadForm').onsubmit = function (e) {
-          e.preventDefault();  // Prevent the default form submission
-
-          const files = document.querySelector('input[name="image"]').files;
-          const batchSize = 10;  // Define the batch size
-          const totalBatches = Math.ceil(files.length / batchSize);
-          let currentBatch = 0;
-
-          document.getElementById('loadingSpinner').style.display = 'block';
-
-          function uploadBatch(batchIndex) {
-              let formData = new FormData();
-              for (let i = batchIndex * batchSize; i < (batchIndex + 1) * batchSize && i < files.length; i++) {
-                  formData.append('image', files[i]);
-              }
-
-              // Append other form data
-              const photosSent = document.getElementById('id_photos_sent').value;
-              const photosReturned = document.getElementById('id_photos_returned').value;
-              formData.append('photos_sent', photosSent);
-              formData.append('photos_returned', photosReturned);
-
-              // Perform the AJAX upload
-              fetch(window.location.href, {
-                  method: 'POST',
-                  body: formData,
-                  headers: {
-                      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                  }
-              }).then(response => {
-                  if (response.ok) {
-                      currentBatch++;
-                      updateProgress(currentBatch, totalBatches);
-                      if (currentBatch < totalBatches) {
-                          uploadBatch(currentBatch);
-                      } else {
-                          window.location.href = window.location.href;  // Reload or redirect after completion
-                      }
-                  } else {
-                      console.error('Upload failed.');
-                  }
-              }).catch(error => {
-                  console.error('Error:', error);
-              });
-          }
-
-          // Start uploading the first batch
-          uploadBatch(currentBatch);
-      };
-
-      function updateProgress(currentBatch, totalBatches) {
-          const progress = Math.ceil((currentBatch / totalBatches) * 100);
-          document.getElementById('loadingSpinner').innerHTML = `Uploading... ${progress}% completed`;
-      }
+    }
+    
+    servicesField.addEventListener('change', updateScanUrlField);
+    updateScanUrlField();
   });
+
+  document.getElementById('uploadForm').onsubmit = async function (e) {
+    e.preventDefault(); // Prevent the default form submission
+
+    var formData = new FormData(this);
+    var spinner = document.getElementById('loadingSpinner');
+    var submitButton = document.querySelector('button[type="submit"]');
+
+    spinner.style.display = 'block';
+    submitButton.disabled = true;
+
+    try {
+      let response = await fetch("{% url 'order_image_upload' pk=order.pk %}", {
+        method: 'POST',
+        body: formData
+      });
+
+      let result = await response.json();
+      if (result.status === 'success') {
+        window.location.href = result.redirect_url; // Redirect on success
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      spinner.style.display = 'none';
+      submitButton.disabled = false;
+    }
+  };
 </script>
 
 <br>
