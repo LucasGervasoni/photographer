@@ -7,13 +7,18 @@ from django.conf import settings
 import rawpy
 from PIL import Image
 from django.core.files.base import ContentFile
+from django.core.files.storage import get_storage_class
 # # Create your models here.
 
 # Function to generate the upload path
 def order_image_path(instance, filename):
     order_address = instance.order.address.replace(' ', '_')
     group_count = OrderImageGroup.objects.filter(order=instance.order).count()
-    return os.path.join('media', order_address, f'{order_address}.{group_count:02d}', filename)
+    
+    # Adjust the path to be compatible with S3 storage
+    path = f'{order_address}/{order_address}.{group_count:02d}/{filename}'
+    
+    return path
 
 
 # Model base for image
@@ -61,14 +66,22 @@ class OrderImage(models.Model):
     def convert_to_jpeg(self):
         file_extension = self.image.name.split('.')[-1].lower()
         if file_extension in ['raw', 'dng', 'arw']:
-            with rawpy.imread(self.image.path) as raw:
+            with rawpy.imread(self.image) as raw:
                 rgb = raw.postprocess()
 
             image = Image.fromarray(rgb)
             image_io = ContentFile(b'')
             image.save(image_io, format='JPEG')
 
-            self.converted_image.save(f'{self.image.name.split(".")[0]}.jpeg', image_io, save=False)
+            # Use the custom S3 storage backend to save the converted image
+            storage = get_storage_class('custom_storages.ConvertedImagesStorage')()
+            converted_image_name = f'{self.image.name.split(".")[0]}.jpeg'
+            converted_image_path = os.path.join(settings.CONVERTED_IMAGES_DIR, converted_image_name)
+            
+            # Save the converted image to S3
+            self.converted_image.name = storage.save(converted_image_path, image_io)
+            self.save()  # Save the model instance with the converted image
+
             return self.converted_image.url
         return None
 

@@ -64,20 +64,21 @@
         headers: {
           'X-CSRFToken': '{{ csrf_token }}',
         },
-      }).then(response => response.json())
-        .then(data => {
-          loadingSpinner.style.display = 'none';
+      })
+      .then(response => response.json())
+      .then(data => {
+        loadingSpinner.style.display = 'none';
 
-          if (data.status === 'success') {
-            window.location.href = "{% url 'userOrders--page' %}";  // Redirect to userOrders page
-          } else {
-            alert(data.message);
-          }
-        })
-        .catch(error => {
-          loadingSpinner.style.display = 'none';
-          alert('Error uploading images. Please try again.');
-        });
+        if (data.status === 'success') {
+          window.location.href = "{% url 'userOrders-page' %}";  // Redirect to userOrders page
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(error => {
+        loadingSpinner.style.display = 'none';
+        alert('Error uploading images. Please try again.');
+      });
     });
 
     // Additional logic for enabling/disabling the 3D scan URL field
@@ -99,5 +100,6 @@
     updateScanUrlField();
   });
 </script>
+
 <br>
 {% endblock %}

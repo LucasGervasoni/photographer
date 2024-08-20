@@ -24,6 +24,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 import time
+from django.core.files.storage import default_storage
 
 # Create your views here.
 
@@ -46,9 +47,13 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
-                image_path = image.image.path
-                relative_path = os.path.relpath(image_path, 'media')
-                zip_file.write(image_path, relative_path)
+                # Get the file from S3
+                file_path = image.image.name
+                file_obj = default_storage.open(file_path)
+                file_data = file_obj.read()
+
+                # Add file to the zip file
+                zip_file.writestr(os.path.basename(file_path), file_data)
 
         buffer.seek(0)
         response = HttpResponse(buffer, content_type='application/zip')
@@ -59,12 +64,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
-
-    def get(self, request, pk):
-        order = get_object_or_404(Order, pk=pk)
-        form = OrderImageForm()
-        group_form = OrderImageGroupForm()
-        return render(request, 'uploadPage.html', {'form': form, 'group_form': group_form, 'order': order})
 
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
@@ -79,11 +78,16 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
-                f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
-                
+                # Rename the file before uploading
+                f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
+
+                # Save the file directly to S3
+                file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
+                s3_file = default_storage.save(file_path, f)
+
                 order_image = OrderImage(
                     order=order,
-                    image=f,
+                    image=s3_file,
                     group=image_group,
                     photos_sent=form.cleaned_data.get('photos_sent'),
                     photos_returned=form.cleaned_data.get('photos_returned')
@@ -92,16 +96,12 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
                 # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
-                
+
                 # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
-                
-                images.append(order_image)
 
-            # Update order status
-            order.order_status = 'Production'
-            order.save()
+                images.append(order_image)
 
             # Register user actions
             user_actions = [
@@ -114,10 +114,9 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
-            return JsonResponse({'status': 'success', 'redirect_url': reverse('order_images', args=[order.pk])})
+            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
     
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
@@ -141,12 +140,17 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
 
             images = []
             for index, f in enumerate(files):
-                f.name = f'Spotlight{index + 1:02d}{f.name[f.name.rfind("."):]}'  # Ex: Spotlight01.jpg
+                # Rename the file before uploading
+                f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
+
+                # Save the file directly to S3
+                file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
+                s3_file = default_storage.save(file_path, f)
 
                 order_image = OrderImage(
                     order=order,
-                    image=f,
-                    group=image_group  # Connect image to group
+                    image=s3_file,
+                    group=image_group
                 )
                 order_image.save()
 
@@ -173,7 +177,6 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
     
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):

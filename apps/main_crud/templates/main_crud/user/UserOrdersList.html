@@ -9,192 +9,192 @@ l{% extends 'base.html' %}
 {% endblock %}
 
 {% block content %}
-  {% if messages %}
-      <div class="messages mb-4">
-        {% for message in messages %}
-          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
-          </div>
-        {% endfor %}
-      </div>
-  {% endif %}
+{% if messages %}
+<div class="messages mb-4">
+  {% for message in messages %}
+  <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
-  <h2 class="mb-4">Your Orders:</h2>
+<h2 class="mb-4">Your Orders:</h2>
 
-  <!-- Filter form -->
-  <form method="get" action="{% url 'userOrders--page' %}" class="mb-4">
-    <div class="row">
-      <div class="col-md-2">
-        <label for="status">Status</label>
-        <select name="status" id="status" class="form-control">
-          <option value="">All</option>
-          <option value="Not Uploaded">Not Uploaded</option>
-          <option value="Production">Production</option>
-          <option value="Completed">Completed</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label for="search">Search</label>
-        <input type="text" name="search" id="search" class="form-control" placeholder="Search...">
-      </div>
-      <div class="col-md-2">
-        <label for="start_date">Start Date</label>
-        <input type="date" name="start_date" id="start_date" class="form-control">
-      </div>
-      <div class="col-md-2">
-        <label for="end_date">End Date</label>
-        <input type="date" name="end_date" id="end_date" class="form-control">
-      </div>
-      <div class="col-md-1">
-        <label>&nbsp;</label>
-        <button type="submit" class="btn btn-primary form-control">Filter</button>
-      </div>
-      {% if request.user.is_superuser %}
-      <div class="col-md-2 align-self-end">
-        <a href="{% url 'order-create' %}" class="btn btn-outline-primary">+ Create Order</a>
-      </div>
-      {% endif %}
+<!-- Filter form -->
+<form method="get" action="{% url 'userOrders--page' %}" class="mb-4">
+  <div class="row">
+    <div class="col-md-2">
+      <label for="status">Status</label>
+      <select name="status" id="status" class="form-control">
+        <option value="">All</option>
+        <option value="Not Uploaded">Not Uploaded</option>
+        <option value="Production">Production</option>
+        <option value="Completed">Completed</option>
+      </select>
     </div>
-  </form>
+    <div class="col-md-2">
+      <label for="search">Search</label>
+      <input type="text" name="search" id="search" class="form-control" placeholder="Search...">
+    </div>
+    <div class="col-md-2">
+      <label for="start_date">Start Date</label>
+      <input type="date" name="start_date" id="start_date" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <label for="end_date">End Date</label>
+      <input type="date" name="end_date" id="end_date" class="form-control">
+    </div>
+    <div class="col-md-1">
+      <label>&nbsp;</label>
+      <button type="submit" class="btn btn-primary form-control">Filter</button>
+    </div>
+    {% if request.user.is_superuser %}
+    <div class="col-md-2 align-self-end">
+      <a href="{% url 'order-create' %}" class="btn btn-outline-primary">+ Create Order</a>
+    </div>
+    {% endif %}
+  </div>
+</form>
 
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <tr>
-        <th scope="col">Photographer</th>
-        <th scope="col">Scheduled</th>
-        <th scope="col">Address</th>
-        <th scope="col">Created At</th>
-        <th scope="col" colspan="2">Action</th>
-      </tr>
-      {% for order in object_list %}
-      <tr>
-        <td>{{ order.appointment_team_members }}</td>
-        <td>{{ order.appointment_date }}</td>
-        <td>{{ order.address }}</td>
-        <td>{{ order.order_created_at }}</td>
-        <td class="d-flex align-items-center justify-content-center">
-          <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
-          <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
-          {% if not request.user.is_superuser and not request.user|has_group:"Editor" %}
-          {% if order.order_status == "Production" or order.order_status == "Completed" %}
-            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Files</a>
-          {% else %}
-            <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2 disabled">+ Files</a>
-          {% endif %}
-            {% if order.order_status == "Production" or order.order_status == "Completed" %}
-              <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2 disabled">Upload</a>
-            {% else %}
-              <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2 ">Upload</a>
-            {% endif %}
-          {% endif %}
-        </td>
-      </tr>
-      <tr class="d-none listInfo" id="listInfo">
-        <td>
-          <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
-        </td>
-        <td>
-          <p class="text-capitalize"><strong>Services:</strong>  {{ order.appointment_items }}</p>
-        </td>
-        <td>
-          {% if request.user.is_superuser %}
-          <form class="d-flex" method="post" action="{% url 'update_order_status' order.id %}">
-            {% csrf_token %}
-            <label class="mt-2 mr-2" style="font-weight: bold;" for="order_status">Status:</label>
-            <select name="order_status" class="form-control" onchange="this.form.submit()">
-                <option value="Not Uploaded" {% if order.order_status == 'Not Uploaded' %}selected{% endif %}>Not Uploaded</option>
-                <option value="Production" {% if order.order_status == 'Production' %}selected{% endif %}>Production</option>
-                <option value="Completed" {% if order.order_status == 'Completed' %}selected{% endif %}>Completed</option>
-            </select>
+<div class="table-responsive">
+  <table class="table table-striped">
+    <tr>
+      <th scope="col">Photographer</th>
+      <th scope="col">Scheduled</th>
+      <th scope="col">Address</th>
+      <th scope="col">Created At</th>
+      <th scope="col" colspan="2">Action</th>
+    </tr>
+    {% for order in object_list %}
+    <tr>
+      <td>{{ order.appointment_team_members }}</td>
+      <td>{{ order.appointment_date }}</td>
+      <td>{{ order.address }}</td>
+      <td>{{ order.order_created_at }}</td>
+      <td class="d-flex align-items-center justify-content-center">
+        <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
+        <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
+        {% if not request.user.is_superuser and not request.user|has_group:"Editor" %}
+        {% if order.order_status == "Production" or order.order_status == "Completed" %}
+        <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Files</a>
+        {% else %}
+        <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2 disabled">+ Files</a>
+        {% endif %}
+        {% if order.order_status == "Production" or order.order_status == "Completed" %}
+        <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2 disabled">Upload</a>
+        {% else %}
+        <a href="{% url 'order_image_upload' order.id %}" class="btn btn-outline-secondary ml-2 ">Upload</a>
+        {% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    <tr class="d-none listInfo" id="listInfo">
+      <td>
+        <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
+      </td>
+      <td>
+        <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items }}</p>
+      </td>
+      <td>
+        {% if request.user.is_superuser %}
+        <form class="d-flex" method="post" action="{% url 'update_order_status' order.id %}">
+          {% csrf_token %}
+          <label class="mt-2 mr-2" style="font-weight: bold;" for="order_status">Status:</label>
+          <select name="order_status" class="form-control" onchange="this.form.submit()">
+            <option value="Not Uploaded" {% if order.order_status=='Not Uploaded' %}selected{% endif %}>Not Uploaded</option>
+            <option value="Production" {% if order.order_status=='Production' %}selected{% endif %}>Production</option>
+            <option value="Completed" {% if order.order_status=='Completed' %}selected{% endif %}>Completed</option>
+          </select>
         </form>
         {% else %}
         <p><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
-        </td>
-        <td colspan="2">
-          {% if request.user.is_superuser or request.user|has_group:"Editor"%}
-            {% if order.order_status == "Production" or order.order_status == "Completed" %}
-            <a href="#" class="btn btn-outline-dark download-btn" data-order-id="{{ order.pk }}">Download</a>
-            {% else %}
-            <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
-            {% endif %}
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-      </table>
-  </div>
+      </td>
+      <td colspan="2">
+        {% if request.user.is_superuser or request.user|has_group:"Editor"%}
+        {% if order.order_status == "Production" or order.order_status == "Completed" %}
+        <a href="#" class="btn btn-outline-dark download-btn" data-order-id="{{ order.pk }}">Download</a>
+        {% else %}
+        <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
+        {% endif %}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
 
-  <div id="loading-spinner" class="d-none" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">Loading...</span>
-    </div>
+<div id="loading-spinner" class="d-none" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+  <div class="spinner-border" role="status">
+    <span class="sr-only">Loading...</span>
+  </div>
 </div>
 
 
-  <div class="pagination">
-    <ul class="pagination">
-      {% if is_paginated %}
-        {% if page_obj.has_previous %}
-          <li class="page-item"><a class="page-link" href="?page=1">&laquo; first</a></li>
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-        {% endif %}
-  
-        <li class="current page-item">
-         <a class="page-link"> Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</a>
-        </li>
-  
-        {% if page_obj.has_next %}
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a></li>
-        {% endif %}
-      {% endif %}
-      </ul>
-  </div>
+<div class="pagination">
+  <ul class="pagination">
+    {% if is_paginated %}
+    {% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page=1">&laquo; first</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+    {% endif %}
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    <li class="current page-item">
+      <a class="page-link"> Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</a>
+    </li>
+
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a></li>
+    {% endif %}
+    {% endif %}
+  </ul>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
     const downloadButtons = document.querySelectorAll('.download-btn');
 
     downloadButtons.forEach(button => {
-        button.addEventListener('click', function (e) {
-            e.preventDefault();
-            const orderId = this.getAttribute('data-order-id');
-            const spinner = document.getElementById('loading-spinner');
+      button.addEventListener('click', function (e) {
+        e.preventDefault();
+        const orderId = this.getAttribute('data-order-id');
+        const spinner = document.getElementById('loading-spinner');
 
-            spinner.classList.remove('d-none');
+        spinner.classList.remove('d-none');
 
-            // Trigger the download
-            fetch(`/orders/${orderId}/download/`)
-                .then(response => {
-                    if (response.status === 200) {
-                        const contentDisposition = response.headers.get('Content-Disposition');
-                        const fileName = contentDisposition.split('filename=')[1].trim().replace(/"/g, '');
-                        return response.blob().then(blob => ({ blob, fileName }));
-                    } else {
-                        throw new Error('Download failed');
-                    }
-                })
-                .then(({ blob, fileName }) => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = fileName; // Use the dynamic filename
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(error => {
-                    alert('Error preparing the download. Please try again.');
-                    console.error('Error:', error);
-                })
-                .finally(() => {
-                    spinner.classList.add('d-none');
-                });
-        });
+        // Trigger the download
+        fetch(`/orders/${orderId}/download/`)
+          .then(response => {
+            if (response.status === 200) {
+              const contentDisposition = response.headers.get('Content-Disposition');
+              const fileName = contentDisposition.split('filename=')[1].trim().replace(/"/g, '');
+              return response.blob().then(blob => ({ blob, fileName }));
+            } else {
+              throw new Error('Download failed');
+            }
+          })
+          .then(({ blob, fileName }) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName; // Use the dynamic filename
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+          })
+          .catch(error => {
+            alert('Error preparing the download. Please try again.');
+            console.error('Error:', error);
+          })
+          .finally(() => {
+            spinner.classList.add('d-none');
+          });
+      });
     });
-});
+  });
+</script>
 
-  </script>
 {% endblock %}

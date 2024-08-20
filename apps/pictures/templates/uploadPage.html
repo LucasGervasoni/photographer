@@ -8,108 +8,147 @@
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
 <form id="uploadForm" action="" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
-    <div class="box__input mb-4 align-self-center">
-      <input class="fileInput" type="file" accept="*" name="image" multiple>
-    </div>
-
-    <!-- Editor Note -->
-    <div class="form-group w-50">
-      <label for="id_editor_note">Editor Note:</label>
-      <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
-    </div>
-
-    <!-- Selected Service -->
-    <div class="form-group w-50">
-        <label for="id_services">Services:</label>
-        {{ group_form.services }}
-    </div>
-
-    <!-- 3D Scan URL -->
-    <div class="form-group w-50">
-      <label for="id_scan_url">3D Scan URL (if applicable):</label>
-      <input class="form-control" type="url" name="scan_url" placeholder="Enter URL for 3d scan" maxlength="200" id="id_scan_url" disabled="">
-    </div>
-
-     <div class="d-flex flex-wrap w-50">
-        <!-- Photos Sent -->
-        <div class="form-group mr-2">
-          <label for="id_photos_sent">Assets to be uploaded:</label>
-          <input class="form-control" type="number" name="photos_sent" min="0" required="" id="id_photos_sent">
+    {% csrf_token %}
+    <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
+        <div class="box__input mb-4 align-self-center">
+            <input class="fileInput" type="file" accept="*" name="image" multiple>
         </div>
-    
-        <!-- Photos Returned -->
-        <div class="form-group">
-          <label for="id_photos_returned">Assets to be returned:</label>
-          <input class="form-control" type="number" name="photos_returned" min="0" required="" id="id_photos_returned">
-        </div>
-     </div>
 
-    <div class="d-flex justify-content-between w-50">
-      <a class="btn btn-info" href="{% url 'userOrders--page' %}">Back to Orders</a>
-      <button class="btn btn-success" type="submit">Upload</button>
+        <!-- Editor Note -->
+        <div class="form-group w-50">
+            <label for="id_editor_note">Editor Note:</label>
+            <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
+        </div>
+
+        <!-- Selected Service -->
+        <div class="form-group w-50">
+            <label for="id_services">Services:</label>
+            {{ group_form.services }}
+        </div>
+
+        <!-- 3D Scan URL -->
+        <div class="form-group w-50">
+            <label for="id_scan_url">3D Scan URL (if applicable):</label>
+            <input class="form-control" type="url" name="scan_url" placeholder="Enter URL for 3d scan" maxlength="200" id="id_scan_url" disabled="">
+        </div>
+
+        <div class="d-flex flex-wrap w-50">
+            <!-- Photos Sent -->
+            <div class="form-group mr-2">
+                <label for="id_photos_sent">Assets to be uploaded:</label>
+                <input class="form-control" type="number" name="photos_sent" min="0" required="" id="id_photos_sent">
+            </div>
+
+            <!-- Photos Returned -->
+            <div class="form-group">
+                <label for="id_photos_returned">Assets to be returned:</label>
+                <input class="form-control" type="number" name="photos_returned" min="0" required="" id="id_photos_returned">
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between w-50">
+            <a class="btn btn-info" href="{% url 'userOrders--page' %}">Back to Orders</a>
+            <button class="btn btn-success" type="submit">Upload</button>
+        </div>
     </div>
-  </div>
 </form>
 
 <!-- Spinner element -->
 <div class="d-flex justify-content-center" style="position: absolute; top: 50%; left: 50%;">
-  <div id="loadingSpinner" class="spinner-border loader" style="display: none;" role="status">
-    <span class="sr-only">Loading...</span>
-  </div>
+    <div id="loadingSpinner" class="spinner-border loader" style="display: none;" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var servicesField = document.getElementById('id_services');
-    var scanUrlField = document.getElementById('id_scan_url');
-    var loadingSpinner = document.getElementById('loadingSpinner');
+    document.addEventListener('DOMContentLoaded', function () {
+        var servicesField = document.getElementById('id_services');
+        var scanUrlField = document.getElementById('id_scan_url');
+        var loadingSpinner = document.getElementById('loadingSpinner');
+        var uploadForm = document.getElementById('uploadForm');
 
-    function updateScanUrlField() {
-      var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
-        .map(checkbox => checkbox.value);
-      if (selectedServices.includes('3d scan')) {
-        scanUrlField.disabled = false;
-      } else {
-        scanUrlField.disabled = true;
-        scanUrlField.value = ''; // Optionally clear the field if not enabled
-      }
-    }
-
-    servicesField.addEventListener('change', updateScanUrlField);
-    updateScanUrlField();
-
-    var uploadForm = document.getElementById('uploadForm');
-
-    uploadForm.onsubmit = function(event) {
-      event.preventDefault();
-      var formData = new FormData(uploadForm);
-
-      // Show the spinner
-      loadingSpinner.style.display = 'block';
-
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', uploadForm.action, true);
-
-      xhr.onload = function() {
-        // Hide the spinner
-        loadingSpinner.style.display = 'none';
-
-        if (xhr.status === 200) {
-          var response = JSON.parse(xhr.responseText);
-          if (response.status === 'success') {
-            window.location.href = "{% url 'userOrders--page' %}";
-          } else {
-            alert(response.message || 'Error during upload.');
-          }
-        } else {
-          alert('Error during upload.');
+        function updateScanUrlField() {
+            var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(checkbox => checkbox.value);
+            if (selectedServices.includes('3d scan')) {
+                scanUrlField.disabled = false;
+            } else {
+                scanUrlField.disabled = true;
+                scanUrlField.value = ''; // Optionally clear the field if not enabled
+            }
         }
-      };
 
-      xhr.send(formData);
-    };
-  });
+        servicesField.addEventListener('change', updateScanUrlField);
+        updateScanUrlField();
+
+        uploadForm.onsubmit = async function (event) {
+            event.preventDefault();
+            var formData = new FormData(uploadForm);
+            var files = formData.getAll('image');
+
+            // Show the spinner
+            loadingSpinner.style.display = 'block';
+
+            // Disable the form to prevent additional submissions
+            uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
+                element.disabled = true;
+            });
+
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    let fileData = new FormData();
+                    fileData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
+                    fileData.append('image', files[i]);
+                    fileData.append('editor_note', formData.get('editor_note'));
+                    fileData.append('services', formData.get('services'));
+                    fileData.append('scan_url', formData.get('scan_url'));
+                    fileData.append('photos_sent', formData.get('photos_sent'));
+                    fileData.append('photos_returned', formData.get('photos_returned'));
+
+                    await uploadFileAsync(fileData, uploadForm.action);
+                }
+
+                // Redirect after successful uploads
+                window.location.href = "{% url 'userOrders-page' %}";
+            } catch (error) {
+                alert(error.message || 'Error during upload.');
+            } finally {
+                // Hide the spinner
+                loadingSpinner.style.display = 'none';
+
+                // Re-enable the form
+                uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
+                    element.disabled = false;
+                });
+            }
+        };
+
+        async function uploadFileAsync(fileData, actionUrl) {
+            return new Promise((resolve, reject) => {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', actionUrl, true);
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.status === 'success') {
+                            resolve();
+                        } else {
+                            reject(new Error(response.message || 'Error during upload.'));
+                        }
+                    } else {
+                        reject(new Error('Error during upload.'));
+                    }
+                };
+
+                xhr.onerror = function () {
+                    reject(new Error('Error during upload.'));
+                };
+
+                xhr.send(fileData);
+            });
+        }
+    });
 </script>
+
 {% endblock %}
