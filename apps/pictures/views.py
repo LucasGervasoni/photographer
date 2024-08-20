@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from apps.pictures.models import OrderImage, UserAction, OrderImageGroup
+from apps.pictures.models import OrderImage, UserAction, OrderImageGroup, order_image_path
 from apps.pictures.forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
 from apps.main_crud.models import Order
 
@@ -12,7 +12,7 @@ from django.contrib import messages  # Import the messages module
 
 import zipfile  # Import the zipfile module to create and manipulate ZIP files
 import io  # Import the io module for handling byte streams
-from django.http import HttpResponse  # Import HttpResponse to send HTTP responses
+from django.http import HttpResponse # Import HttpResponse to send HTTP responses
 import os
 from django.conf import settings
 from django.db.models import Q
@@ -64,6 +64,12 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
+    
+    def get(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        form = OrderImageForm()
+        group_form = OrderImageGroupForm()
+        return render(request, 'uploadPage.html', {'order': order, 'form': form, 'group_form': group_form})
 
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
@@ -79,8 +85,11 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
                 f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
-                file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
+                
+                # Use the custom order_image_path function to generate the path
+                file_path = order_image_path(image_group, f.name)
                 s3_file = default_storage.save(file_path, f)
+
 
                 order_image = OrderImage(
                     order=order,
@@ -107,9 +116,15 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
+            order.order_status = 'Production'
+            order.save()
+            
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
+    
+    
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -118,11 +133,10 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         form = PhotographerImageForm()
         group_form = OrderImageGroupForm()
         return render(request, 'uploadNewPhotos.html', {'form': form, 'group_form': group_form, 'order': order})
-
+    
+    @method_decorator(csrf_exempt)
     def post(self, request, pk):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             order = get_object_or_404(Order, pk=pk)
-            files = request.FILES.getlist('image')
             form = PhotographerImageForm(request.POST, request.FILES)
             group_form = OrderImageGroupForm(request.POST)
 
@@ -132,9 +146,9 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 image_group.save()
 
                 images = []
-                for index, f in enumerate(files):
+                for index, f in enumerate(request.FILES.getlist('image')):
                     f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
-                    file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
+                    file_path = order_image_path(image_group, f.name)
                     s3_file = default_storage.save(file_path, f)
 
                     order_image = OrderImage(
@@ -163,6 +177,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
             return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+        
         
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):

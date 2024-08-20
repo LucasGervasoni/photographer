@@ -164,7 +164,7 @@ MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Converted images storage
-CONVERTED_IMAGES_DIR = 'media/converted_images'
+CONVERTED_IMAGES_DIR = 'converted_images'
 CONVERTED_IMAGES_STORAGE = 'custom_storages.ConvertedImagesStorage'
 CONVERTED_IMAGES_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{CONVERTED_IMAGES_DIR}/'
 os.makedirs(CONVERTED_IMAGES_DIR, exist_ok=True)

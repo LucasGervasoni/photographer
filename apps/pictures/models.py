@@ -75,8 +75,8 @@ class OrderImage(models.Model):
 
             # Use the custom S3 storage backend to save the converted image
             storage = get_storage_class('custom_storages.ConvertedImagesStorage')()
-            converted_image_name = f'{self.image.name.split(".")[0]}.jpeg'
-            converted_image_path = os.path.join(settings.CONVERTED_IMAGES_DIR, converted_image_name)
+            image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
+            converted_image_path = os.path.join(image_name_without_extension, f'{image_name_without_extension}.jpeg')
             
             # Save the converted image to S3
             self.converted_image.name = storage.save(converted_image_path, image_io)
