@@ -8,7 +8,6 @@ urlpatterns = [
     #LIST
     path('orders/<int:pk>/images/', OrderImageListView.as_view(), name='order_images'),
     path('files/', FilesListView.as_view(), name='list_files'),
-    path('files/', FilesListView.as_view(), name='list_files'),
     path('logs/', LogListView.as_view(), name='list_logs'),
     #DELETE
     path('files/<int:pk>/delete', FileDeleteView.as_view(), name='delete_files'),
