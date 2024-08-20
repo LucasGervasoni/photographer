@@ -15,7 +15,7 @@ import time  # For sleep and time-related functions
 import os  # For interacting with the operating system
 
 # Get the API key from environment variable
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
+GOOGLE_API_KEY = 'AIzaSyDxlOoKRC8b1P7BM49yhE1xnBuxliIGZlA'
 
 # Configure the geolocator with your Google API key
 geolocator = GoogleV3(api_key=GOOGLE_API_KEY, timeout=10)
