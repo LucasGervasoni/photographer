@@ -135,6 +135,10 @@ AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 
+AWS_S3_FILE_OVERWRITE = False
+
+AWS_DEFAULT_ACL = 'public-read'
+
 AWS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
 }
@@ -142,8 +146,11 @@ AWS_HEADERS = {
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 
+# Custom storage backends for static and media files
+
 # Static files (CSS, JavaScript, Images)
-STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_LOCATION = 'static'
+STATICFILES_STORAGE = 'custom_storages.StaticStorage'
 STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "setup/static")
@@ -151,9 +158,10 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files (uploaded files)
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIAFILES_LOCATION = 'media'
+DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Converted images storage
 CONVERTED_IMAGES_DIR = 'media/converted_images'
