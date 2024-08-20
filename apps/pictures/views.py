@@ -78,10 +78,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
-                # Rename the file before uploading
                 f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
-
-                # Save the file directly to S3
                 file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
                 s3_file = default_storage.save(file_path, f)
 
@@ -94,16 +91,12 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 )
                 order_image.save()
 
-                # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
-
-                # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
 
                 images.append(order_image)
 
-            # Register user actions
             user_actions = [
                 UserAction(
                     user=request.user,
@@ -117,7 +110,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -128,56 +120,50 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         return render(request, 'uploadNewPhotos.html', {'form': form, 'group_form': group_form, 'order': order})
 
     def post(self, request, pk):
-        order = get_object_or_404(Order, pk=pk)
-        files = request.FILES.getlist('image')
-        form = PhotographerImageForm(request.POST, request.FILES)
-        group_form = OrderImageGroupForm(request.POST)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            order = get_object_or_404(Order, pk=pk)
+            files = request.FILES.getlist('image')
+            form = PhotographerImageForm(request.POST, request.FILES)
+            group_form = OrderImageGroupForm(request.POST)
 
-        if form.is_valid() and group_form.is_valid():
-            image_group = group_form.save(commit=False)
-            image_group.order = order
-            image_group.save()
+            if form.is_valid() and group_form.is_valid():
+                image_group = group_form.save(commit=False)
+                image_group.order = order
+                image_group.save()
 
-            images = []
-            for index, f in enumerate(files):
-                # Rename the file before uploading
-                f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
+                images = []
+                for index, f in enumerate(files):
+                    f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
+                    file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
+                    s3_file = default_storage.save(file_path, f)
 
-                # Save the file directly to S3
-                file_path = os.path.join(settings.MEDIAFILES_LOCATION, f.name)
-                s3_file = default_storage.save(file_path, f)
-
-                order_image = OrderImage(
-                    order=order,
-                    image=s3_file,
-                    group=image_group
-                )
-                order_image.save()
-
-                # Convert the image if necessary
-                converted_image_url = order_image.convert_to_jpeg()
-
-                # Save the order image with the converted image
-                if converted_image_url:
+                    order_image = OrderImage(
+                        order=order,
+                        image=s3_file,
+                        group=image_group
+                    )
                     order_image.save()
 
-                images.append(order_image)
+                    converted_image_url = order_image.convert_to_jpeg()
+                    if converted_image_url:
+                        order_image.save()
 
-            # Log the upload actions
-            user_actions = [
-                UserAction(
-                    user=request.user,
-                    action_type='upload',
-                    order=order,
-                    order_image=image
-                ) for image in images
-            ]
-            UserAction.objects.bulk_create(user_actions)
+                    images.append(order_image)
 
-            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
+                user_actions = [
+                    UserAction(
+                        user=request.user,
+                        action_type='upload',
+                        order=order,
+                        order_image=image
+                    ) for image in images
+                ]
+                UserAction.objects.bulk_create(user_actions)
 
-        return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
+                return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
+
+            return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+        
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')

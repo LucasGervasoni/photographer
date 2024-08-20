@@ -8,7 +8,7 @@
 
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
-<form id="uploadForm" action="{% url 'order_image_upload_photographer' order.pk %}" method="post" enctype="multipart/form-data">
+<form id="uploadForm" method="POST" enctype="multipart/form-data">
   {% csrf_token %}
   <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
     <div class="box__input mb-4 align-self-center">
@@ -48,38 +48,37 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var uploadForm = document.getElementById('uploadForm');
-    var loadingSpinner = document.getElementById('loadingSpinner');
+document.getElementById('uploadForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(this);
+    const xhr = new XMLHttpRequest();
 
-    uploadForm.addEventListener('submit', function(event) {
-      event.preventDefault();  // Prevent the default form submission
+    xhr.open('POST', '', true);
+    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
 
-      var formData = new FormData(uploadForm);
-      loadingSpinner.style.display = 'block';
-
-      fetch(uploadForm.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'X-CSRFToken': '{{ csrf_token }}',
-        },
-      })
-      .then(response => response.json())
-      .then(data => {
-        loadingSpinner.style.display = 'none';
-
-        if (data.status === 'success') {
-          window.location.href = "{% url 'userOrders-page' %}";  // Redirect to userOrders page
-        } else {
-          alert(data.message);
+    xhr.upload.addEventListener('progress', function(e) {
+        if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            document.getElementById('uploadStatus').innerText = `Uploading: ${percentComplete.toFixed(2)}%`;
         }
-      })
-      .catch(error => {
-        loadingSpinner.style.display = 'none';
-        alert('Error uploading images. Please try again.');
-      });
     });
+
+    xhr.addEventListener('load', function() {
+        const response = JSON.parse(this.responseText);
+        if (response.status === 'success') {
+            document.getElementById('uploadStatus').innerText = 'Upload complete!';
+        } else {
+            document.getElementById('uploadStatus').innerText = 'Error during upload.';
+        }
+    });
+
+    xhr.addEventListener('error', function() {
+        document.getElementById('uploadStatus').innerText = 'Error during upload.';
+    });
+
+    xhr.send(formData);
+
 
     // Additional logic for enabling/disabling the 3D scan URL field
     var servicesField = document.getElementById('id_services');
@@ -98,7 +97,7 @@
 
     servicesField.addEventListener('change', updateScanUrlField);
     updateScanUrlField();
-  });
+});
 </script>
 
 <br>
