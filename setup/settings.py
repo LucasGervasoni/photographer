@@ -1,9 +1,10 @@
 from pathlib import Path, os
 from django.conf import settings
 from dotenv import load_dotenv
-from decouple import config
 import django_heroku
 import dj_database_url
+
+from distutils import config
 
 load_dotenv()
 
