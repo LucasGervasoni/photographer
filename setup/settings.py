@@ -86,7 +86,7 @@ DATABASES = {
         "NAME": config('NAME'),
         "USER": config('USER'),
         "PASSWORD": config('PASSWORD'),
-        "HOST": config('HOST'),
+        "HOST": 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
         "PORT": '5432',
     }
 }
