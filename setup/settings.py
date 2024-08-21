@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 import django_heroku
 import dj_database_url
 
-from distutils import config
+import environ
+
+env = environ.Env()
 
 load_dotenv()
 
@@ -84,10 +86,10 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": config('NAME'),
-        "USER": config('USER'),
-        "PASSWORD": config('PASSWORD'),
-        "HOST": 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
+        "NAME": env('NAME'),
+        "USER": env('USER'),
+        "PASSWORD": env('PASSWORD'),
+        "HOST": env('HOST'),
         "PORT": '5432',
     }
 }
