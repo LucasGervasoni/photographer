@@ -1,6 +1,7 @@
 from pathlib import Path, os
 from django.conf import settings
 from dotenv import load_dotenv
+from decouple import config
 import django_heroku
 import dj_database_url
 
@@ -82,10 +83,10 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": os.getenv('NAME'),
-        "USER": os.getenv('USER'),
-        "PASSWORD": os.getenv('PASSWORD'),
-        "HOST": os.getenv('HOST'),
+        "NAME": config('NAME'),
+        "USER": config('USER'),
+        "PASSWORD": config('PASSWORD'),
+        "HOST": config('HOST'),
         "PORT": '5432',
     }
 }
