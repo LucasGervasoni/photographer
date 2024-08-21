@@ -4,10 +4,6 @@ from dotenv import load_dotenv
 import django_heroku
 import dj_database_url
 
-import environ
-
-env = environ.Env()
-
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -86,10 +82,10 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": env('NAME'),
-        "USER": env('USER'),
-        "PASSWORD": env('PASSWORD'),
-        "HOST": env('HOST'),
+        "NAME": 'spotlightdatabase',
+        "USER": str(os.getenv('USER')),
+        "PASSWORD": str(os.getenv('PASSWORD')),
+        "HOST": 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
         "PORT": '5432',
     }
 }
