@@ -1,4 +1,5 @@
 from pathlib import Path, os
+from django.conf import settings
 from dotenv import load_dotenv
 import django_heroku
 import dj_database_url
@@ -137,13 +138,10 @@ AWS_S3_OBJECT_PARAMETERS = {
 
 AWS_S3_FILE_OVERWRITE = False
 
-AWS_DEFAULT_ACL = 'public-read'
-
 AWS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
 }
 
-AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
 
 # Custom storage backends for static and media files
@@ -164,9 +162,8 @@ MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Converted images storage
-CONVERTED_IMAGES_DIR = 'converted_images'
-CONVERTED_IMAGES_STORAGE = 'custom_storages.ConvertedImagesStorage'
-CONVERTED_IMAGES_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{CONVERTED_IMAGES_DIR}/'
+CONVERTED_IMAGES_DIR = os.path.join(settings.MEDIA_ROOT, 'converted_images')
+CONVERTED_IMAGES_URL = f'{settings.MEDIA_URL}converted_images/'
 os.makedirs(CONVERTED_IMAGES_DIR, exist_ok=True)
 
 #Authentication

@@ -90,7 +90,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 file_path = order_image_path(image_group, f.name)
                 s3_file = default_storage.save(file_path, f)
 
-
                 order_image = OrderImage(
                     order=order,
                     image=s3_file,

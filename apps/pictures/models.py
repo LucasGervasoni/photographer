@@ -7,7 +7,9 @@ from django.conf import settings
 import rawpy
 from PIL import Image
 from django.core.files.base import ContentFile
-from django.core.files.storage import get_storage_class
+from django.core.files.storage import get_storage_class, default_storage
+
+from setup.settings import CONVERTED_IMAGES_DIR, MEDIAFILES_LOCATION
 # # Create your models here.
 
 # Function to generate the upload path
@@ -63,6 +65,7 @@ class OrderImage(models.Model):
         verbose_name = "File uploaded"  # Singular name
         verbose_name_plural = "Files uploaded"  # Plural name (optional)
         
+
     def convert_to_jpeg(self):
         file_extension = self.image.name.split('.')[-1].lower()
         if file_extension in ['raw', 'dng', 'arw']:
@@ -73,16 +76,17 @@ class OrderImage(models.Model):
             image_io = ContentFile(b'')
             image.save(image_io, format='JPEG')
 
-            # Use the custom S3 storage backend to save the converted image
-            storage = get_storage_class('custom_storages.ConvertedImagesStorage')()
             image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-            converted_image_path = os.path.join(image_name_without_extension, f'{image_name_without_extension}.jpeg')
-            
-            # Save the converted image to S3
-            self.converted_image.name = storage.save(converted_image_path, image_io)
-            self.save()  # Save the model instance with the converted image
 
-            return self.converted_image.url
+            # Definir o caminho de salvamento em media/converted_images/
+            converted_image_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
+            
+            # Salvar a imagem convertida usando o default_storage (padrão do Django)
+            self.converted_image.name = default_storage.save(converted_image_path, image_io)
+            self.save()  # Salvar a instância do modelo com a imagem convertida
+
+            # Retornar a URL diretamente
+            return default_storage.url(self.converted_image.name)
         return None
 
         
