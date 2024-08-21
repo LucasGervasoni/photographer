@@ -82,10 +82,10 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        "NAME": str(os.getenv('NAME')),
-        "USER": str(os.getenv('USER')),
-        "PASSWORD": str(os.getenv('PASSWORD')),
-        "HOST": str(os.getenv('HOST')),
+        "NAME": os.getenv('NAME'),
+        "USER": os.getenv('USER'),
+        "PASSWORD": os.getenv('PASSWORD'),
+        "HOST": os.getenv('HOST'),
         "PORT": '5432',
     }
 }
@@ -126,10 +126,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 # AWS S3 configuration for storing static, media, and converted images files
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
+AWS_ACCESS_KEY_ID = str(os.getenv('AWS_ACCESS_KEY_ID'))
+AWS_SECRET_ACCESS_KEY = str(os.getenv('AWS_SECRET_ACCESS_KEY'))
+AWS_STORAGE_BUCKET_NAME = str(os.getenv('AWS_STORAGE_BUCKET_NAME'))
+AWS_S3_REGION_NAME = str(os.getenv('AWS_S3_REGION_NAME'))
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 AWS_S3_SIGNATURE_NAME = 's3v4'
 AWS_S3_OBJECT_PARAMETERS = {
