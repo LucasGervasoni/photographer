@@ -1,15 +1,12 @@
 from django.db import models
 from apps.main_crud.models import Order
 import os
-
 from multiselectfield import MultiSelectField
 from django.conf import settings
 import rawpy
 from PIL import Image
 from django.core.files.base import ContentFile
-from django.core.files.storage import get_storage_class, default_storage
-
-from setup.settings import CONVERTED_IMAGES_DIR, MEDIAFILES_LOCATION
+from django.core.files.storage import default_storage
 # # Create your models here.
 
 # Function to generate the upload path
