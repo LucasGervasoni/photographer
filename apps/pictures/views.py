@@ -1,3 +1,4 @@
+from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from apps.pictures.models import OrderImage, UserAction, OrderImageGroup, order_image_path
 from apps.pictures.forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
@@ -25,6 +26,10 @@ from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 import time
 from django.core.files.storage import default_storage
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -78,33 +83,45 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
 
         if form.is_valid() and group_form.is_valid():
-            image_group = group_form.save(commit=False)
-            image_group.order = order
-            image_group.save()
+            image_group = OrderImageGroup.objects.filter(order=order).first()
+
+            if not image_group:
+                # Se não existir, crie um novo grupo
+                image_group = group_form.save(commit=False)
+                image_group.order = order
+                image_group.save()
+                
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
-                f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
                 
-                # Use the custom order_image_path function to generate the path
-                file_path = order_image_path(image_group, f.name)
-                s3_file = default_storage.save(file_path, f)
-
                 order_image = OrderImage(
                     order=order,
-                    image=s3_file,
+                    image=f,
                     group=image_group,
                     photos_sent=form.cleaned_data.get('photos_sent'),
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
+                
+                # Generate file path
+                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+                
                 order_image.save()
 
+                # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
+                
+                # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
-
+                
                 images.append(order_image)
 
+            # Update order status
+            order.order_status = 'Production'
+            order.save()
+
+            # Register user actions
             user_actions = [
                 UserAction(
                     user=request.user,
@@ -115,14 +132,10 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
-            order.order_status = 'Production'
-            order.save()
-            
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
-    
+
     
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
@@ -140,21 +153,25 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             group_form = OrderImageGroupForm(request.POST)
 
             if form.is_valid() and group_form.is_valid():
-                image_group = group_form.save(commit=False)
-                image_group.order = order
-                image_group.save()
+                image_group = OrderImageGroup.objects.filter(order=order).first()
+
+                if not image_group:
+                    image_group = group_form.save(commit=False)
+                    image_group.order = order
+                    image_group.save()
 
                 images = []
                 for index, f in enumerate(request.FILES.getlist('image')):
-                    f.name = f'Spotlight{index + 1:02d}{os.path.splitext(f.name)[-1]}'
-                    file_path = order_image_path(image_group, f.name)
-                    s3_file = default_storage.save(file_path, f)
 
                     order_image = OrderImage(
                         order=order,
-                        image=s3_file,
+                        image=f,
                         group=image_group
                     )
+                    
+                    # Generate file path
+                    f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+                    
                     order_image.save()
 
                     converted_image_url = order_image.convert_to_jpeg()

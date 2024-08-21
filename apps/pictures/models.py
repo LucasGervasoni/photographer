@@ -13,10 +13,22 @@ from django.core.files.storage import default_storage
 def order_image_path(instance, filename):
     order_address = instance.order.address.replace(' ', '_')
     group_count = OrderImageGroup.objects.filter(order=instance.order).count()
+
+    # Extract the file extension
+    extension = filename.split('.')[-1]
+    # Generate a base filename
+    base_filename = f'Spotlight{instance.group.images.count() + 1:02d}.{extension}'
     
-    # Adjust the path to be compatible with S3 storage
-    path = f'{order_address}/{order_address}.{group_count:02d}/{filename}'
+    # Define the initial path
+    path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}', base_filename)
     
+    # Check if the file already exists and append a suffix if necessary
+    counter = 1
+    while os.path.exists(path):
+        base_filename = f'Spotlight{instance.group.images.count() + 1:02d}_{counter}.{extension}'
+        path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}', base_filename)
+        counter += 1
+
     return path
 
 
@@ -48,7 +60,7 @@ class OrderImageGroup(models.Model):
 class OrderImage(models.Model):
     
     order = models.ForeignKey(Order, related_name='image', on_delete=models.CASCADE)
-    image = models.FileField(upload_to=order_image_path)
+    image = models.FileField(upload_to=order_image_path, max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     photos_sent = models.CharField(verbose_name="Assets to be uploaded")
     photos_returned = models.CharField(verbose_name="Assets to be returned")

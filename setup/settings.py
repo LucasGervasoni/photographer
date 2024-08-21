@@ -87,6 +87,10 @@ DATABASES = {
         "PASSWORD": "chgBgStGq0Dj3IzqlZUN",
         "HOST": 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
         "PORT": '5432',
+        'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'connect_timeout': 60,
+        },
     }
 }
 

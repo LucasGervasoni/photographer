@@ -66,6 +66,7 @@
         var scanUrlField = document.getElementById('id_scan_url');
         var loadingSpinner = document.getElementById('loadingSpinner');
         var uploadForm = document.getElementById('uploadForm');
+        var storedFiles = [];  // Array to store files
 
         function updateScanUrlField() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
@@ -84,7 +85,7 @@
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
-            var files = formData.getAll('image');
+            storedFiles = formData.getAll('image');  // Store files in the array
 
             // Show the spinner
             loadingSpinner.style.display = 'block';
@@ -95,17 +96,18 @@
             });
 
             try {
-                for (let i = 0; i < files.length; i++) {
+                // Send files one by one
+                for (let i = 0; i < storedFiles.length; i++) {
                     let fileData = new FormData();
                     fileData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-                    fileData.append('image', files[i]);
+                    fileData.append('image', storedFiles[i]);  // Use stored files
                     fileData.append('editor_note', formData.get('editor_note'));
                     fileData.append('services', formData.get('services'));
                     fileData.append('scan_url', formData.get('scan_url'));
                     fileData.append('photos_sent', formData.get('photos_sent'));
                     fileData.append('photos_returned', formData.get('photos_returned'));
 
-                    await uploadFileAsync(fileData, uploadForm.action);
+                    await uploadFileAsync(fileData, uploadForm.action);  // Await each upload
                 }
 
                 // Redirect after successful uploads
@@ -127,6 +129,7 @@
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
+                xhr.timeout = 60000; // Set timeout to 60 seconds per file
 
                 xhr.onload = function () {
                     if (xhr.status === 200) {
@@ -143,6 +146,10 @@
 
                 xhr.onerror = function () {
                     reject(new Error('Error during upload.'));
+                };
+
+                xhr.ontimeout = function () {
+                    reject(new Error('Upload timed out.'));
                 };
 
                 xhr.send(fileData);
