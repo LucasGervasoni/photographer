@@ -83,7 +83,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         "NAME": 'spotlightdatabase',
-        "USER": str(os.getenv('USER')),
+        "USER": 'manager',
         "PASSWORD": str(os.getenv('PASSWORD')),
         "HOST": 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
         "PORT": '5432',
