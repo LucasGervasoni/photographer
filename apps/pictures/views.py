@@ -51,45 +51,29 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # S3 client setup
-        s3_client = boto3.client('s3')
+        def stream_zip_file():
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, 'w') as zip_file:
+                for image in images:
+                    file_path = image.image.name
 
-        # Generate ZIP file in memory
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
-            for image in images:
-                file_path = image.image.name
-                s3_key = os.path.join(settings.MEDIAFILES_LOCATION, file_path)
+                    if not default_storage.exists(file_path):
+                        # Log or handle the missing file case
+                        print(f"File not found: {file_path}")
+                        continue
 
-                with io.BytesIO() as tmp_buffer:
-                    s3_client.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp_buffer)
-                    tmp_buffer.seek(0)
-                    zip_file.writestr(os.path.basename(file_path), tmp_buffer.read())
+                    with default_storage.open(file_path, 'rb') as file_obj:
+                        while True:
+                            chunk = file_obj.read(8192)  # Read in chunks of 8KB
+                            if not chunk:
+                                break
+                            zip_file.writestr(os.path.basename(file_path), chunk)
 
-        buffer.seek(0)
-        zip_file_size = buffer.getbuffer().nbytes
+            buffer.seek(0)
+            yield from buffer.getvalue()
 
-        # Handle Range Requests
-        range_header = request.META.get('HTTP_RANGE', '').strip()
-        if range_header:
-            range_match = re.match(r'bytes=(\d+)-(\d*)', range_header)
-            if range_match:
-                first_byte, last_byte = range_match.groups()
-                first_byte = int(first_byte)
-                last_byte = int(last_byte) if last_byte else zip_file_size - 1
-                length = last_byte - first_byte + 1
-                buffer.seek(first_byte)
-                response = HttpResponse(buffer.read(length), status=206, content_type='application/zip')
-                response['Content-Range'] = f'bytes {first_byte}-{last_byte}/{zip_file_size}'
-        else:
-            response = HttpResponse(buffer.read(), content_type='application/zip')
-
-        # Construct the dynamic filename
-        filename = f"order_{order.address.replace(' ', '_')}_{order.pk}.zip"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        response['Accept-Ranges'] = 'bytes'
-        response['Content-Length'] = zip_file_size
-
+        response = StreamingHttpResponse(stream_zip_file(), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.pk}.zip"'
         return response
 
 
