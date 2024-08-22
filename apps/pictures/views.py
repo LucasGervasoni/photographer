@@ -83,12 +83,16 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                         zip_file.writestr(new_name, file_obj.read())
 
             buffer.seek(0)
-            yield from buffer.getvalue()
+            return buffer
 
-        response = StreamingHttpResponse(stream_zip_file(), content_type='application/zip')
+        buffer = stream_zip_file()
+
+        # Create a streaming response to the client
+        response = StreamingHttpResponse(buffer, content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
         return response
-
+    
+    
 # Upload 
 
 class OrderImageUploadView(LoginRequiredMixin, View):
