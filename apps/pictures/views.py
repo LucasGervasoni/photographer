@@ -83,7 +83,8 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             return zip_buffer
 
         # Ajustar o caminho dos arquivos para evitar duplicações de "media/"
-        file_paths = [os.path.join(settings.MEDIA_ROOT, image.image.name.replace("media/", "")) for image in order.image.all()]
+        # Extrair apenas a parte relevante do caminho para o S3
+        file_paths = [image.image.name.replace("media/", "") for image in order.image.all()]
 
         # Log dos arquivos que serão incluídos no ZIP
         logger.info(f"Files to be zipped: {file_paths}")
@@ -125,8 +126,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             response = StreamingHttpResponse(zip_file, content_type='application/zip')
             response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
 
-            return response      
-         
+            return response       
 # Upload 
 
 class OrderImageUploadView(LoginRequiredMixin, View):
