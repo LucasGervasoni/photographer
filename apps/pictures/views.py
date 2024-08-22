@@ -54,6 +54,9 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         def stream_zip_file():
             buffer = io.BytesIO()
             with zipfile.ZipFile(buffer, 'w') as zip_file:
+                # Dictionary to track file names and handle duplicates
+                file_name_tracker = defaultdict(int)
+
                 for image in images:
                     file_path = image.image.name
 
@@ -63,19 +66,27 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                         continue
 
                     with default_storage.open(file_path, 'rb') as file_obj:
-                        while True:
-                            chunk = file_obj.read(8192)  # Read in chunks of 8KB
-                            if not chunk:
-                                break
-                            zip_file.writestr(os.path.basename(file_path), chunk)
+                        # Handle duplicate file names
+                        base_name = os.path.basename(file_path)
+                        file_name, file_extension = os.path.splitext(base_name)
+
+                        if file_name_tracker[base_name] > 0:
+                            new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
+                        else:
+                            new_name = base_name
+
+                        # Increase the count for the base name
+                        file_name_tracker[base_name] += 1
+
+                        # Write the file in chunks to the ZIP archive
+                        zip_file.writestr(new_name, file_obj.read())
 
             buffer.seek(0)
             yield from buffer.getvalue()
 
         response = StreamingHttpResponse(stream_zip_file(), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.pk}.zip"'
+        response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
         return response
-
 
 # Upload 
 
