@@ -89,7 +89,9 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         logger.info(f"Files to be zipped: {file_paths}")
 
         # Verifica se os arquivos estão no S3 ou no sistema de arquivos local
-        if settings.USE_S3:
+        use_s3 = getattr(settings, 'USE_S3', False)
+
+        if use_s3:
             # Se estiver usando S3, gerar URLs pré-assinadas para download
             s3_client = boto3.client('s3')
             zip_urls = []
@@ -123,8 +125,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             response = StreamingHttpResponse(zip_file, content_type='application/zip')
             response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
 
-            return response
-        
+            return response      
          
 # Upload 
 

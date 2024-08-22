@@ -149,6 +149,7 @@ AWS_HEADERS = {
 
 AWS_QUERYSTRING_AUTH = False
 
+USE_S3 = True 
 # Custom storage backends for static and media files
 
 # Static files (CSS, JavaScript, Images)
