@@ -63,6 +63,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
                 for file_path in files:
                     if not os.path.exists(file_path):
+                        logger.warning(f"File not found: {file_path}")
                         continue
 
                     base_name = os.path.basename(file_path)
@@ -75,7 +76,8 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
                     file_name_tracker[base_name] += 1
 
-                    zip_file.write(file_path, new_name)
+                    with open(file_path, 'rb') as file_obj:
+                        zip_file.writestr(new_name, file_obj.read())
 
             zip_buffer.seek(0)
             return zip_buffer
@@ -83,8 +85,15 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         # Caminhos dos arquivos que precisam ser compactados
         file_paths = [os.path.join(settings.MEDIAFILES_LOCATION, image.image.name) for image in order.image.all()]
 
+        # Log dos arquivos que serão incluídos no ZIP
+        logger.info(f"Files to be zipped: {file_paths}")
+
         # Cria o arquivo ZIP em memória
         zip_file = zip_files(file_paths)
+
+        # Verifica se o ZIP contém arquivos
+        if not zip_file.getvalue():
+            return HttpResponse("No files to download.", status=404)
 
         # Retorna o arquivo como uma resposta de streaming
         response = StreamingHttpResponse(zip_file, content_type='application/zip')
