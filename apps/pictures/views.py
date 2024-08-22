@@ -59,7 +59,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
                 file_path = image.image.name
-                s3_key = os.path.join(settings.AWS_LOCATION, file_path)
+                s3_key = os.path.join(settings.MEDIAFILES_LOCATION, file_path)
 
                 with io.BytesIO() as tmp_buffer:
                     s3_client.download_fileobj(settings.AWS_STORAGE_BUCKET_NAME, s3_key, tmp_buffer)
