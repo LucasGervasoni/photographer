@@ -154,6 +154,7 @@
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
+                xhr.timeout = baseTimeout + (fileData.get('image').size / (1024 * 1024)) * 1000; // Timeout adaptativo
   
                 xhr.upload.onprogress = function (event) {
                     if (event.lengthComputable) {
@@ -186,11 +187,15 @@
                     reject(new Error('Error during upload.'));
                 };
   
+                xhr.ontimeout = function () {
+                    reject(new Error('O upload atingiu o tempo limite.'));
+                };
+  
                 xhr.send(fileData);
             });
         }
     });
 </script>
-  
+
 <br>
 {% endblock %}
