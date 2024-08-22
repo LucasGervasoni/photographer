@@ -31,7 +31,7 @@ import time
 from django.core.files.storage import default_storage
 import boto3
 from collections import defaultdict
-from django.utils.http import urlquote
+from urllib.parse import quote as urlquote
 import logging
 
 logger = logging.getLogger(__name__)
