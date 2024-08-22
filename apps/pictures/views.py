@@ -1,4 +1,5 @@
-from django.core.servers.basehttp import FileWrapper
+
+from wsgiref.util import FileWrapper
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from apps.pictures.models import OrderImage, UserAction, OrderImageGroup, order_image_path
