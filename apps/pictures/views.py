@@ -81,7 +81,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             return zip_buffer
 
         # Caminhos dos arquivos que precisam ser compactados
-        file_paths = [os.path.join(settings.MEDIA_ROOT, image.image.name) for image in order.image.all()]
+        file_paths = [os.path.join(settings.MEDIAFILES_LOCATION, image.image.name) for image in order.image.all()]
 
         # Cria o arquivo ZIP em memória
         zip_file = zip_files(file_paths)
