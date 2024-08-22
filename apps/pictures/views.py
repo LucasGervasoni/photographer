@@ -30,6 +30,7 @@ from django.core.paginator import Paginator
 import time
 from django.core.files.storage import default_storage
 import boto3
+from collections import defaultdict
 import logging
 
 logger = logging.getLogger(__name__)
