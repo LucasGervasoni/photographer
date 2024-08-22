@@ -70,7 +70,7 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     var servicesField = document.getElementById('id_services');
     var scanUrlField = document.getElementById('id_scan_url');
     var progressCard = document.getElementById('progressCard');
@@ -99,7 +99,12 @@
     uploadForm.onsubmit = async function (event) {
         event.preventDefault();
         var formData = new FormData(uploadForm);
-        var files = formData.getAll('image');
+        var files = formData.getAll('image');  // Obtenha todos os arquivos do input de arquivo
+
+        if (files.length === 0) {
+            alert('Nenhum arquivo foi selecionado.');
+            return;
+        }
 
         progressCard.style.display = 'block';
 
@@ -109,6 +114,7 @@
 
         try {
             for (let file of files) {
+                console.log('File being processed:', file.name, 'Size:', file.size);  // Log de depuração
                 await uploadLargeFileWithRetries(file, formData, uploadForm.action);
             }
             window.location.href = "{% url 'userOrders--page' %}";
@@ -184,10 +190,10 @@
 
             var uploadData = new FormData();
             uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-            uploadData.append('chunk', chunk);
+            uploadData.append('chunk', chunk);  // `chunk` derivado de `file` é enviado aqui
             uploadData.append('chunk_number', chunkNumber);
             uploadData.append('total_chunks', totalChunks);
-            uploadData.append('file_name', file.name);
+            uploadData.append('file_name', file.name);  // Passe o nome correto do arquivo aqui
             uploadData.append('editor_note', formData.get('editor_note'));
             uploadData.append('services', formData.get('services'));
             uploadData.append('scan_url', formData.get('scan_url'));
