@@ -88,20 +88,44 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         # Log dos arquivos que serão incluídos no ZIP
         logger.info(f"Files to be zipped: {file_paths}")
 
-        # Cria o arquivo ZIP em memória
-        zip_file = zip_files(file_paths)
+        # Verifica se os arquivos estão no S3 ou no sistema de arquivos local
+        if settings.USE_S3:
+            # Se estiver usando S3, gerar URLs pré-assinadas para download
+            s3_client = boto3.client('s3')
+            zip_urls = []
 
-        # Verifica se o ZIP contém arquivos
-        if not zip_file.getvalue():
-            return HttpResponse("No files to download.", status=404)
+            for file_path in file_paths:
+                try:
+                    presigned_url = s3_client.generate_presigned_url(
+                        'get_object',
+                        Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_path},
+                        ExpiresIn=3600  # Link válido por 1 hora
+                    )
+                    zip_urls.append(presigned_url)
+                except Exception as e:
+                    logger.error(f"Error generating presigned URL for {file_path}: {str(e)}")
 
-        # Retorna o arquivo como uma resposta de streaming
-        response = StreamingHttpResponse(zip_file, content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
+            if not zip_urls:
+                return HttpResponse("No files to download.", status=404)
 
-        return response 
-    
-    
+            # Retornar as URLs pré-assinadas como JSON
+            return JsonResponse({'download_urls': zip_urls})
+
+        else:
+            # Se os arquivos estão no sistema de arquivos local, criar o ZIP
+            zip_file = zip_files(file_paths)
+
+            # Verifica se o ZIP contém arquivos
+            if not zip_file.getvalue():
+                return HttpResponse("No files to download.", status=404)
+
+            # Retorna o arquivo como uma resposta de streaming
+            response = StreamingHttpResponse(zip_file, content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
+
+            return response
+        
+         
 # Upload 
 
 class OrderImageUploadView(LoginRequiredMixin, View):
