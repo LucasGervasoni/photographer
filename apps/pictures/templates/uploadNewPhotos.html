@@ -40,19 +40,33 @@
   </div>
 </form>
 
-<!-- Spinner element -->
-<div class="d-flex justify-content-center" style="position: absolute; top: 50%; left: 50%;">
-  <div id="loadingSpinner" class="spinner-border loader" style="display: none;" role="status">
-    <span class="sr-only">Loading...</span>
-  </div>
+<div id="progressCard" class="progress-card" style="display:none;">
+    <div class="progress-header">
+        <strong>Progress</strong>
+    </div>
+    <div class="progress-details">
+        <p id="fileName">File: </p>
+    </div>
+    <div class="progress">
+        <div id="progressBar" class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div class="progress-footer">
+        <p id="progressPercent" class="text-center">0% Complete</p>
+    </div>
 </div>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
       var servicesField = document.getElementById('id_services');
       var scanUrlField = document.getElementById('id_scan_url');
-      var loadingSpinner = document.getElementById('loadingSpinner');
+      var progressCard = document.getElementById('progressCard');
+      var progressBar = document.getElementById('progressBar');
+      var fileNameElement = document.getElementById('fileName');
+      var progressPercent = document.getElementById('progressPercent');
       var uploadForm = document.getElementById('uploadForm');
+      var retryLimit = 5;
+      var baseTimeout = 60000;
 
       function updateScanUrlField() {
           var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
@@ -82,58 +96,84 @@
           });
 
           try {
-              for (let i = 0; i < files.length; i++) {
-                  let fileData = new FormData();
-                  fileData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-                  fileData.append('image', files[i]);
-                  fileData.append('editor_note', formData.get('editor_note'));
-                  fileData.append('services', formData.get('services'));
-                  fileData.append('scan_url', formData.get('scan_url'));
+            for (let file of files) {
+                await uploadFileWithRetries(file, formData, uploadForm.action);
+            }
+            window.location.href = "{% url 'userOrders--page' %}"; 
+        } catch (error) {
+            alert(error.message || 'Error during upload.');
+        } finally {
+            progressCard.style.display = 'none';
 
-                  await uploadFileAsync(fileData, uploadForm.action);
-              }
+            uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
+                element.disabled = false;
+            });
+        }
+    };
 
-              // Redirect after successful uploads
-              window.location.href = "{% url 'userOrders--page' %}";
-          } catch (error) {
-              alert(error.message || 'Error during upload.');
-          } finally {
-              // Hide the spinner
-              loadingSpinner.style.display = 'none';
+    async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
+        try {
+            await uploadFileAsync(file, formData, actionUrl);
+        } catch (error) {
+            if (retries < retryLimit) {
+                const delay = Math.pow(2, retries) * 1000; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
+            } else {
+                throw error;
+            }
+        }
+    }
 
-              // Re-enable the form
-              uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
-                  element.disabled = false;
-              });
-          }
-      };
 
-      async function uploadFileAsync(fileData, actionUrl) {
-          return new Promise((resolve, reject) => {
-              var xhr = new XMLHttpRequest();
-              xhr.open('POST', actionUrl, true);
+    async function uploadFileAsync(file, formData, actionUrl) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', actionUrl, true);
+            xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Timeout adaptativo
 
-              xhr.onload = function () {
-                  if (xhr.status === 200) {
-                      var response = JSON.parse(xhr.responseText);
-                      if (response.status === 'success') {
-                          resolve();
-                      } else {
-                          reject(new Error(response.message || 'Error during upload.'));
-                      }
-                  } else {
-                      reject(new Error('Error during upload.'));
-                  }
-              };
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    var percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.setAttribute('aria-valuenow', percentComplete);
+                    progressPercent.textContent = percentComplete + '% Complete';
+                }
+            };
 
-              xhr.onerror = function () {
-                  reject(new Error('Error during upload.'));
-              };
+            xhr.onloadstart = function () {
+                fileNameElement.textContent = 'File: ' + file.name;
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0% Complete';
+            };
 
-              xhr.send(fileData);
-          });
-      }
-  });
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    resolve();
+                } else {
+                    reject(new Error('Error during upload.'));
+                }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Error during upload.'));
+            };
+
+            xhr.ontimeout = function () {
+                reject(new Error('Upload timed out.'));
+            };
+
+            var uploadData = new FormData();
+            uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
+            uploadData.append('image', file);
+            uploadData.append('editor_note', formData.get('editor_note'));
+            uploadData.append('services', formData.get('services'));
+            uploadData.append('scan_url', formData.get('scan_url'));
+
+            xhr.send(uploadData);
+        });
+    }
+});
 </script>
 <br>
 {% endblock %}

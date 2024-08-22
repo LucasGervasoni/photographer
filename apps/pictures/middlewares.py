@@ -1,4 +1,5 @@
 import logging
+from django.http import HttpResponseBadRequest
 from django.utils.deprecation import MiddlewareMixin
 from django.core.exceptions import SuspiciousOperation
 

@@ -13,7 +13,7 @@ from django.contrib import messages  # Import the messages module
 
 import zipfile  # Import the zipfile module to create and manipulate ZIP files
 import io  # Import the io module for handling byte streams
-from django.http import HttpResponse # Import HttpResponse to send HTTP responses
+from django.http import HttpResponse, StreamingHttpResponse # Import HttpResponse to send HTTP responses
 import os
 from django.conf import settings
 from django.db.models import Q
@@ -48,20 +48,27 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Create a zip file in memory
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
-            for image in images:
-                # Get the file from S3
-                file_path = image.image.name
-                file_obj = default_storage.open(file_path)
-                file_data = file_obj.read()
+        # Create a generator to stream the zip file
+        def zip_generator():
+            buffer = io.BytesIO()
+            with zipfile.ZipFile(buffer, 'w') as zip_file:
+                for image in images:
+                    # Get the file from S3
+                    file_path = image.image.name
+                    file_obj = default_storage.open(file_path)
+                    
+                    # Add file to the zip file
+                    with file_obj:
+                        file_data = file_obj.read()
+                        zip_file.writestr(os.path.basename(file_path), file_data)
+                    
+                    # Clear buffer after each file to prevent memory overflow
+                    buffer.seek(0)
+                    yield buffer.read()
+                    buffer.seek(0)
+                    buffer.truncate(0)
 
-                # Add file to the zip file
-                zip_file.writestr(os.path.basename(file_path), file_data)
-
-        buffer.seek(0)
-        response = HttpResponse(buffer, content_type='application/zip')
+        response = StreamingHttpResponse(zip_generator(), content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.pk}.zip"'
         return response
 

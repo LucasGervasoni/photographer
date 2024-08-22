@@ -154,47 +154,48 @@ l{% extends 'base.html' %}
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const downloadButtons = document.querySelectorAll('.download-btn');
+  const downloadButtons = document.querySelectorAll('.download-btn');
 
-    downloadButtons.forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const spinner = document.getElementById('loading-spinner');
+  downloadButtons.forEach(button => {
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      const orderId = this.getAttribute('data-order-id');
+      const spinner = document.getElementById('loading-spinner');
 
-        spinner.classList.remove('d-none');
+      spinner.classList.remove('d-none');
 
-        // Trigger the download
-        fetch(`/orders/${orderId}/download/`)
-          .then(response => {
-            if (response.status === 200) {
-              const contentDisposition = response.headers.get('Content-Disposition');
-              const fileName = contentDisposition.split('filename=')[1].trim().replace(/"/g, '');
-              return response.blob().then(blob => ({ blob, fileName }));
-            } else {
-              throw new Error('Download failed');
-            }
-          })
-          .then(({ blob, fileName }) => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = fileName; // Use the dynamic filename
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-          })
-          .catch(error => {
-            alert('Error preparing the download. Please try again.');
-            console.error('Error:', error);
-          })
-          .finally(() => {
-            spinner.classList.add('d-none');
-          });
-      });
+      // Trigger the download in chunks
+      fetch(`/orders/${orderId}/download/`)
+        .then(response => {
+          if (response.status === 200 || response.status === 206) {
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const fileName = contentDisposition.split('filename=')[1].trim().replace(/"/g, '');
+            return response.blob().then(blob => ({ blob, fileName }));
+          } else {
+            throw new Error('Download failed');
+          }
+        })
+        .then(({ blob, fileName }) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = fileName; // Use the dynamic filename
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+          alert('Error preparing the download. Please try again.');
+          console.error('Error:', error);
+        })
+        .finally(() => {
+          spinner.classList.add('d-none');
+        });
     });
   });
+});
+
 </script>
 
 {% endblock %}
