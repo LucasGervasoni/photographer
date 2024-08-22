@@ -31,6 +31,7 @@ import time
 from django.core.files.storage import default_storage
 import boto3
 from collections import defaultdict
+from django.utils.http import urlquote
 import logging
 
 logger = logging.getLogger(__name__)
@@ -52,45 +53,41 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        def stream_zip_file():
-            buffer = io.BytesIO()
-            with zipfile.ZipFile(buffer, 'w') as zip_file:
-                # Dictionary to track file names and handle duplicates
-                file_name_tracker = defaultdict(int)
+        # Create a temporary ZIP file in the Nginx accessible directory
+        zip_file_name = f"order_{order.address.replace(' ', '_')}_{order.pk}.zip"
+        zip_file_path = os.path.join('/path/to/nginx/served/files/', zip_file_name)
 
-                for image in images:
-                    file_path = image.image.name
+        # Dictionary to track file names and handle duplicates
+        file_name_tracker = defaultdict(int)
 
-                    if not default_storage.exists(file_path):
-                        # Log or handle the missing file case
-                        print(f"File not found: {file_path}")
-                        continue
+        with zipfile.ZipFile(zip_file_path, 'w') as zip_file:
+            for image in images:
+                file_path = image.image.name
 
-                    with default_storage.open(file_path, 'rb') as file_obj:
-                        # Handle duplicate file names
-                        base_name = os.path.basename(file_path)
-                        file_name, file_extension = os.path.splitext(base_name)
+                if not default_storage.exists(file_path):
+                    # Log or handle the missing file case
+                    print(f"File not found: {file_path}")
+                    continue
 
-                        if file_name_tracker[base_name] > 0:
-                            new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
-                        else:
-                            new_name = base_name
+                with default_storage.open(file_path, 'rb') as file_obj:
+                    # Handle duplicate file names
+                    base_name = os.path.basename(file_path)
+                    file_name, file_extension = os.path.splitext(base_name)
 
-                        # Increase the count for the base name
-                        file_name_tracker[base_name] += 1
+                    if file_name_tracker[base_name] > 0:
+                        new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
+                    else:
+                        new_name = base_name
 
-                        # Write the file in chunks to the ZIP archive
-                        zip_file.writestr(new_name, file_obj.read())
+                    # Increase the count for the base name
+                    file_name_tracker[base_name] += 1
 
-            buffer.seek(0)
-            return buffer
+                    # Write the file to the ZIP archive
+                    zip_file.writestr(new_name, file_obj.read())
 
-        buffer = stream_zip_file()
-
-        # Create a streaming response to the client
-        response = StreamingHttpResponse(buffer, content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
-        return response
+        # Redirect to the Nginx URL
+        nginx_served_url = f'/media/{urlquote(zip_file_name)}'
+        return redirect(nginx_served_url)
     
     
 # Upload 
