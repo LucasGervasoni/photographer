@@ -1,5 +1,7 @@
 
 import re
+import shutil
+import tempfile
 from wsgiref.util import FileWrapper
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
@@ -53,41 +55,57 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Create a temporary ZIP file in the Nginx accessible directory
-        zip_file_name = f"order_{order.address.replace(' ', '_')}_{order.pk}.zip"
-        zip_file_path = os.path.join('/path/to/nginx/served/files/', zip_file_name)
+        def create_zip_file():
+            # Cria um diretório temporário
+            temp_dir = tempfile.mkdtemp()
+            temp_zip_path = os.path.join(temp_dir, f"order_{order.address.replace(' ', '_')}_{order.pk}.zip")
 
-        # Dictionary to track file names and handle duplicates
-        file_name_tracker = defaultdict(int)
+            with zipfile.ZipFile(temp_zip_path, 'w') as zip_file:
+                # Dictionary to track file names and handle duplicates
+                file_name_tracker = defaultdict(int)
 
-        with zipfile.ZipFile(zip_file_path, 'w') as zip_file:
-            for image in images:
-                file_path = image.image.name
+                for image in images:
+                    file_path = image.image.name
 
-                if not default_storage.exists(file_path):
-                    # Log or handle the missing file case
-                    print(f"File not found: {file_path}")
-                    continue
+                    if not default_storage.exists(file_path):
+                        # Log or handle the missing file case
+                        print(f"File not found: {file_path}")
+                        continue
 
-                with default_storage.open(file_path, 'rb') as file_obj:
-                    # Handle duplicate file names
-                    base_name = os.path.basename(file_path)
-                    file_name, file_extension = os.path.splitext(base_name)
+                    with default_storage.open(file_path, 'rb') as file_obj:
+                        # Handle duplicate file names
+                        base_name = os.path.basename(file_path)
+                        file_name, file_extension = os.path.splitext(base_name)
 
-                    if file_name_tracker[base_name] > 0:
-                        new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
-                    else:
-                        new_name = base_name
+                        if file_name_tracker[base_name] > 0:
+                            new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
+                        else:
+                            new_name = base_name
 
-                    # Increase the count for the base name
-                    file_name_tracker[base_name] += 1
+                        # Increase the count for the base name
+                        file_name_tracker[base_name] += 1
 
-                    # Write the file to the ZIP archive
-                    zip_file.writestr(new_name, file_obj.read())
+                        # Write the file in chunks to the ZIP archive
+                        zip_file.writestr(new_name, file_obj.read())
 
-        # Redirect to the Nginx URL
-        nginx_served_url = f'/media/{urlquote(zip_file_name)}'
-        return redirect(nginx_served_url)
+            # Defina o caminho final onde o Nginx pode servir o arquivo
+            final_zip_path = os.path.join(settings.MEDIA_ROOT, f"order_{order.address.replace(' ', '_')}_{order.pk}.zip")
+            shutil.move(temp_zip_path, final_zip_path)
+
+            return final_zip_path
+
+        try:
+            # Crie o arquivo ZIP e obtenha o caminho final
+            final_zip_path = create_zip_file()
+
+            # Retorna o arquivo como uma resposta de streaming
+            response = StreamingHttpResponse(open(final_zip_path, 'rb'), content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(final_zip_path)}"'
+            return response
+
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
+            return HttpResponse("There was an error processing your request.", status=500)
     
     
 # Upload 
