@@ -1,3 +1,4 @@
+from django.core.servers.basehttp import FileWrapper
 from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from apps.pictures.models import OrderImage, UserAction, OrderImageGroup, order_image_path
@@ -48,28 +49,23 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Create a generator to stream the zip file
-        def zip_generator():
-            buffer = io.BytesIO()
-            with zipfile.ZipFile(buffer, 'w') as zip_file:
-                for image in images:
-                    # Get the file from S3
-                    file_path = image.image.name
-                    file_obj = default_storage.open(file_path)
-                    
-                    # Add file to the zip file
-                    with file_obj:
-                        file_data = file_obj.read()
-                        zip_file.writestr(os.path.basename(file_path), file_data)
-                    
-                    # Clear buffer after each file to prevent memory overflow
-                    buffer.seek(0)
-                    yield buffer.read()
-                    buffer.seek(0)
-                    buffer.truncate(0)
+        # Create a zip file on disk temporarily
+        temp_file = f'/tmp/order_{order.pk}.zip'
+        with zipfile.ZipFile(temp_file, 'w') as zip_file:
+            for image in images:
+                file_path = image.image.name
+                file_obj = default_storage.open(file_path)
+                with file_obj:
+                    zip_file.write(file_path, os.path.basename(file_path))
 
-        response = StreamingHttpResponse(zip_generator(), content_type='application/zip')
+        wrapper = FileWrapper(open(temp_file, 'rb'))
+        response = StreamingHttpResponse(wrapper, content_type='application/zip')
         response['Content-Disposition'] = f'attachment; filename="order_{order.address}_{order.pk}.zip"'
+        response['Content-Length'] = os.path.getsize(temp_file)
+        
+        # Optionally remove the temporary file after response
+        os.remove(temp_file)
+
         return response
 
 # Upload 
