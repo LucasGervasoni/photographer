@@ -65,10 +65,9 @@
         var fileNameElement = document.getElementById('fileName');
         var progressPercent = document.getElementById('progressPercent');
         var uploadForm = document.getElementById('uploadForm');
-        var chunkSize = 10 * 1024 * 1024; // Tamanho de cada chunk, 10MB
-        var retryLimit = 5; 
-        var baseTimeout = 60000; // 60 segundos de base
-  
+        var retryLimit = 5;
+        var baseTimeout = 60000; // Timeout 60 seconds
+    
         function updateScanUrlField() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
@@ -76,126 +75,109 @@
                 scanUrlField.disabled = false;
             } else {
                 scanUrlField.disabled = true;
-                scanUrlField.value = ''; 
+                scanUrlField.value = '';
             }
         }
-  
+    
         servicesField.addEventListener('change', updateScanUrlField);
         updateScanUrlField();
-  
+    
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
-            var files = formData.getAll('image');
-  
-            // Show the progress card
+            var files = formData.getAll('image');  
+    
+            if (files.length === 0) {
+                alert('No files were selected.');
+                return;
+            }
+    
             progressCard.style.display = 'block';
-  
-            // Disable the form to prevent additional submissions
+    
             uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                 element.disabled = true;
             });
-  
+    
             try {
                 for (let file of files) {
-                    await uploadFileInChunks(file, formData, uploadForm.action);
+                    await uploadFileWithRetries(file, formData, uploadForm.action);
                 }
-  
-                // Redirect after successful uploads
-                window.location.href = "{% url 'userOrders--page' %}";
+                window.location.href = "{% url 'userOrders--page' %}"; 
             } catch (error) {
                 alert(error.message || 'Error during upload.');
             } finally {
-                // Hide the progress card
                 progressCard.style.display = 'none';
-  
-                // Re-enable the form
+    
                 uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                     element.disabled = false;
                 });
             }
         };
-  
-        async function uploadFileInChunks(file, formData, actionUrl) {
-            const totalChunks = Math.ceil(file.size / chunkSize);
-            for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-                const start = chunkIndex * chunkSize;
-                const end = Math.min(file.size, start + chunkSize);
-                const chunk = file.slice(start, end);
-  
-                let chunkFormData = new FormData();
-                chunkFormData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-                chunkFormData.append('image', chunk, file.name);
-                chunkFormData.append('editor_note', formData.get('editor_note'));
-                chunkFormData.append('services', formData.get('services'));
-                chunkFormData.append('scan_url', formData.get('scan_url'));
-                chunkFormData.append('chunk_number', chunkIndex + 1);
-                chunkFormData.append('total_chunks', totalChunks);
-  
-                await uploadFileWithRetries(chunkFormData, actionUrl, chunkIndex + 1, totalChunks);
-            }
-        }
-  
-        async function uploadFileWithRetries(fileData, actionUrl, chunkIndex, totalChunks, retries = 0) {
+    
+        async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
             try {
-                await uploadFileAsync(fileData, actionUrl, chunkIndex, totalChunks);
+                await uploadFileAsync(file, formData, actionUrl);
             } catch (error) {
                 if (retries < retryLimit) {
                     const delay = Math.pow(2, retries) * 1000; // Exponential backoff
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    return uploadFileWithRetries(fileData, actionUrl, chunkIndex, totalChunks, retries + 1);
+                    return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
                 } else {
                     throw error;
                 }
             }
         }
-  
-        async function uploadFileAsync(fileData, actionUrl, chunkIndex, totalChunks) {
+    
+        async function uploadFileAsync(file, formData, actionUrl) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
-                xhr.timeout = baseTimeout + (fileData.get('image').size / (1024 * 1024)) * 1000; // Timeout adaptativo
-  
+                xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Timeout adaptativo
+    
                 xhr.upload.onprogress = function (event) {
                     if (event.lengthComputable) {
-                        var percentComplete = Math.round((chunkIndex / totalChunks) * 100);
+                        var percentComplete = Math.round((event.loaded / event.total) * 100);
                         progressBar.style.width = percentComplete + '%';
+                        progressBar.setAttribute('aria-valuenow', percentComplete);
                         progressPercent.textContent = percentComplete + '% Complete';
                     }
                 };
-  
+    
                 xhr.onloadstart = function () {
-                    fileNameElement.textContent = 'File: ' + fileData.get('image').name;
+                    fileNameElement.textContent = 'File: ' + file.name;
                     progressBar.style.width = '0%';
                     progressPercent.textContent = '0% Complete';
                 };
-  
+    
                 xhr.onload = function () {
                     if (xhr.status === 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.status === 'success') {
-                            resolve();
-                        } else {
-                            reject(new Error(response.message || 'Error during upload.'));
-                        }
+                        resolve();
                     } else {
                         reject(new Error('Error during upload.'));
                     }
                 };
-  
+    
                 xhr.onerror = function () {
-                    reject(new Error('Error during upload.'));
+                    reject(new Error('Upload timed out.'));
                 };
-  
+    
                 xhr.ontimeout = function () {
                     reject(new Error('O upload atingiu o tempo limite.'));
                 };
-  
-                xhr.send(fileData);
+    
+                var uploadData = new FormData();
+                uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
+                uploadData.append('image', file);
+                uploadData.append('editor_note', formData.get('editor_note'));
+                uploadData.append('services', formData.get('services'));
+                uploadData.append('scan_url', formData.get('scan_url'));
+    
+                xhr.send(uploadData);
             });
         }
     });
+    
 </script>
-
+    
 <br>
 {% endblock %}
