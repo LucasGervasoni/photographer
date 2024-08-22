@@ -6,12 +6,12 @@
   </a>
 </div>
 <i class="fas fa-bars hamburger-btn inside mt-3" id="hamburger-btn-inside"></i>
-<a class="sideLink"  href="#">Welcome, {{ request.user }}</a>
-<a class="sideLink"  href="{% url 'userOrders--page' %}">Home</a>
-<a class="sideLink"  href="{% url 'listUsers' %}">Users</a>
-<a class="sideLink"  href="{% url 'adminOrders--page' %}">Orders</a>
-<a  class="sideLink" href="{% url 'list_files' %}">Files</a>
-<a class="sideLink"  href="{% url 'list_logs' %}">Log Actions</a>
-<a class="sideLink"  href="{% url 'search_nearby_users' %}">Search</a>
-<a class="sideLink"  href="#">Support</a>
-<a  class="sideLink" href="{% url 'logout' %}">Logout</a>
+<a class="sideLink text-body"  href="#">Welcome, {{ request.user }}</a>
+<a class="sideLink text-dark"  href="{% url 'userOrders--page' %}">Home</a>
+<a class="sideLink text-dark"  href="{% url 'listUsers' %}">Users</a>
+<a class="sideLink text-dark"  href="{% url 'adminOrders--page' %}">Orders</a>
+<a  class="sideLink text-dark" href="{% url 'list_files' %}">Files</a>
+<a class="sideLink text-dark"  href="{% url 'list_logs' %}">Log Actions</a>
+<a class="sideLink text-dark"  href="{% url 'search_nearby_users' %}">Search</a>
+<a class="sideLink text-dark"  href="#">Support</a>
+<a  class="sideLink text-dark" href="{% url 'logout' %}">Logout</a>
