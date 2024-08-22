@@ -1,5 +1,4 @@
 import logging
-from django.http import HttpResponseBadRequest
 from django.utils.deprecation import MiddlewareMixin
 from django.core.exceptions import SuspiciousOperation
 
@@ -10,7 +9,6 @@ class LargeFileUploadMiddleware(MiddlewareMixin):
     Middleware para gerenciar uploads grandes. Monitora o tamanho dos uploads e ajusta o tempo limite de upload.
     """
     MAX_UPLOAD_SIZE = 20 * 1024 * 1024 * 1024  # Limite de 20GB
-    BASE_TIMEOUT = 300  # 300 segundos (5 minutos) como tempo base
 
     def process_request(self, request):
         if request.method == 'POST' and request.content_type.startswith('multipart/form-data'):
@@ -22,11 +20,7 @@ class LargeFileUploadMiddleware(MiddlewareMixin):
                 logger.warning(f"Upload de arquivo excede o limite permitido: {content_length} bytes")
                 raise SuspiciousOperation("O arquivo enviado é muito grande.")
 
-            if content_length > 0:
-                # Adiciona o tempo limite adaptativo para o upload
-                timeout = max(self.BASE_TIMEOUT, content_length / (1024 * 1024))
-                request.META['wsgi.input'].settimeout(timeout)
-                logger.debug(f"Timeout ajustado para: {timeout} segundos para upload de {content_length / (1024 * 1024)} MB")
+            # O timeout não é mais ajustado aqui, confiamos nas configurações do servidor web
 
     def process_exception(self, request, exception):
         if isinstance(exception, SuspiciousOperation):
