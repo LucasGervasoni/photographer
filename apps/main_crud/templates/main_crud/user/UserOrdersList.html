@@ -153,27 +153,31 @@ l{% extends 'base.html' %}
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-      const downloadButtons = document.querySelectorAll('.download-btn');
-  
-      downloadButtons.forEach(button => {
-          button.addEventListener('click', function (e) {
-              e.preventDefault();
-              const orderId = this.getAttribute('data-order-id');
-              const spinner = document.getElementById('loading-spinner');
-  
-              spinner.classList.remove('d-none');
-  
-              // Redirect to the download URL which will be handled by Nginx
-              window.location.href = `/orders/${orderId}/download/`;
-  
-              // Optional: Hide spinner after a timeout, in case of large files where download may take time
-              setTimeout(() => {
-                  spinner.classList.add('d-none');
-              }, 3000);
-          });
-      });
-  });
-  </script>
+document.addEventListener('DOMContentLoaded', function () {
+    const downloadButtons = document.querySelectorAll('.download-btn');
+
+    downloadButtons.forEach(button => {
+        button.addEventListener('click', async function (e) {
+            e.preventDefault();
+            const orderId = this.getAttribute('data-order-id');
+            const spinner = document.getElementById('loading-spinner');
+
+            spinner.classList.remove('d-none');
+
+            try {
+                const response = await fetch(`/orders/${orderId}/download/`);
+                const data = await response.json();
+                
+                if (data.download_url) {
+                    window.location.href = data.download_url;
+                }
+            } finally {
+                spinner.classList.add('d-none');
+            }
+        });
+    });
+});
+
+</script>
   
 {% endblock %}

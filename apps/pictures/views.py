@@ -46,7 +46,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.all()
 
         # Log the download action
         UserAction.objects.create(
@@ -55,58 +54,43 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        def create_zip_file():
-            # Cria um diretório temporário
-            temp_dir = tempfile.mkdtemp()
-            temp_zip_path = os.path.join(temp_dir, f"order_{order.address.replace(' ', '_')}_{order.pk}.zip")
+        def zip_files(files):
+            """Compress files into a zip archive in memory."""
+            zip_buffer = io.BytesIO()
 
-            with zipfile.ZipFile(temp_zip_path, 'w') as zip_file:
-                # Dictionary to track file names and handle duplicates
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                 file_name_tracker = defaultdict(int)
 
-                for image in images:
-                    file_path = image.image.name
-
-                    if not default_storage.exists(file_path):
-                        # Log or handle the missing file case
-                        print(f"File not found: {file_path}")
+                for file_path in files:
+                    if not os.path.exists(file_path):
                         continue
 
-                    with default_storage.open(file_path, 'rb') as file_obj:
-                        # Handle duplicate file names
-                        base_name = os.path.basename(file_path)
-                        file_name, file_extension = os.path.splitext(base_name)
+                    base_name = os.path.basename(file_path)
+                    file_name, file_extension = os.path.splitext(base_name)
 
-                        if file_name_tracker[base_name] > 0:
-                            new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
-                        else:
-                            new_name = base_name
+                    if file_name_tracker[base_name] > 0:
+                        new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
+                    else:
+                        new_name = base_name
 
-                        # Increase the count for the base name
-                        file_name_tracker[base_name] += 1
+                    file_name_tracker[base_name] += 1
 
-                        # Write the file in chunks to the ZIP archive
-                        zip_file.writestr(new_name, file_obj.read())
+                    zip_file.write(file_path, new_name)
 
-            # Defina o caminho final onde o Nginx pode servir o arquivo
-            final_zip_path = os.path.join(settings.MEDIA_ROOT, f"order_{order.address.replace(' ', '_')}_{order.pk}.zip")
-            shutil.move(temp_zip_path, final_zip_path)
+            zip_buffer.seek(0)
+            return zip_buffer
 
-            return final_zip_path
+        # Caminhos dos arquivos que precisam ser compactados
+        file_paths = [os.path.join(settings.MEDIA_ROOT, image.image.name) for image in order.image.all()]
 
-        try:
-            # Crie o arquivo ZIP e obtenha o caminho final
-            final_zip_path = create_zip_file()
+        # Cria o arquivo ZIP em memória
+        zip_file = zip_files(file_paths)
 
-            # Retorna o arquivo como uma resposta de streaming
-            response = StreamingHttpResponse(open(final_zip_path, 'rb'), content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(final_zip_path)}"'
-            return response
+        # Retorna o arquivo como uma resposta de streaming
+        response = StreamingHttpResponse(zip_file, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
 
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            return HttpResponse("There was an error processing your request.", status=500)
-    
+        return response
     
 # Upload 
 
