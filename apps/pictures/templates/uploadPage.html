@@ -78,9 +78,9 @@
     var fileNameElement = document.getElementById('fileName');
     var progressPercent = document.getElementById('progressPercent');
     var uploadForm = document.getElementById('uploadForm');
-    var storedFiles = [];  
-    var retryLimit = 5; 
-    var baseTimeout = 60000; // 60 segundos de base
+    var chunkSize = 10 * 1024 * 1024; // Tamanho de cada chunk, 10MB
+    var retryLimit = 5;
+    var baseTimeout = 60000;
 
     function updateScanUrlField() {
         var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
@@ -89,7 +89,7 @@
             scanUrlField.disabled = false;
         } else {
             scanUrlField.disabled = true;
-            scanUrlField.value = ''; 
+            scanUrlField.value = '';
         }
     }
 
@@ -99,7 +99,7 @@
     uploadForm.onsubmit = async function (event) {
         event.preventDefault();
         var formData = new FormData(uploadForm);
-        storedFiles = formData.getAll('image');  
+        var files = formData.getAll('image');
 
         progressCard.style.display = 'block';
 
@@ -108,10 +108,9 @@
         });
 
         try {
-            for (let file of storedFiles) {
-                await uploadFileWithRetries(file, formData, uploadForm.action);
+            for (let file of files) {
+                await uploadLargeFileWithRetries(file, formData, uploadForm.action);
             }
-
             window.location.href = "{% url 'userOrders--page' %}";
         } catch (error) {
             alert(error.message || 'Erro durante o upload.');
@@ -124,29 +123,37 @@
         }
     };
 
-    async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
-        try {
-            await uploadFileAsync(file, formData, actionUrl, retries);
-        } catch (error) {
-            if (retries < retryLimit) {
-                const delay = Math.pow(2, retries) * 1000; // Exponential backoff
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
-            } else {
-                throw error;
+    async function uploadLargeFileWithRetries(file, formData, actionUrl, retries = 0) {
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * chunkSize;
+            const end = Math.min(file.size, start + chunkSize);
+            const chunk = file.slice(start, end);
+            const chunkNumber = chunkIndex + 1;
+
+            try {
+                await uploadChunkWithRetries(chunk, chunkNumber, totalChunks, formData, actionUrl, retries);
+            } catch (error) {
+                if (retries < retryLimit) {
+                    const delay = Math.pow(2, retries) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return uploadLargeFileWithRetries(file, formData, actionUrl, retries + 1);
+                } else {
+                    throw error;
+                }
             }
         }
     }
 
-    async function uploadFileAsync(file, formData, actionUrl, retries) {
+    async function uploadChunkWithRetries(chunk, chunkNumber, totalChunks, formData, actionUrl, retries) {
         return new Promise((resolve, reject) => {
             var xhr = new XMLHttpRequest();
             xhr.open('POST', actionUrl, true);
-            xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Timeout adaptativo
+            xhr.timeout = baseTimeout + (chunk.size / (1024 * 1024)) * 1000;
 
             xhr.upload.onprogress = function (event) {
                 if (event.lengthComputable) {
-                    var percentComplete = Math.round((event.loaded / event.total) * 100);
+                    var percentComplete = Math.round((chunkNumber / totalChunks) * 100);
                     progressBar.style.width = percentComplete + '%';
                     progressBar.setAttribute('aria-valuenow', percentComplete);
                     progressPercent.textContent = percentComplete + '% Complete';
@@ -154,35 +161,33 @@
             };
 
             xhr.onloadstart = function () {
-                fileNameElement.textContent = 'File: ' + file.name;
+                fileNameElement.textContent = 'Uploading: ' + chunkNumber + '/' + totalChunks;
                 progressBar.style.width = '0%';
                 progressPercent.textContent = '0% Complete';
             };
 
             xhr.onload = function () {
                 if (xhr.status === 200) {
-                    var response = JSON.parse(xhr.responseText);
-                    if (response.status === 'success') {
-                        resolve();
-                    } else {
-                        reject(new Error(response.message || 'Erro durante o upload.'));
-                    }
+                    resolve();
                 } else {
-                    reject(new Error('Erro durante o upload.'));
+                    reject(new Error('Erro durante o upload do chunk ' + chunkNumber));
                 }
             };
 
             xhr.onerror = function () {
-                reject(new Error('Erro durante o upload.'));
+                reject(new Error('Erro durante o upload do chunk ' + chunkNumber));
             };
 
             xhr.ontimeout = function () {
-                reject(new Error('O upload atingiu o tempo limite.'));
+                reject(new Error('O upload do chunk ' + chunkNumber + ' atingiu o tempo limite.'));
             };
 
             var uploadData = new FormData();
             uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-            uploadData.append('image', file);
+            uploadData.append('chunk', chunk);
+            uploadData.append('chunk_number', chunkNumber);
+            uploadData.append('total_chunks', totalChunks);
+            uploadData.append('file_name', file.name);
             uploadData.append('editor_note', formData.get('editor_note'));
             uploadData.append('services', formData.get('services'));
             uploadData.append('scan_url', formData.get('scan_url'));
