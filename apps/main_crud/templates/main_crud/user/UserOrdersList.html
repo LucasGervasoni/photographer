@@ -103,8 +103,8 @@ l{% extends 'base.html' %}
           <label class="mt-2 mr-2" style="font-weight: bold;" for="order_status">Status:</label>
           <select name="order_status" class="form-control" onchange="this.form.submit()">
             <option value="Not Uploaded" {% if order.order_status == "Not Uploaded" %}selected{% endif %}>Not Uploaded</option>
-            <option value="Production" {% if order.order_status=='Production' %}selected{% endif %}>Production</option>
-            <option value="Completed" {% if order.order_status=='Completed' %}selected{% endif %}>Completed</option>
+            <option value="Production" {% if order.order_status == "Production" %}selected{% endif %}>Production</option>
+            <option value="Completed" {% if order.order_status == "Completed" %}selected{% endif %}>Completed</option>
           </select>
         </form>
         {% else %}
