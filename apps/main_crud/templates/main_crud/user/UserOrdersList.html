@@ -133,14 +133,6 @@ l{% extends 'base.html' %}
 
 
 <script>
-  function showPopup(popupId) {
-    document.getElementById(popupId).classList.remove('d-none');
-  }
-
-  function closePopup(popupId) {
-    document.getElementById(popupId).classList.add('d-none');
-  }
-
   document.addEventListener('DOMContentLoaded', function () {
     const downloadButtons = document.querySelectorAll('.download-btn');
   
@@ -148,31 +140,21 @@ l{% extends 'base.html' %}
       button.addEventListener('click', function (e) {
         e.preventDefault();
         const orderId = this.getAttribute('data-order-id');
+        const spinner = document.getElementById('loading-spinner');
+  
+        spinner.classList.remove('d-none');
+  
+        // Trigger the download
         const downloadUrl = `/orders/${orderId}/download/`;
+        window.location.href = downloadUrl;
         
-        // Show progress pop-up
-        showPopup('popup-progress');
-
-        // Start the download
-        fetch(downloadUrl)
-          .then(response => {
-            if (response.ok) {
-              showPopup('popup-success'); // Show success pop-up
-            } else {
-              throw new Error('Download failed');
-            }
-          })
-          .catch(error => {
-            showPopup('popup-error'); // Show error pop-up
-            console.error('Error:', error);
-          })
-          .finally(() => {
-            closePopup('popup-progress'); // Close progress pop-up
-          });
+        // Hide spinner after a short delay, assuming the download has started
+        setTimeout(() => {
+          spinner.classList.add('d-none');
+        }, 3000);
       });
     });
   });
 </script>
-
 
 {% endblock %}
