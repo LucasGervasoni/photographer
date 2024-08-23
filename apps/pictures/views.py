@@ -70,12 +70,12 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
-                file_path = image.image.path
+                file_path = image.image.name
 
-                if not os.path.exists(file_path):
+                if not default_storage.exists(file_path):
                     continue
 
-                with open(file_path, 'rb') as file_obj:
+                with default_storage.open(file_path, 'rb') as file_obj:
                     # Split the file into chunks to avoid memory overload
                     chunk_size = 1024 * 1024 * 10  # 10MB chunks
                     for chunk in iter(lambda: file_obj.read(chunk_size), b''):
@@ -83,7 +83,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         buffer.seek(0)
         return FileWrapper(buffer, chunk_size=8192)
-
 
 
 # Upload 
