@@ -23,6 +23,9 @@ from django.core.files.storage import default_storage
 import logging
 from concurrent.futures import ThreadPoolExecutor
 import threading
+from django.conf import settings
+import boto3
+from botocore.client import Config
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +46,29 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
+        # Generate a presigned URL with Transfer Acceleration
+        s3_client = boto3.client(
+            's3',
+            config=Config(
+                s3={
+                    'use_accelerate_endpoint': True,
+                    'endpoint_url': settings.S3_ACCELERATE_ENDPOINT
+                }
+            )
+        )
+        presigned_urls = []
+        
+        for image in images:
+            url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': 'your-bucket-name', 'Key': image.image.name},
+                ExpiresIn=3600  # URL válido por 1 hora
+            )
+            presigned_urls.append(url)
+
+        # Stream the ZIP file with accelerated download
         response = StreamingHttpResponse(
-            self.stream_zip_file(images),
+            self.stream_zip_file(images, presigned_urls),
             content_type='application/zip'
         )
         response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
@@ -52,20 +76,20 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         return response
 
-    def stream_zip_file(self, images):
+    def stream_zip_file(self, images, presigned_urls):
         buffer = io.BytesIO()
         zip_lock = threading.Lock()  # Lock for writing to the zip file
 
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             with ThreadPoolExecutor(max_workers=4) as executor:  # Use a thread pool for parallel processing
                 futures = []
-                for image in images:
-                    file_path = image.image.name
+                for index, url in enumerate(presigned_urls):
+                    file_path = images[index].image.name
 
                     if not default_storage.exists(file_path):
                         continue
 
-                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path, zip_lock))
+                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path, url, zip_lock))
 
                 # Ensure all files are processed
                 for future in futures:
@@ -75,9 +99,9 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         while chunk := buffer.read(8192):
             yield chunk
 
-    def add_file_to_zip(self, zip_file, file_path, zip_lock):
+    def add_file_to_zip(self, zip_file, file_path, url, zip_lock):
+        # Download the file using the presigned URL
         with default_storage.open(file_path, 'rb') as file_obj:
-            # Divida o arquivo em partes menores
             chunk_size = 5 * 1024 * 1024  # 5MB por chunk
             unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
             index = 0
@@ -104,7 +128,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
- 
+    
     
 # Upload 
 

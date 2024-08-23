@@ -151,7 +151,7 @@ AWS_QUERYSTRING_AUTH = False
 
 USE_S3 = True 
 # Custom storage backends for static and media files
-
+S3_ACCELERATE_ENDPOINT = 'spotlight-prod-us-west-1-static-media.s3-accelerate.amazonaws.com'
 # Static files (CSS, JavaScript, Images)
 STATICFILES_LOCATION = 'static'
 STATICFILES_STORAGE = 'custom_storages.StaticStorage'
