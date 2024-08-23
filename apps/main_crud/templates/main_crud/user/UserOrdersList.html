@@ -133,28 +133,16 @@ l{% extends 'base.html' %}
 
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const downloadButtons = document.querySelectorAll('.download-btn');
-  
-    downloadButtons.forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const spinner = document.getElementById('loading-spinner');
-  
-        spinner.classList.remove('d-none');
-  
-        // Trigger the download
-        const downloadUrl = `/orders/${orderId}/download/`;
-        window.location.href = downloadUrl;
-        
-        // Hide spinner after a short delay, assuming the download has started
-        setTimeout(() => {
-          spinner.classList.add('d-none');
-        }, 3000);
+  document.addEventListener("DOMContentLoaded", function() {
+      // Adiciona um evento de clique aos botões de download
+      document.querySelectorAll('.download-btn').forEach(function(button) {
+          button.addEventListener('click', function(event) {
+              event.preventDefault();
+              const orderId = this.getAttribute('data-order-id');
+              const downloadUrl = `/orders/${orderId}/download/`;
+              window.location.href = downloadUrl;
+          });
       });
-    });
   });
-</script>
-
+  </script>
 {% endblock %}
