@@ -49,58 +49,54 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Criar um cliente S3
-        s3_client = boto3.client(
-            's3',
-            config=Config(
-                s3={
-                    'use_accelerate_endpoint': True,
-                    'endpoint_url': settings.S3_ACCELERATE_ENDPOINT
-                }
-            )
+        # Stream the ZIP file directly from storage
+        response = StreamingHttpResponse(
+            self.stream_zip_file(images),
+            content_type='application/zip'
         )
+        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
+        response['Content-Transfer-Encoding'] = 'binary'
 
-        # Criar uma pasta temporária no S3 para armazenar os arquivos ZIP
-        temp_folder = f'temp/{uuid.uuid4()}/'
-        zip_file_key = f'{temp_folder}order_{order.id}_images.zip'
+        return response
 
-        # Criar o arquivo ZIP diretamente no S3
-        self.create_zip_in_s3(s3_client, images, temp_folder)
+    def stream_zip_file(self, images):
+        buffer = io.BytesIO()
+        zip_lock = threading.Lock()  # Lock for writing to the zip file
 
-        # Gerar um URL pré-assinado para o arquivo ZIP
-        presigned_url = s3_client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': zip_file_key},
-            ExpiresIn=3600  # URL válido por 1 hora
-        )
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
+            with ThreadPoolExecutor(max_workers=4) as executor:  # Use a thread pool for parallel processing
+                futures = []
+                for image in images:
+                    file_path = image.image.name
 
-        # Retornar o URL para o cliente
-        return JsonResponse({'download_url': presigned_url})
+                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path, zip_lock))
 
-    def create_zip_in_s3(self, s3_client, images, temp_folder):
-        # Cria um arquivo ZIP diretamente no S3
-        s3_resource = boto3.resource('s3')
-        bucket = s3_resource.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+                # Ensure all files are processed
+                for future in futures:
+                    future.result()
 
-        # Criar um arquivo ZIP em memória
-        zip_buffer = io.BytesIO()
+        buffer.seek(0)
+        while chunk := buffer.read(8192):
+            yield chunk
 
-        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-            for image in images:
-                file_key = image.image.name
-                presigned_url = s3_client.generate_presigned_url(
-                    'get_object',
-                    Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_key},
-                    ExpiresIn=3600  # URL válido por 1 hora
-                )
+    def add_file_to_zip(self, zip_file, file_path, zip_lock):
+        # Stream the file directly from the storage backend into the ZIP file
+        with default_storage.open(file_path, 'rb') as file_obj:
+            unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
 
-                # Download do arquivo direto para a memória
-                response = requests.get(presigned_url)
-                zip_file.writestr(os.path.basename(file_key), response.content)
+            with zip_lock:
+                zip_file.writestr(unique_name, file_obj.read())
 
-            # Upload do arquivo ZIP para o S3
-            zip_buffer.seek(0)
-            bucket.put_object(Key=f'{temp_folder}order_{Order.id}_images.zip', Body=zip_buffer.getvalue())
+    def get_unique_filename(self, zip_file, filename):
+        counter = 1
+        unique_name = filename
+        while unique_name in zip_file.namelist():
+            name, ext = os.path.splitext(filename)
+            unique_name = f"{name}_{counter}{ext}"
+            counter += 1
+        return unique_name
+  
+   
     
 # Upload 
 
