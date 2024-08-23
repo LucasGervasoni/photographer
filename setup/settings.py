@@ -82,18 +82,27 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'spotlightdatabase',
-        'USER': 'manager',
-        'PASSWORD':  'k8YNCKbEp8ksileBeJoK',
-        'HOST': 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
-        'PORT': 5432,
-        'CONN_MAX_AGE': 600,
-        'OPTIONS': {
-            'connect_timeout': 60,
-        },
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'spotlightdatabase',
+#         'USER': 'manager',
+#         'PASSWORD':  'k8YNCKbEp8ksileBeJoK',
+#         'HOST': 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
+#         'PORT': 5432,
+#         'CONN_MAX_AGE': 600,
+#         'OPTIONS': {
+#             'connect_timeout': 60,
+#         },
+#     }
+# }
 
 
 # Password validation
