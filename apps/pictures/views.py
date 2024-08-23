@@ -43,46 +43,12 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 # Download
-class LargeZipFile(zipfile.ZipFile):
-    """
-    Extends ZipFile to handle larger-than-memory files efficiently.
-    """
-    def write_large_file(self, filename, arcname=None):
-        """
-        Writes a large file to the zip without loading it fully in memory.
-        """
-        if arcname is None:
-            arcname = filename
-        with open(filename, 'rb') as f:
-            self.write(arcname, f.read(), zipfile.ZIP_STORED)
-
-def zip_and_stream_large_files(file_paths, zip_name='files.zip'):
-    """
-    Generates a zip file containing the files in file_paths and streams it.
-    """
-    temp_dir = tempfile.mkdtemp()
-    zip_path = os.path.join(temp_dir, zip_name)
-
-    with LargeZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for file_path in file_paths:
-            arcname = os.path.relpath(file_path, start=os.path.commonpath(file_paths))
-            zip_file.write_large_file(file_path, arcname=arcname)
-
-    response = StreamingHttpResponse(FileWrapper(open(zip_path, 'rb')), content_type='application/zip')
-    response['Content-Disposition'] = f'attachment; filename={zip_name}'
-    response['Content-Length'] = os.path.getsize(zip_path)
-    
-    # Remove the temporary zip file after response is fully sent
-    response['X-Accel-Buffering'] = 'no'
-    response['X-Sendfile'] = zip_path
-
-    return response
-
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
+        images = order.image.all()
 
         # Log the download action
         UserAction.objects.create(
@@ -91,24 +57,34 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Get file paths from the order's media directory
-        file_paths = self.get_file_paths_by_order(order)
+        response = StreamingHttpResponse(
+            self.stream_zip_file(images),
+            content_type='application/zip'
+        )
+        response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
+        response['Content-Transfer-Encoding'] = 'binary'
 
-        # Stream the zip file as a response
-        return zip_and_stream_large_files(file_paths, zip_name=f'order_{order.id}_files.zip')
+        return response
 
-    def get_file_paths_by_order(self, order):
-        """
-        Returns the file paths related to an order.
-        """
-        order_media_dir = os.path.join(MEDIA_ROOT, f'orders/{order.id}/')
-        
-        file_paths = []
-        for root, dirs, files in os.walk(order_media_dir):
-            for file in files:
-                file_paths.append(os.path.join(root, file))
-        
-        return file_paths
+    def stream_zip_file(self, images):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
+            for image in images:
+                file_path = image.image.path
+
+                if not os.path.exists(file_path):
+                    continue
+
+                with open(file_path, 'rb') as file_obj:
+                    # Split the file into chunks to avoid memory overload
+                    chunk_size = 1024 * 1024 * 10  # 10MB chunks
+                    for chunk in iter(lambda: file_obj.read(chunk_size), b''):
+                        zip_file.writestr(os.path.basename(file_path), chunk)
+
+        buffer.seek(0)
+        return FileWrapper(buffer, chunk_size=8192)
+
+
 
 # Upload 
 
