@@ -1,26 +1,16 @@
 
-import re
-import shutil
-import tempfile
-from wsgiref.util import FileWrapper
-from django.db import transaction, OperationalError
 from django.shortcuts import render, get_object_or_404, redirect
 from apps.pictures.models import OrderImage, UserAction, OrderImageGroup, order_image_path
 from apps.pictures.forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
 from apps.main_crud.models import Order
-
 from django.views.generic import View, ListView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from braces.views import GroupRequiredMixin
 from django.urls import reverse, reverse_lazy
-
-from django.contrib import messages  # Import the messages module
-
 import zipfile  # Import the zipfile module to create and manipulate ZIP files
 import io  # Import the io module for handling byte streams
 from django.http import HttpResponse, StreamingHttpResponse # Import HttpResponse to send HTTP responses
 import os
-from django.conf import settings
 from django.db.models import Q
 from django.utils.timezone import make_aware
 from datetime import datetime
@@ -28,16 +18,11 @@ from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
 from django.core.paginator import Paginator
-import time
 from django.core.files.storage import default_storage
-import boto3
-from collections import defaultdict
-from urllib.parse import quote as urlquote
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
-from setup.settings import MEDIA_ROOT
 
 logger = logging.getLogger(__name__)
 
@@ -70,19 +55,40 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
     def stream_zip_file(self, images):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
-            for image in images:
-                file_path = image.image.name
+            with ThreadPoolExecutor(max_workers=4) as executor:  # Use a thread pool for parallel processing
+                futures = []
+                for image in images:
+                    file_path = image.image.name
 
-                if not default_storage.exists(file_path):
-                    continue
+                    if not default_storage.exists(file_path):
+                        continue
 
-                with default_storage.open(file_path, 'rb') as file_obj:
-                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-                    zip_file.writestr(unique_name, file_obj.read())
+                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path))
+
+                # Ensure all files are processed
+                for future in futures:
+                    future.result()
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
             yield chunk
+
+    def add_file_to_zip(self, zip_file, file_path):
+        with default_storage.open(file_path, 'rb') as file_obj:
+            # Divida o arquivo em partes menores
+            chunk_size = 5 * 1024 * 1024  # 5MB por chunk
+            unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+            index = 0
+
+            while True:
+                chunk = file_obj.read(chunk_size)
+                if not chunk:
+                    break
+
+                # Nome do arquivo com parte indexada
+                part_name = f"{unique_name}.part{index}"
+                zip_file.writestr(part_name, chunk)
+                index += 1
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -92,7 +98,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-
     
 # Upload 
 
