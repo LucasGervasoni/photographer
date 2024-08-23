@@ -125,24 +125,109 @@ l{% extends 'base.html' %}
   </table>
 </div>
 
-<div id="loading-spinner" class="d-none" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-  <div class="spinner-border" role="status">
-    <span class="sr-only">Loading...</span>
+
+<!-- Progress Pop-up -->
+<div id="popup-progress" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Your download is in progress...</h2>
+    </div>
+    <div class="popup-body">
+      <p>Please wait while we process your download.</p>
+    </div>
   </div>
+</div>
+
+<!-- Success Pop-up -->
+<div id="popup-success" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Success!</h2>
+    </div>
+    <div class="popup-body">
+      <p>Your download has been completed successfully!</p>
+      <button onclick="closePopup('popup-success')">Continue Browsing</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Pop-up -->
+<div id="popup-error" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Error!</h2>
+    </div>
+    <div class="popup-body">
+      <p>An error occurred during the download. Please try again.</p>
+      <button onclick="closePopup('popup-error')">Try Again</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div class="pagination">
+  <ul class="pagination">
+    {% if is_paginated %}
+    {% if page_obj.has_previous %}
+    <li class="page-item"><a class="page-link" href="?page=1">&laquo; first</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+    {% endif %}
+    <li class="current page-item">
+      <a class="page-link"> Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</a>
+    </li>
+    {% if page_obj.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a></li>
+    {% endif %}
+    {% endif %}
+  </ul>
 </div>
 
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-      // Adiciona um evento de clique aos botões de download
-      document.querySelectorAll('.download-btn').forEach(function(button) {
-          button.addEventListener('click', function(event) {
-              event.preventDefault();
-              const orderId = this.getAttribute('data-order-id');
-              const downloadUrl = `/orders/${orderId}/download/`;
+    document.querySelectorAll('.download-btn').forEach(function(button) {
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+        const orderId = this.getAttribute('data-order-id');
+        const downloadUrl = `/orders/${orderId}/download/`;
+
+        // Show the progress pop-up
+        showPopup('popup-progress');
+
+        // Perform the download request via Fetch API
+        fetch(downloadUrl)
+          .then(response => {
+            if (response.ok) {
+              // Successful download
+              showPopup('popup-success');
+              // Initiate the download
               window.location.href = downloadUrl;
+            } else {
+              // Error in download
+              showPopup('popup-error');
+            }
+          })
+          .catch(error => {
+            // Error in connection or request processing
+            showPopup('popup-error');
+          })
+          .finally(() => {
+            // Close the progress pop-up
+            closePopup('popup-progress');
           });
       });
+    });
   });
-  </script>
+
+  function showPopup(popupId) {
+    document.getElementById(popupId).classList.remove('d-none');
+  }
+
+  function closePopup(popupId) {
+    document.getElementById(popupId).classList.add('d-none');
+  }
+</script>
 {% endblock %}

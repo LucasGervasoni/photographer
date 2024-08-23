@@ -51,11 +51,14 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
+        address_safe = order.address.replace(' ', '_').replace(',', '').replace('.', '')
+        zip_filename = f'order_{address_safe}.zip'
+
         response = StreamingHttpResponse(
             self.stream_zip_file(images),
             content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.id}.zip'
+        response['Content-Disposition'] = f'attachment; filename={zip_filename}'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
