@@ -7,7 +7,7 @@ class OrderImageForm(forms.ModelForm):
         fields = ['image','photos_sent', 'photos_returned']
         widgets = {
             'photos_sent': forms.NumberInput(attrs={'min': 0}),
-            'photos_returned': forms.NumberInput(attrs={'min': 0}),
+            'photos_returned': forms.NumberInput(attrs={'min': 0, 'required':'false'}),
         }
 
 class PhotographerImageForm(forms.ModelForm):

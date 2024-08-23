@@ -55,7 +55,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             self.stream_zip_file(images),
             content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
+        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
@@ -225,7 +225,7 @@ class OrderImageListView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.all().order_by('uploaded_at') 
-        paginator = Paginator(images, 20) 
+        paginator = Paginator(images, 21) 
         
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)

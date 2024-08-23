@@ -132,6 +132,46 @@ l{% extends 'base.html' %}
 </div>
 
 
+<!-- Progress Pop-up -->
+<div id="popup-progress" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Your download is in progress...</h2>
+    </div>
+    <div class="popup-body">
+      <p>Please wait while we process your download.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Success Pop-up -->
+<div id="popup-success" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Success!</h2>
+    </div>
+    <div class="popup-body">
+      <p>Your download has been completed successfully!</p>
+      <button onclick="closePopup('popup-success')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Pop-up -->
+<div id="popup-error" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Error!</h2>
+    </div>
+    <div class="popup-body">
+      <p>An error occurred during the download. Please try again.</p>
+      <button onclick="closePopup('popup-error')">Try Again</button>
+    </div>
+  </div>
+</div>
+
+
+
 <div class="pagination">
   <ul class="pagination">
     {% if is_paginated %}
@@ -161,21 +201,50 @@ l{% extends 'base.html' %}
         e.preventDefault();
         const orderId = this.getAttribute('data-order-id');
         const spinner = document.getElementById('loading-spinner');
+        const popupProgress = document.getElementById('popup-progress');
   
-        spinner.classList.remove('d-none');
-  
+        showPopup('popup-progress');
+
         // Trigger the download
-        const downloadUrl = `/orders/${orderId}/download/`;
-        window.location.href = downloadUrl;
-        
-        // Hide spinner after a short delay, assuming the download has started
-        setTimeout(() => {
-          spinner.classList.add('d-none');
-        }, 3000);
+        fetch(`/orders/${orderId}/download/`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.blob();
+          })
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `order_${orderId}_images.zip`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            showPopup('popup-success');
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showPopup('popup-error');
+          })
+          .finally(() => {
+            hidePopup('popup-progress');
+          });
       });
     });
   });
-</script>
 
+  function showPopup(popupId) {
+    document.getElementById(popupId).classList.remove('d-none');
+  }
+
+  function hidePopup(popupId) {
+    document.getElementById(popupId).classList.add('d-none');
+  }
+
+  function closePopup(popupId) {
+    hidePopup(popupId);
+  }
+</script>
 
 {% endblock %}
