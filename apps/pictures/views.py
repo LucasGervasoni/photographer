@@ -28,6 +28,7 @@ from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.core.paginator import Paginator
 import time
 from django.core.files.storage import default_storage
@@ -46,9 +47,10 @@ logger = logging.getLogger(__name__)
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
+    @method_decorator(never_cache)
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.all()
+        images = order.image.only('image')
 
         # Log the download action
         UserAction.objects.create(
@@ -61,7 +63,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             self.stream_zip_file(images),
             content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
+        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
@@ -75,9 +77,13 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                 if not default_storage.exists(file_path):
                     continue
 
-                with default_storage.open(file_path, 'rb') as file_obj:
-                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-                    zip_file.writestr(unique_name, file_obj.read())
+                try:
+                    with default_storage.open(file_path, 'rb') as file_obj:
+                        unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+                        zip_file.writestr(unique_name, file_obj.read())
+                except Exception as e:
+                    # Handle any exception during the file reading process
+                    continue
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
@@ -91,7 +97,9 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-
+    
+    
+    
 # Upload 
 
 class OrderImageUploadView(LoginRequiredMixin, View):
