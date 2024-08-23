@@ -60,7 +60,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         return response
 
-    @sync_to_async
     def stream_zip_file(self, images):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
@@ -85,7 +84,9 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             name, ext = os.path.splitext(filename)
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
-        return unique_name 
+        return unique_name
+    
+    
     
 # Upload 
 
