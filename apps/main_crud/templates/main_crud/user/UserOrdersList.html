@@ -164,25 +164,12 @@ l{% extends 'base.html' %}
   
         spinner.classList.remove('d-none');
   
+        // Trigger the download
         fetch(`/orders/${orderId}/download/`)
-          .then(response => {
-            if (response.ok) {
-              const contentDisposition = response.headers.get('Content-Disposition');
-              const fileName = contentDisposition.split('filename=')[1].trim().replace(/"/g, '');
-              return response.blob().then(blob => ({ blob, fileName }));
-            } else {
-              throw new Error('Download failed');
-            }
-          })
-          .then(({ blob, fileName }) => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
+          .then(response => response.json())
+          .then(data => {
+            const url = data.download_url;
+            window.location.href = url;  // Redireciona o navegador para o link de download
           })
           .catch(error => {
             alert('Error preparing the download. Please try again.');
@@ -194,6 +181,7 @@ l{% extends 'base.html' %}
       });
     });
   });
-  </script>
+</script>
   
+
 {% endblock %}

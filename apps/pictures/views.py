@@ -1,5 +1,7 @@
 
+import uuid
 from django.shortcuts import render, get_object_or_404, redirect
+import requests
 from apps.pictures.models import OrderImage, UserAction, OrderImageGroup, order_image_path
 from apps.pictures.forms import OrderImageForm, PhotographerImageForm, OrderImageGroupForm
 from apps.main_crud.models import Order
@@ -47,46 +49,58 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Criação do arquivo ZIP
-        zip_file_path = self.create_zip_file(order, images)
+        # Criar um cliente S3
+        s3_client = boto3.client(
+            's3',
+            config=Config(
+                s3={
+                    'use_accelerate_endpoint': True,
+                    'endpoint_url': settings.S3_ACCELERATE_ENDPOINT
+                }
+            )
+        )
 
-        # Serve o arquivo ZIP para download
-        response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
-        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
-        response['Content-Transfer-Encoding'] = 'binary'
+        # Criar uma pasta temporária no S3 para armazenar os arquivos ZIP
+        temp_folder = f'temp/{uuid.uuid4()}/'
+        zip_file_key = f'{temp_folder}order_{order.id}_images.zip'
 
-        return response
+        # Criar o arquivo ZIP diretamente no S3
+        self.create_zip_in_s3(s3_client, images, temp_folder)
 
-    def create_zip_file(self, order, images):
-        # Defina o caminho para salvar o arquivo ZIP
-        zip_file_name = f"order_{order.address}.zip"
-        zip_file_path = os.path.join(settings.MEDIA_ROOT, 'temp_zips', zip_file_name)
+        # Gerar um URL pré-assinado para o arquivo ZIP
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': zip_file_key},
+            ExpiresIn=3600  # URL válido por 1 hora
+        )
 
-        # Certifique-se de que o diretório temp_zips exista
-        os.makedirs(os.path.dirname(zip_file_path), exist_ok=True)
+        # Retornar o URL para o cliente
+        return JsonResponse({'download_url': presigned_url})
 
-        with zipfile.ZipFile(zip_file_path, 'w') as zip_file:
+    def create_zip_in_s3(self, s3_client, images, temp_folder):
+        # Cria um arquivo ZIP diretamente no S3
+        s3_resource = boto3.resource('s3')
+        bucket = s3_resource.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+
+        # Criar um arquivo ZIP em memória
+        zip_buffer = io.BytesIO()
+
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
             for image in images:
-                file_path = image.image.name
+                file_key = image.image.name
+                presigned_url = s3_client.generate_presigned_url(
+                    'get_object',
+                    Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_key},
+                    ExpiresIn=3600  # URL válido por 1 hora
+                )
 
-                if not default_storage.exists(file_path):
-                    continue
+                # Download do arquivo direto para a memória
+                response = requests.get(presigned_url)
+                zip_file.writestr(os.path.basename(file_key), response.content)
 
-                with default_storage.open(file_path, 'rb') as file_obj:
-                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-                    zip_file.writestr(unique_name, file_obj.read())
-
-        return zip_file_path
-
-    def get_unique_filename(self, zip_file, filename):
-        counter = 1
-        unique_name = filename
-        while unique_name in zip_file.namelist():
-            name, ext = os.path.splitext(filename)
-            unique_name = f"{name}_{counter}{ext}"
-            counter += 1
-        return unique_name
-
+            # Upload do arquivo ZIP para o S3
+            zip_buffer.seek(0)
+            bucket.put_object(Key=f'{temp_folder}order_{Order.id}_images.zip', Body=zip_buffer.getvalue())
     
 # Upload 
 
