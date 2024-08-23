@@ -49,6 +49,7 @@ class OrderImageGroup(models.Model):
     
     services = MultiSelectField(choices=select_services, blank=True)
     scan_url = models.CharField(max_length=200, blank=True, null=True)
+    created_by_view = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"Group for {self.order} - Created at {self.created_at}"
@@ -63,7 +64,7 @@ class OrderImage(models.Model):
     image = models.FileField(upload_to=order_image_path, max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     photos_sent = models.CharField(verbose_name="Assets to be uploaded", max_length=150)
-    photos_returned = models.CharField(verbose_name="Assets to be returned", max_length=150, blank=True, null=True)
+    photos_returned = models.CharField(verbose_name="Assets to be returned", max_length=150)
     group = models.ForeignKey(OrderImageGroup, on_delete=models.CASCADE, related_name='images')
     converted_image = models.ImageField(upload_to='converted_images/', blank=True, null=True)
     

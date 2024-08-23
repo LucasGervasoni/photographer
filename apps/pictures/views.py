@@ -109,14 +109,13 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
 
         if form.is_valid() and group_form.is_valid():
-            image_group = OrderImageGroup.objects.filter(order=order).first()
+            image_group = OrderImageGroup.objects.filter(order=order, created_by_view='OrderImageUploadView').first()
 
             if not image_group:
-                # Se não existir, crie um novo grupo
                 image_group = group_form.save(commit=False)
                 image_group.order = order
+                image_group.created_by_view = 'OrderImageUploadView'  # Mark the view that created this group
                 image_group.save()
-                
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
@@ -162,7 +161,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
 
-    
+
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -174,52 +173,61 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
     
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
-            order = get_object_or_404(Order, pk=pk)
-            form = PhotographerImageForm(request.POST, request.FILES)
-            group_form = OrderImageGroupForm(request.POST)
+        order = get_object_or_404(Order, pk=pk)
+        form = PhotographerImageForm(request.POST, request.FILES)
+        group_form = OrderImageGroupForm(request.POST)
 
-            if form.is_valid() and group_form.is_valid():
-                image_group = OrderImageGroup.objects.filter(order=order).first()
+        if form.is_valid() and group_form.is_valid():
+            image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
 
-                if not image_group:
-                    image_group = group_form.save(commit=False)
-                    image_group.order = order
-                    image_group.save()
+            if image_group:
+                # Create a new group if one already exists
+                group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count()
+                group_form.instance.group_name = f"PhotographerGroup{group_count + 1}"
+                image_group = group_form.save(commit=False)
+                image_group.order = order
+                image_group.created_by_view = 'PhotographerImageUploadView'  # Mark the view that created this group
+                image_group.save()
+            else:
+                image_group = group_form.save(commit=False)
+                image_group.order = order
+                image_group.created_by_view = 'PhotographerImageUploadView'
+                image_group.save()
 
-                images = []
-                for index, f in enumerate(request.FILES.getlist('image')):
+            images = []
+            for index, f in enumerate(request.FILES.getlist('image')):
 
-                    order_image = OrderImage(
-                        order=order,
-                        image=f,
-                        group=image_group
-                    )
-                    
-                    # Generate file path
-                    f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
-                    
+                order_image = OrderImage(
+                    order=order,
+                    image=f,
+                    group=image_group
+                )
+                
+                # Generate file path
+                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+                
+                order_image.save()
+
+                converted_image_url = order_image.convert_to_jpeg()
+                if converted_image_url:
                     order_image.save()
 
-                    converted_image_url = order_image.convert_to_jpeg()
-                    if converted_image_url:
-                        order_image.save()
+                images.append(order_image)
 
-                    images.append(order_image)
+            user_actions = [
+                UserAction(
+                    user=request.user,
+                    action_type='upload',
+                    order=order,
+                    order_image=image
+                ) for image in images
+            ]
+            UserAction.objects.bulk_create(user_actions)
 
-                user_actions = [
-                    UserAction(
-                        user=request.user,
-                        action_type='upload',
-                        order=order,
-                        order_image=image
-                    ) for image in images
-                ]
-                UserAction.objects.bulk_create(user_actions)
+            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
-                return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
+        return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
 
-            return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-        
         
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
