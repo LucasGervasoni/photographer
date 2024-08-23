@@ -29,6 +29,7 @@ from django.conf import settings
 import boto3
 from botocore.client import Config
 import aiofiles
+from asgiref.sync import sync_to_async
 
 logger = logging.getLogger(__name__)
 
@@ -59,26 +60,23 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         return response
 
-    async def stream_zip_file(self, images):
+    @sync_to_async
+    def stream_zip_file(self, images):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
                 file_path = image.image.name
 
-                if not await self.async_file_exists(file_path):
+                if not default_storage.exists(file_path):
                     continue
 
-                async with aiofiles.open(default_storage.path(file_path), 'rb') as file_obj:
-                    file_content = await file_obj.read()
+                with default_storage.open(file_path, 'rb') as file_obj:
                     unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-                    zip_file.writestr(unique_name, file_content)
+                    zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
             yield chunk
-
-    async def async_file_exists(self, file_path):
-        return await aiofiles.os.path.exists(default_storage.path(file_path))
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -87,8 +85,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             name, ext = os.path.splitext(filename)
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
-        return unique_name
-   
+        return unique_name 
     
 # Upload 
 
