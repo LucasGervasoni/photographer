@@ -22,7 +22,7 @@ from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 import logging
 from concurrent.futures import ThreadPoolExecutor
-
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,8 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
     def stream_zip_file(self, images):
         buffer = io.BytesIO()
+        zip_lock = threading.Lock()  # Lock for writing to the zip file
+
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             with ThreadPoolExecutor(max_workers=4) as executor:  # Use a thread pool for parallel processing
                 futures = []
@@ -63,7 +65,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                     if not default_storage.exists(file_path):
                         continue
 
-                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path))
+                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path, zip_lock))
 
                 # Ensure all files are processed
                 for future in futures:
@@ -73,7 +75,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         while chunk := buffer.read(8192):
             yield chunk
 
-    def add_file_to_zip(self, zip_file, file_path):
+    def add_file_to_zip(self, zip_file, file_path, zip_lock):
         with default_storage.open(file_path, 'rb') as file_obj:
             # Divida o arquivo em partes menores
             chunk_size = 5 * 1024 * 1024  # 5MB por chunk
@@ -87,7 +89,11 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
                 # Nome do arquivo com parte indexada
                 part_name = f"{unique_name}.part{index}"
-                zip_file.writestr(part_name, chunk)
+
+                # Use o lock para garantir que apenas uma thread escreva no ZIP de cada vez
+                with zip_lock:
+                    zip_file.writestr(part_name, chunk)
+
                 index += 1
 
     def get_unique_filename(self, zip_file, filename):
@@ -98,6 +104,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
+ 
     
 # Upload 
 
