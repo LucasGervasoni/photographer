@@ -92,10 +92,10 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD':  os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
+        'NAME': 'spotlightrds',
+        'USER': 'spotlightmanager',
+        'PASSWORD':  '6p6BKPX1MOqWm2Bk3Tao',
+        'HOST': 'spotlightrds.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
         'PORT': 5432,
         'CONN_MAX_AGE': 600,
         'OPTIONS': {
