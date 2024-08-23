@@ -76,14 +76,21 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                     continue
 
                 with default_storage.open(file_path, 'rb') as file_obj:
-                    # Split the file into chunks to avoid memory overload
-                    chunk_size = 1024 * 1024 * 10  # 10MB chunks
-                    for chunk in iter(lambda: file_obj.read(chunk_size), b''):
-                        zip_file.writestr(os.path.basename(file_path), chunk)
+                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+                    zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
-        return FileWrapper(buffer, chunk_size=8192)
+        while chunk := buffer.read(8192):
+            yield chunk
 
+    def get_unique_filename(self, zip_file, filename):
+        counter = 1
+        unique_name = filename
+        while unique_name in zip_file.namelist():
+            name, ext = os.path.splitext(filename)
+            unique_name = f"{name}_{counter}{ext}"
+            counter += 1
+        return unique_name
 
 # Upload 
 
