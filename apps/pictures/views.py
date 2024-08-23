@@ -47,10 +47,9 @@ logger = logging.getLogger(__name__)
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
-    @method_decorator(never_cache)
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.only('image')
+        images = order.image.all()
 
         # Log the download action
         UserAction.objects.create(
@@ -63,7 +62,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             self.stream_zip_file(images),
             content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
+        response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
@@ -77,13 +76,9 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                 if not default_storage.exists(file_path):
                     continue
 
-                try:
-                    with default_storage.open(file_path, 'rb') as file_obj:
-                        unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-                        zip_file.writestr(unique_name, file_obj.read())
-                except Exception as e:
-                    # Handle any exception during the file reading process
-                    continue
+                with default_storage.open(file_path, 'rb') as file_obj:
+                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+                    zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
@@ -97,8 +92,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-    
-    
+
     
 # Upload 
 
