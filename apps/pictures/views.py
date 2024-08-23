@@ -9,7 +9,7 @@ from braces.views import GroupRequiredMixin
 from django.urls import reverse, reverse_lazy
 import zipfile  # Import the zipfile module to create and manipulate ZIP files
 import io  # Import the io module for handling byte streams
-from django.http import HttpResponse, StreamingHttpResponse # Import HttpResponse to send HTTP responses
+from django.http import FileResponse, HttpResponse, StreamingHttpResponse # Import HttpResponse to send HTTP responses
 import os
 from django.db.models import Q
 from django.utils.timezone import make_aware
@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 # Download
+
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -46,79 +47,36 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Generate a presigned URL with Transfer Acceleration
-        s3_client = boto3.client(
-            's3',
-            config=Config(
-                s3={
-                    'use_accelerate_endpoint': True,
-                    'endpoint_url': settings.S3_ACCELERATE_ENDPOINT
-                }
-            )
-        )
-        presigned_urls = []
-        
-        for image in images:
-            url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={'Bucket': 'your-bucket-name', 'Key': image.image.name},
-                ExpiresIn=3600  # URL válido por 1 hora
-            )
-            presigned_urls.append(url)
+        # Criação do arquivo ZIP
+        zip_file_path = self.create_zip_file(order, images)
 
-        # Stream the ZIP file with accelerated download
-        response = StreamingHttpResponse(
-            self.stream_zip_file(images, presigned_urls),
-            content_type='application/zip'
-        )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
+        # Serve o arquivo ZIP para download
+        response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
 
-    def stream_zip_file(self, images, presigned_urls):
-        buffer = io.BytesIO()
-        zip_lock = threading.Lock()  # Lock for writing to the zip file
+    def create_zip_file(self, order, images):
+        # Defina o caminho para salvar o arquivo ZIP
+        zip_file_name = f"order_{order.address}.zip"
+        zip_file_path = os.path.join(settings.MEDIA_ROOT, 'temp_zips', zip_file_name)
 
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
-            with ThreadPoolExecutor(max_workers=4) as executor:  # Use a thread pool for parallel processing
-                futures = []
-                for index, url in enumerate(presigned_urls):
-                    file_path = images[index].image.name
+        # Certifique-se de que o diretório temp_zips exista
+        os.makedirs(os.path.dirname(zip_file_path), exist_ok=True)
 
-                    if not default_storage.exists(file_path):
-                        continue
+        with zipfile.ZipFile(zip_file_path, 'w') as zip_file:
+            for image in images:
+                file_path = image.image.name
 
-                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path, url, zip_lock))
+                if not default_storage.exists(file_path):
+                    continue
 
-                # Ensure all files are processed
-                for future in futures:
-                    future.result()
+                with default_storage.open(file_path, 'rb') as file_obj:
+                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+                    zip_file.writestr(unique_name, file_obj.read())
 
-        buffer.seek(0)
-        while chunk := buffer.read(8192):
-            yield chunk
-
-    def add_file_to_zip(self, zip_file, file_path, url, zip_lock):
-        # Download the file using the presigned URL
-        with default_storage.open(file_path, 'rb') as file_obj:
-            chunk_size = 5 * 1024 * 1024  # 5MB por chunk
-            unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-            index = 0
-
-            while True:
-                chunk = file_obj.read(chunk_size)
-                if not chunk:
-                    break
-
-                # Nome do arquivo com parte indexada
-                part_name = f"{unique_name}.part{index}"
-
-                # Use o lock para garantir que apenas uma thread escreva no ZIP de cada vez
-                with zip_lock:
-                    zip_file.writestr(part_name, chunk)
-
-                index += 1
+        return zip_file_path
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -128,7 +86,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-    
+
     
 # Upload 
 
