@@ -133,57 +133,16 @@ l{% extends 'base.html' %}
 
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const downloadButtons = document.querySelectorAll('.download-btn');
-  
-    downloadButtons.forEach(button => {
-      button.addEventListener('click', function (e) {
-        e.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const spinner = document.getElementById('loading-spinner');
-        const popupProgress = document.getElementById('popup-progress');
-  
-        showPopup('popup-progress');
-
-        // Trigger the download
-        fetch(`/orders/${orderId}/download/`)
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
-            }
-            return response.blob();
-          })
-          .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `order_${orderId}_images.zip`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            showPopup('popup-success');
-          })
-          .catch(error => {
-            console.error('Error:', error);
-            showPopup('popup-error');
-          })
-          .finally(() => {
-            hidePopup('popup-progress');
+  document.addEventListener("DOMContentLoaded", function() {
+      // Adiciona um evento de clique aos botões de download
+      document.querySelectorAll('.download-btn').forEach(function(button) {
+          button.addEventListener('click', function(event) {
+              event.preventDefault();
+              const orderId = this.getAttribute('data-order-id');
+              const downloadUrl = `/orders/${orderId}/download/`;
+              window.location.href = downloadUrl;
           });
       });
-    });
   });
-
-  function showPopup(popupId) {
-    document.getElementById(popupId).classList.remove('d-none');
-  }
-
-  function hidePopup(popupId) {
-    document.getElementById(popupId).classList.add('d-none');
-  }
-
-  function closePopup(popupId) {
-    hidePopup(popupId);
-  }
-</script>
+  </script>
 {% endblock %}
