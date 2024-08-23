@@ -101,7 +101,7 @@ class UserListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
     paginate_by = 10
     
     def get_queryset(self):
-        queryset = CustomUser.objects.all()
+        queryset = CustomUser.objects.all().order_by('username')
         query = self.request.GET.get('q')
         
         if query:
