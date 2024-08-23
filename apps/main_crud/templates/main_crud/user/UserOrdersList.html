@@ -145,7 +145,7 @@ l{% extends 'base.html' %}
         spinner.classList.remove('d-none');
   
         // Trigger the download
-        const downloadUrl = `/orders/${orderId}/download/`;
+        const downloadUrl = '/orders/${orderId}/download/';
         window.location.href = downloadUrl;
         
         // Hide spinner after a short delay, assuming the download has started
