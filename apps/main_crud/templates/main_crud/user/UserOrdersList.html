@@ -102,9 +102,9 @@ l{% extends 'base.html' %}
           {% csrf_token %}
           <label class="mt-2 mr-2" style="font-weight: bold;" for="order_status">Status:</label>
           <select name="order_status" class="form-control" onchange="this.form.submit()">
-            <option value="Not Uploaded" {% if order.order_status == 'Not Uploaded' %}selected{% endif %}>Not Uploaded</option>
-            <option value="Production" {% if order.order_status == 'Production' %}selected{% endif %}>Production</option>
-            <option value="Completed" {% if order.order_status == 'Completed' %}selected{% endif %}>Completed</option>
+            <option value="Not Uploaded" {% if order.order_status=='Not Uploaded' %}selected{% endif %}>Not Uploaded</option>
+            <option value="Production" {% if order.order_status=='Production' %}selected{% endif %}>Production</option>
+            <option value="Completed" {% if order.order_status=='Completed' %}selected{% endif %}>Completed</option>
           </select>
         </form>
         {% else %}
@@ -132,67 +132,15 @@ l{% extends 'base.html' %}
 </div>
 
 
-<!-- Progress Pop-up -->
-<div id="popup-progress" class="popup d-none">
-  <div class="popup-content">
-    <div class="popup-header">
-      <h2>Your download is in progress...</h2>
-    </div>
-    <div class="popup-body">
-      <p>Please wait while we process your download.</p>
-    </div>
-  </div>
-</div>
-
-<!-- Success Pop-up -->
-<div id="popup-success" class="popup d-none">
-  <div class="popup-content">
-    <div class="popup-header">
-      <h2>Success!</h2>
-    </div>
-    <div class="popup-body">
-      <p>Your download has been completed successfully!</p>
-      <button onclick="closePopup('popup-success')">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Error Pop-up -->
-<div id="popup-error" class="popup d-none">
-  <div class="popup-content">
-    <div class="popup-header">
-      <h2>Error!</h2>
-    </div>
-    <div class="popup-body">
-      <p>An error occurred during the download. Please try again.</p>
-      <button onclick="closePopup('popup-error')">Try Again</button>
-    </div>
-  </div>
-</div>
-
-
-
-<div class="pagination">
-  <ul class="pagination">
-    {% if is_paginated %}
-    {% if page_obj.has_previous %}
-    <li class="page-item"><a class="page-link" href="?page=1">&laquo; first</a></li>
-    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-    {% endif %}
-
-    <li class="current page-item">
-      <a class="page-link"> Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.</a>
-    </li>
-
-    {% if page_obj.has_next %}
-    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a></li>
-    {% endif %}
-    {% endif %}
-  </ul>
-</div>
-
 <script>
+  function showPopup(popupId) {
+    document.getElementById(popupId).classList.remove('d-none');
+  }
+
+  function closePopup(popupId) {
+    document.getElementById(popupId).classList.add('d-none');
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     const downloadButtons = document.querySelectorAll('.download-btn');
   
@@ -200,51 +148,31 @@ l{% extends 'base.html' %}
       button.addEventListener('click', function (e) {
         e.preventDefault();
         const orderId = this.getAttribute('data-order-id');
-        const spinner = document.getElementById('loading-spinner');
-        const popupProgress = document.getElementById('popup-progress');
-  
+        const downloadUrl = `/orders/${orderId}/download/`;
+        
+        // Show progress pop-up
         showPopup('popup-progress');
 
-        // Trigger the download
-        fetch(`/orders/${orderId}/download/`)
+        // Start the download
+        fetch(downloadUrl)
           .then(response => {
-            if (!response.ok) {
-              throw new Error('Network response was not ok');
+            if (response.ok) {
+              showPopup('popup-success'); // Show success pop-up
+            } else {
+              throw new Error('Download failed');
             }
-            return response.blob();
-          })
-          .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `order_${orderId}_images.zip`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            showPopup('popup-success');
           })
           .catch(error => {
+            showPopup('popup-error'); // Show error pop-up
             console.error('Error:', error);
-            showPopup('popup-error');
           })
           .finally(() => {
-            hidePopup('popup-progress');
+            closePopup('popup-progress'); // Close progress pop-up
           });
       });
     });
   });
-
-  function showPopup(popupId) {
-    document.getElementById(popupId).classList.remove('d-none');
-  }
-
-  function hidePopup(popupId) {
-    document.getElementById(popupId).classList.add('d-none');
-  }
-
-  function closePopup(popupId) {
-    hidePopup(popupId);
-  }
 </script>
+
 
 {% endblock %}
