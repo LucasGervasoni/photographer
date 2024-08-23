@@ -165,23 +165,17 @@ l{% extends 'base.html' %}
         spinner.classList.remove('d-none');
   
         // Trigger the download
-        fetch(`/orders/${orderId}/download/`)
-          .then(response => response.json())
-          .then(data => {
-            const url = data.download_url;
-            window.location.href = url;  // Redireciona o navegador para o link de download
-          })
-          .catch(error => {
-            alert('Error preparing the download. Please try again.');
-            console.error('Error:', error);
-          })
-          .finally(() => {
-            spinner.classList.add('d-none');
-          });
+        const downloadUrl = `/orders/${orderId}/download/`;
+        window.location.href = downloadUrl;
+        
+        // Hide spinner after a short delay, assuming the download has started
+        setTimeout(() => {
+          spinner.classList.add('d-none');
+        }, 3000);
       });
     });
   });
 </script>
-  
+
 
 {% endblock %}

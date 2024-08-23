@@ -28,6 +28,7 @@ import threading
 from django.conf import settings
 import boto3
 from botocore.client import Config
+import aiofiles
 
 logger = logging.getLogger(__name__)
 
@@ -49,43 +50,35 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        # Stream the ZIP file directly from storage
         response = StreamingHttpResponse(
             self.stream_zip_file(images),
             content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
+        response['Content-Disposition'] = f'attachment; filename=order_{order.id}_images.zip'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
 
-    def stream_zip_file(self, images):
+    async def stream_zip_file(self, images):
         buffer = io.BytesIO()
-        zip_lock = threading.Lock()  # Lock for writing to the zip file
-
         with zipfile.ZipFile(buffer, 'w') as zip_file:
-            with ThreadPoolExecutor(max_workers=4) as executor:  # Use a thread pool for parallel processing
-                futures = []
-                for image in images:
-                    file_path = image.image.name
+            for image in images:
+                file_path = image.image.name
 
-                    futures.append(executor.submit(self.add_file_to_zip, zip_file, file_path, zip_lock))
+                if not await self.async_file_exists(file_path):
+                    continue
 
-                # Ensure all files are processed
-                for future in futures:
-                    future.result()
+                async with aiofiles.open(default_storage.path(file_path), 'rb') as file_obj:
+                    file_content = await file_obj.read()
+                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+                    zip_file.writestr(unique_name, file_content)
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
             yield chunk
 
-    def add_file_to_zip(self, zip_file, file_path, zip_lock):
-        # Stream the file directly from the storage backend into the ZIP file
-        with default_storage.open(file_path, 'rb') as file_obj:
-            unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-
-            with zip_lock:
-                zip_file.writestr(unique_name, file_obj.read())
+    async def async_file_exists(self, file_path):
+        return await aiofiles.os.path.exists(default_storage.path(file_path))
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -95,7 +88,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-  
    
     
 # Upload 
