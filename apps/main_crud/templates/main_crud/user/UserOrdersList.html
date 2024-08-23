@@ -165,31 +165,46 @@ document.addEventListener('DOMContentLoaded', function () {
             spinner.classList.remove('d-none');
 
             try {
-                const response = await fetch(`/orders/${orderId}/download/`);
-                const data = await response.json();
-                
-                if (data.download_urls && data.download_urls.length > 0) {
-                    for (const url of data.download_urls) {
-                        const anchor = document.createElement('a');
-                        anchor.href = url;
-                        anchor.target = '_blank';
-                        anchor.download = ''; // Deixar vazio para o navegador usar o nome padrão
-                        document.body.appendChild(anchor);
-                        anchor.click();
-                        document.body.removeChild(anchor);
-                    }
-                } else {
-                    alert("No files available for download.");
+                const response = await fetch(`/orders/${orderId}/download/`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao iniciar o download.');
                 }
+
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'download.zip';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match.length === 2) {
+                        filename = match[1];
+                    }
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = filename;
+                document.body.appendChild(anchor);
+                anchor.click();
+                document.body.removeChild(anchor);
+                window.URL.revokeObjectURL(url);
+
             } catch (error) {
-                console.error("Error downloading files:", error);
+                console.error("Erro ao realizar o download:", error);
+                alert('Ocorreu um erro ao tentar baixar os arquivos. Tente novamente.');
             } finally {
                 spinner.classList.add('d-none');
             }
         });
     });
 });
-
 
 </script>
   

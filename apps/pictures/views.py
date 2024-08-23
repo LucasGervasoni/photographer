@@ -36,11 +36,48 @@ from collections import defaultdict
 from urllib.parse import quote as urlquote
 import logging
 
+from setup.settings import MEDIA_ROOT
+
 logger = logging.getLogger(__name__)
 
 # Create your views here.
 
 # Download
+class LargeZipFile(zipfile.ZipFile):
+    """
+    Extends ZipFile to handle larger-than-memory files efficiently.
+    """
+    def write_large_file(self, filename, arcname=None):
+        """
+        Writes a large file to the zip without loading it fully in memory.
+        """
+        if arcname is None:
+            arcname = filename
+        with open(filename, 'rb') as f:
+            self.write(arcname, f.read(), zipfile.ZIP_STORED)
+
+def zip_and_stream_large_files(file_paths, zip_name='files.zip'):
+    """
+    Generates a zip file containing the files in file_paths and streams it.
+    """
+    temp_dir = tempfile.mkdtemp()
+    zip_path = os.path.join(temp_dir, zip_name)
+
+    with LargeZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for file_path in file_paths:
+            arcname = os.path.relpath(file_path, start=os.path.commonpath(file_paths))
+            zip_file.write_large_file(file_path, arcname=arcname)
+
+    response = StreamingHttpResponse(FileWrapper(open(zip_path, 'rb')), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename={zip_name}'
+    response['Content-Length'] = os.path.getsize(zip_path)
+    
+    # Remove the temporary zip file after response is fully sent
+    response['X-Accel-Buffering'] = 'no'
+    response['X-Sendfile'] = zip_path
+
+    return response
+
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -54,79 +91,25 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        def zip_files(files):
-            """Compress files into a zip archive in memory."""
-            zip_buffer = io.BytesIO()
+        # Get file paths from the order's media directory
+        file_paths = self.get_file_paths_by_order(order)
 
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                file_name_tracker = defaultdict(int)
+        # Stream the zip file as a response
+        return zip_and_stream_large_files(file_paths, zip_name=f'order_{order.id}_files.zip')
 
-                for file_path in files:
-                    if not os.path.exists(file_path):
-                        logger.warning(f"File not found: {file_path}")
-                        continue
+    def get_file_paths_by_order(self, order):
+        """
+        Returns the file paths related to an order.
+        """
+        order_media_dir = os.path.join(MEDIA_ROOT, f'orders/{order.id}/')
+        
+        file_paths = []
+        for root, dirs, files in os.walk(order_media_dir):
+            for file in files:
+                file_paths.append(os.path.join(root, file))
+        
+        return file_paths
 
-                    base_name = os.path.basename(file_path)
-                    file_name, file_extension = os.path.splitext(base_name)
-
-                    if file_name_tracker[base_name] > 0:
-                        new_name = f"{file_name}_{file_name_tracker[base_name]}{file_extension}"
-                    else:
-                        new_name = base_name
-
-                    file_name_tracker[base_name] += 1
-
-                    with open(file_path, 'rb') as file_obj:
-                        zip_file.writestr(new_name, file_obj.read())
-
-            zip_buffer.seek(0)
-            return zip_buffer
-
-        # Ajustar o caminho dos arquivos para evitar duplicações de "media/"
-        # Extrair apenas a parte relevante do caminho para o S3
-        file_paths = [image.image.name.replace("media/", "") for image in order.image.all()]
-
-        # Log dos arquivos que serão incluídos no ZIP
-        logger.info(f"Files to be zipped: {file_paths}")
-
-        # Verifica se os arquivos estão no S3 ou no sistema de arquivos local
-        use_s3 = getattr(settings, 'USE_S3', False)
-
-        if use_s3:
-            # Se estiver usando S3, gerar URLs pré-assinadas para download
-            s3_client = boto3.client('s3')
-            zip_urls = []
-
-            for file_path in file_paths:
-                try:
-                    presigned_url = s3_client.generate_presigned_url(
-                        'get_object',
-                        Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_path},
-                        ExpiresIn=3600  # Link válido por 1 hora
-                    )
-                    zip_urls.append(presigned_url)
-                except Exception as e:
-                    logger.error(f"Error generating presigned URL for {file_path}: {str(e)}")
-
-            if not zip_urls:
-                return HttpResponse("No files to download.", status=404)
-
-            # Retornar as URLs pré-assinadas como JSON
-            return JsonResponse({'download_urls': zip_urls})
-
-        else:
-            # Se os arquivos estão no sistema de arquivos local, criar o ZIP
-            zip_file = zip_files(file_paths)
-
-            # Verifica se o ZIP contém arquivos
-            if not zip_file.getvalue():
-                return HttpResponse("No files to download.", status=404)
-
-            # Retorna o arquivo como uma resposta de streaming
-            response = StreamingHttpResponse(zip_file, content_type='application/zip')
-            response['Content-Disposition'] = f'attachment; filename="order_{order.address.replace(" ", "_")}_{order.pk}.zip"'
-
-            return response       
 # Upload 
 
 class OrderImageUploadView(LoginRequiredMixin, View):
