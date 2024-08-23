@@ -55,7 +55,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             self.stream_zip_file(images),
             content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename=order_{order.address}.zip'
+        response['Content-Disposition'] = f'attachment; filename=order_{order.id}.zip'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
