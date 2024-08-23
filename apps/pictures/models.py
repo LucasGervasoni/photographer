@@ -63,7 +63,7 @@ class OrderImage(models.Model):
     image = models.FileField(upload_to=order_image_path, max_length=255)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     photos_sent = models.CharField(verbose_name="Assets to be uploaded")
-    photos_returned = models.CharField(verbose_name="Assets to be returned", required=False)
+    photos_returned = models.CharField(verbose_name="Assets to be returned")
     group = models.ForeignKey(OrderImageGroup, on_delete=models.CASCADE, related_name='images')
     converted_image = models.ImageField(upload_to='converted_images/', blank=True, null=True)
     
