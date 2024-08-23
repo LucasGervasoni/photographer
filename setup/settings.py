@@ -140,10 +140,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 # AWS S3 configuration for storing static, media, and converted images files
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME')
+AWS_STORAGE_BUCKET_NAME = 'spotlight-prod-us-west-1-static-media'
+AWS_ACCESS_KEY_ID = 'AKIAQMEY55YT5HZ5WEKW'
+AWS_SECRET_ACCESS_KEY = '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'
+AWS_S3_REGION_NAME = 'us-west-1'
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 AWS_S3_SIGNATURE_NAME = 's3v4'
 AWS_S3_OBJECT_PARAMETERS = {
