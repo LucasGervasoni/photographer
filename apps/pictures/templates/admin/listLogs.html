@@ -60,9 +60,13 @@
     <ul class="pagination justify-content-center">
       {% if is_paginated %}
         <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
-          <a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-          </a>
+          {% if page_obj.has_previous %}
+            <a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          {% else %}
+            <span class="page-link" aria-label="Previous">&laquo;</span>
+          {% endif %}
         </li>
         {% for num in page_obj.paginator.page_range %}
           <li class="page-item {% if page_obj.number == num %}active{% endif %}">
@@ -70,13 +74,18 @@
           </li>
         {% endfor %}
         <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
-          <a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-          </a>
+          {% if page_obj.has_next %}
+            <a class="page-link" href="?{% if search_query %}q={{ search_query }}&{% endif %}{% if start_date %}start_date={{ start_date }}&{% endif %}{% if end_date %}end_date={{ end_date }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          {% else %}
+            <span class="page-link" aria-label="Next">&raquo;</span>
+          {% endif %}
         </li>
       {% endif %}
     </ul>
   </nav>
+  
 
 
   <script>
