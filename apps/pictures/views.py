@@ -103,20 +103,23 @@ def compress_order_images(order_image_group):
     # Cria o arquivo ZIP
     with default_storage.open(zip_path, 'wb') as zip_file:
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zip_archive:
-            for root, dirs, files in default_storage.listdir(folder_path):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    zip_archive.write(file_path, os.path.relpath(file_path, folder_path))
+            # Itera através dos arquivos na pasta do pedido
+            for dirpath, dirnames, filenames in default_storage.listdir(folder_path):
+                for filename in filenames:
+                    file_path = os.path.join(folder_path, filename)
+                    if default_storage.exists(file_path):
+                        with default_storage.open(file_path, 'rb') as file:
+                            zip_archive.writestr(os.path.relpath(file_path, folder_path), file.read())
 
     return zip_path
-
 
 
 def start_compression_async(order_image_group):
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future = executor.submit(compress_order_images, order_image_group)
         return future.result()
-
+    
+    
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
     
