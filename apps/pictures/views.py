@@ -133,7 +133,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             os.makedirs(zip_folder)
 
         with ZipFile(zip_file_path, 'w') as zip_file:
-            for image in image_group.orderimage_set.all():
+            for image in image_group.images.all():
                 image_path = default_storage.path(image.image.name)
                 zip_file.write(image_path, os.path.basename(image_path))
 
