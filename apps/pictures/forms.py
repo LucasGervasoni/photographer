@@ -9,6 +9,10 @@ class OrderImageForm(forms.ModelForm):
             'photos_sent': forms.NumberInput(attrs={'min': 0}),
             'photos_returned': forms.NumberInput(attrs={'min': 0}),
         }
+        
+    def __init__(self, *args, **kwargs):
+        super(OrderImageForm, self).__init__(*args, **kwargs)
+        self.fields['photos_returned'].required = False
 
 class PhotographerImageForm(forms.ModelForm):
     class Meta:
