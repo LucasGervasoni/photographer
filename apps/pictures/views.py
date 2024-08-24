@@ -103,13 +103,20 @@ def compress_order_images(order_image_group):
     # Cria o arquivo ZIP
     with default_storage.open(zip_path, 'wb') as zip_file:
         with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zip_archive:
-            # Itera através dos arquivos na pasta do pedido
-            for dirpath, dirnames, filenames in default_storage.listdir(folder_path):
-                for filename in filenames:
-                    file_path = os.path.join(folder_path, filename)
-                    if default_storage.exists(file_path):
-                        with default_storage.open(file_path, 'rb') as file:
-                            zip_archive.writestr(os.path.relpath(file_path, folder_path), file.read())
+            # Obtenha a lista de arquivos no diretório
+            try:
+                dirnames, filenames = default_storage.listdir(folder_path)
+            except ValueError:
+                # Handle when listdir returns only files or only directories
+                filenames = []
+                for dirname in default_storage.listdir(folder_path):
+                    filenames.extend(default_storage.listdir(os.path.join(folder_path, dirname)))
+
+            for filename in filenames:
+                file_path = os.path.join(folder_path, filename)
+                if default_storage.exists(file_path):
+                    with default_storage.open(file_path, 'rb') as file:
+                        zip_archive.writestr(os.path.relpath(file_path, folder_path), file.read())
 
     return zip_path
 
