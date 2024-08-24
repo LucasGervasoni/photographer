@@ -23,13 +23,9 @@ from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 import logging
-from concurrent.futures import ThreadPoolExecutor
-import threading
 from django.conf import settings
-import boto3
-from botocore.client import Config
-import aiofiles
-from asgiref.sync import sync_to_async
+from django.utils.text import slugify
+import concurrent.futures
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +88,34 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
     
     
 # Upload 
+
+def compress_order_images(order_image_group):
+    order_address = slugify(order_image_group.order.address)
+    zip_path = f"{settings.MEDIAFILES_LOCATION}/zip/{order_address}.zip"
+
+    # Remove o arquivo ZIP existente, se houver
+    if default_storage.exists(zip_path):
+        default_storage.delete(zip_path)
+
+    # Caminho da pasta para compressão
+    folder_path = os.path.join(settings.MEDIAFILES_LOCATION, str(order_image_group.order.id))
+
+    # Cria o arquivo ZIP
+    with default_storage.open(zip_path, 'wb') as zip_file:
+        with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zip_archive:
+            for root, dirs, files in default_storage.listdir(folder_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    zip_archive.write(file_path, os.path.relpath(file_path, folder_path))
+
+    return zip_path
+
+
+
+def start_compression_async(order_image_group):
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(compress_order_images, order_image_group)
+        return future.result()
 
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
@@ -157,9 +181,15 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
+            # Inicia a compressão de forma assíncrona
+            zip_path = start_compression_async(image_group)
+            image_group.zip_file_path = zip_path
+            image_group.save()
+            
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+
 
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
@@ -227,8 +257,8 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-
-        
+    
+    
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')

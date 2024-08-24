@@ -50,6 +50,7 @@ class OrderImageGroup(models.Model):
     services = MultiSelectField(choices=select_services, blank=True)
     scan_url = models.CharField(max_length=200, blank=True, null=True)
     created_by_view = models.CharField(max_length=100, blank=True, null=True)
+    zip_file_path = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return f"Group for {self.order} - Created at {self.created_at}"
