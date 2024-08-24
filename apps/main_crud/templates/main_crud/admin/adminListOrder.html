@@ -89,7 +89,7 @@
         <td >
           {% if request.user.is_superuser or request.user|has_group:"Admin"%}
             {% if order.order_status == "Production" or order.order_status == "Completed" %}
-                <a href="{% url 'order_image_download' pk=order.pk %}" class="btn btn-outline-dark">Download</a>
+                <a  class="btn btn-outline-dark" data-order-id="{{ order.pk }}">Download</a>
             {% else %}
                 <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
             {% endif %}
