@@ -114,9 +114,7 @@ l{% extends 'base.html' %}
       <td colspan="2">
         {% if request.user.is_superuser or request.user|has_group:"Editor"%}
         {% if order.order_status == "Production" or order.order_status == "Completed" %}
-        {% if image_group.zip_file_path %}
-        <a href="{{ image_group.zip_file_path }}" class="btn btn-outline-dark download-btn">Download</a>
-        {% endif %}
+        <a href="#" class="btn btn-outline-dark download-btn" data-order-id="{{ order.pk }}">Download</a>
         {% else %}
         <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
         {% endif %}
@@ -192,5 +190,67 @@ l{% extends 'base.html' %}
 </div>
 
 
-
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.download-btn').forEach(function(button) {
+      button.addEventListener('click', function(event) {
+        event.preventDefault();
+        const orderId = this.getAttribute('data-order-id');
+        const downloadUrl = `/orders/${orderId}/download/`;
+  
+        // Show the progress pop-up
+        showPopup('popup-progress');
+  
+        // Perform the download request via Fetch API
+        fetch(downloadUrl)
+          .then(response => {
+            if (response.ok) {
+              // Convert response to Blob
+              return response.blob();
+            } else {
+              throw new Error('Download error');
+            }
+          })
+          .then(blob => {
+            // Create a temporary link element
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            
+            // Append link to the body
+            document.body.appendChild(a);
+  
+            // Trigger download by clicking the link
+            a.click();
+  
+            // Cleanup: Remove the link and revoke the object URL
+            a.remove();
+            window.URL.revokeObjectURL(url);
+  
+            // Show the success pop-up
+            showPopup('popup-success');
+          })
+          .catch(error => {
+            // Error in connection or request processing
+            showPopup('popup-error');
+          })
+          .finally(() => {
+            // Close the progress pop-up
+            closePopup('popup-progress');
+          });
+      });
+    });
+  });
+  
+  function showPopup(popupId) {
+    document.getElementById(popupId).classList.remove('d-none');
+  }
+  
+  function closePopup(popupId) {
+    document.getElementById(popupId).classList.add('d-none');
+  }
+  
+  
+</script>
 {% endblock %}
