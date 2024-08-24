@@ -23,9 +23,10 @@ from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 import logging
+from concurrent.futures import ThreadPoolExecutor
+import threading
 from django.conf import settings
-from django.utils.text import slugify
-import concurrent.futures
+from zipfile import ZipFile
 
 logger = logging.getLogger(__name__)
 
@@ -36,55 +37,14 @@ logger = logging.getLogger(__name__)
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
-    def get(self, request, pk):
-        order = get_object_or_404(Order, pk=pk)
-        images = order.image.all()
+    def get(self, request, group_id):
+        image_group = get_object_or_404(OrderImageGroup, id=group_id)
+        zip_file_url = image_group.zip_file_path
 
-        # Log the download action
-        UserAction.objects.create(
-            user=request.user,
-            action_type='download',
-            order=order
-        )
-
-        address_safe = order.address.replace(' ', '_').replace(',', '').replace('.', '')
-        zip_filename = f'order_{address_safe}.zip'
-
-        response = StreamingHttpResponse(
-            self.stream_zip_file(images),
-            content_type='application/zip'
-        )
-        response['Content-Disposition'] = f'attachment; filename={zip_filename}'
-        response['Content-Transfer-Encoding'] = 'binary'
-
-        return response
-
-    def stream_zip_file(self, images):
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
-            for image in images:
-                file_path = image.image.name
-
-                if not default_storage.exists(file_path):
-                    continue
-
-                with default_storage.open(file_path, 'rb') as file_obj:
-                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
-                    zip_file.writestr(unique_name, file_obj.read())
-
-        buffer.seek(0)
-        while chunk := buffer.read(8192):
-            yield chunk
-
-    def get_unique_filename(self, zip_file, filename):
-        counter = 1
-        unique_name = filename
-        while unique_name in zip_file.namelist():
-            name, ext = os.path.splitext(filename)
-            unique_name = f"{name}_{counter}{ext}"
-            counter += 1
-        return unique_name
-    
+        return render(request, 'downloadPage.html', {
+            'zip_file_url': zip_file_url,
+            'order': image_group.order,
+        })
     
     
 # Upload 
@@ -153,9 +113,35 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
             
+            self.compress_images_folder(image_group)
+
+            
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
+    def compress_images_folder(self, image_group):
+        order_address = image_group.order.address.replace(' ', '_')
+        zip_folder_name = f"{order_address}.zip"
+        zip_file_path = os.path.join(settings.MEDIAFILES_LOCATION, 'zip', zip_folder_name)
+        
+        # Caminho completo para a pasta zip
+        zip_folder = os.path.join(settings.MEDIA_ROOT, 'zip')
+
+        # Cria a pasta zip se ela não existir
+        if not os.path.exists(zip_folder):
+            os.makedirs(zip_folder)
+
+        with ZipFile(zip_file_path, 'w') as zip_file:
+            for image in image_group.orderimage_set.all():
+                image_path = default_storage.path(image.image.name)
+                zip_file.write(image_path, os.path.basename(image_path))
+
+        # Atualiza o caminho do arquivo ZIP no banco de dados
+        image_group.zip_file_path = zip_file_path
+        image_group.save()
+
+
 
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
@@ -223,8 +209,8 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
-    
+
+        
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
