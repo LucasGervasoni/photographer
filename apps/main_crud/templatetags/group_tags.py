@@ -8,3 +8,7 @@ def has_group(user, group_name):
   if user.is_authenticated:
     return user.groups.filter(name=group_name).exists()
   return False
+
+@register.filter
+def format_services(services):
+    return ', '.join(services.strip('[]').replace("'", "").split(', '))

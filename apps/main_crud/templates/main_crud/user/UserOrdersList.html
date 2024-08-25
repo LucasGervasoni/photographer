@@ -9,15 +9,7 @@
 {% endblock %}
 
 {% block content %}
-{% if messages %}
-<div class="messages mb-4">
-  {% for message in messages %}
-  <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-    {{ message }}
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
+
 
 <h2 class="mb-4">Your Orders:</h2>
 
@@ -94,7 +86,13 @@
         <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
       </td>
       <td>
-        <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items }}</p>
+        {% if order.latest_scan_url %}
+          <span id="scan-url-{{ order.id }}"><strong>Scan URL:</strong> {{ order.latest_scan_url }}</span>
+          <button class="btn btn-outline-primary btn-sm ml-2 copy-scan-btn" data-order-id="{{ order.id }}">Copiar</button>
+        {% endif %}
+      </td>
+      <td>
+        <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items|format_services }}</p>
       </td>
       <td>
         {% if request.user.is_superuser %}
@@ -245,6 +243,35 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
   });
+
+  // Copiar URL de scan
+  document.querySelectorAll('.copy-scan-btn').forEach(function(button) {
+    button.addEventListener('click', function() {
+      const orderId = this.getAttribute('data-order-id');
+      const urlElement = document.getElementById(`scan-url-${orderId}`);
+
+      // Create a temporary input element
+      const tempInput = document.createElement('input');
+      tempInput.style.position = 'absolute';
+      tempInput.style.left = '-9999px';
+      tempInput.value = urlElement.textContent;
+      document.body.appendChild(tempInput);
+      
+      // Select the text and copy it to clipboard
+      tempInput.select();
+      document.execCommand('copy');
+      
+      // Remove the temporary input
+      document.body.removeChild(tempInput);
+      
+      // Change button appearance to show it's been copied
+      this.classList.add('copied-btn');
+      this.textContent = 'Copied';
+      
+      // Optionally, disable the button after copying
+      this.disabled = true;
+    });
+  });
 });
 
 function showPopup(popupId) {
@@ -254,6 +281,8 @@ function showPopup(popupId) {
 function closePopup(popupId) {
   document.getElementById(popupId).classList.add('d-none');
 }
+
+
 
   
   

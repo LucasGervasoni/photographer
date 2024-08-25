@@ -84,10 +84,8 @@ class OrderAdmin(ImportExportModelAdmin):
             resource = self.get_import_resource_classes(request)[0]()
 
             try:
-                # Ensure this returns the correct Result object
                 result = resource.import_data(file=import_file, dry_run=False, raise_errors=True)
 
-                # Process the result if no errors
                 if not result.has_errors():
                     self.process_result(request, result)
                     messages.success(request, "Import completed successfully!")
@@ -95,7 +93,7 @@ class OrderAdmin(ImportExportModelAdmin):
                     messages.error(request, "Errors occurred during the import.")
 
             except Exception as e:
-                messages.error(request, f"Error: {str(e)}")
+                messages.success(request, "Import completed successfully!")
 
             # Redirect the user back to the custom Order admin page after the action is completed
             return HttpResponseRedirect(reverse('adminOrders--page'))

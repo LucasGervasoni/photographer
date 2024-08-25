@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load group_tags %}
+
+
+
+{% block title %}
+<title>Spotlight - Support</title>
+{% endblock %}
+
+{% block content %}
+
+
+<h2 class="mb-4">Support:</h2>
+
+<div class="w-50 mr-auto ml-auto">
+  <h3 class="text-center">Call to JB</h3>
+  <ul class="list-group text-center">
+    <li class="list-group-item">
+      Phone: <a href="tel:+14248889195">+1 (424) 888-9195</a>
+      <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('+14248889195', this)">Copy</button>
+    </li>
+    <li class="list-group-item">
+      Slack: <a href="#">jb@spotlighthomephotos.com</a>
+      <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('jb@spotlighthomephotos.com', this)">Copy</button>
+    </li>
+  </ul>
+</div>
+
+
+<script>
+  function copyToClipboard(text, btn) {
+      // Create a temporary input element
+      const tempInput = document.createElement("input");
+      tempInput.style.position = "absolute";
+      tempInput.style.left = "-9999px";
+      tempInput.value = text;
+      
+      // Append the input element to the body
+      document.body.appendChild(tempInput);
+      
+      // Select the text and copy it to the clipboard
+      tempInput.select();
+      document.execCommand("copy");
+      
+      // Remove the temporary input element
+      document.body.removeChild(tempInput);
+      
+      // Update the button text to indicate success
+      btn.textContent = "Copied";
+      btn.classList.add("btn-success");
+      btn.classList.remove("btn-outline-primary");
+      
+      // Optionally, reset the button text after a short delay
+      setTimeout(function() {
+          btn.textContent = "Copy";
+          btn.classList.remove("btn-success");
+          btn.classList.add("btn-outline-primary");
+      }, 2000);
+  }
+  </script>
+
+{% endblock %}

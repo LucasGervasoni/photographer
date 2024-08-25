@@ -32,7 +32,6 @@
       <tr>
         <th scope="col">Order</th>
         <th scope="col">Services</th>
-        <th scope="col">Scan URL</th>
         <th scope="col">Created At</th>
         <th scope="col" colspan="2">Action</th>
       </tr>
@@ -40,11 +39,6 @@
       <tr>
         <td>{{ file.order }}</td>
         <td>{{ file.services }}</td>
-        <td>
-          <i class="fa fa-copy copy-icon" title="Copy URL" style="cursor: pointer; margin-right: 5px;"></i>
-          <span class="scan-url">{{ file.scan_url }}</span>
-          <span class="copy-message" style="display: none; margin-left: 10px; color: green;">Copied</span>
-        </td>
         <td>{{ file.created_at }}</td>
         <td>
           <a title="delete" href="{% url 'delete_files' file.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>

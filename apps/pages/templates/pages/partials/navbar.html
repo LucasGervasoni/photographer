@@ -19,7 +19,7 @@
         <a class="nav-link text-secondary" href="{% url 'userOrders--page' %}">Orders</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link text-secondary" href="#">Support</a>
+        <a class="nav-link text-secondary" href="{% url 'support' %}">Support</a>
       </li>
       {% if request.user.is_superuser or request.user|has_group:"Admin" %}
       <li class="nav-item">
