@@ -31,7 +31,6 @@
     <table class="table table-striped">
       <tr>
         <th scope="col">Order</th>
-        <th scope="col">Editor Note</th>
         <th scope="col">Services</th>
         <th scope="col">Scan URL</th>
         <th scope="col">Created At</th>
@@ -40,9 +39,12 @@
       {% for file in object_list %}
       <tr>
         <td>{{ file.order }}</td>
-        <td>{{ file.editor_note }}</td>
         <td>{{ file.services }}</td>
-        <td>{{ file.scan_url }}</td>
+        <td>
+          <i class="fa fa-copy copy-icon" title="Copy URL" style="cursor: pointer; margin-right: 5px;"></i>
+          <span class="scan-url">{{ file.scan_url }}</span>
+          <span class="copy-message" style="display: none; margin-left: 10px; color: green;">Copied</span>
+        </td>
         <td>{{ file.created_at }}</td>
         <td>
           <a title="delete" href="{% url 'delete_files' file.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>
@@ -97,8 +99,39 @@
         window.addEventListener('pageshow', function () {
             loadingSpinner.classList.add('d-none');
         });
+
+        // Function to copy text to clipboard
+        function copyToClipboard(text) {
+            const tempInput = document.createElement("input");
+            document.body.appendChild(tempInput);
+            tempInput.value = text;
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+        }
+
+        // Event listener for the copy icon
+        const copyIcons = document.querySelectorAll('.copy-icon');
+        copyIcons.forEach(function(icon) {
+            icon.addEventListener('click', function() {
+                const scanUrl = this.nextElementSibling.textContent;
+                copyToClipboard(scanUrl);
+
+                // Show the "Link copied" message
+                const message = this.nextElementSibling.nextElementSibling;
+                message.style.display = 'inline';
+                
+                // Hide the message after 3 seconds
+                setTimeout(function() {
+                    message.style.display = 'none';
+                }, 3000);
+            });
+        });
     });
 </script>
+
+
+
 
 
 {% endblock %}

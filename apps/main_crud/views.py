@@ -31,7 +31,7 @@ class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         model = Order
         template_name = "main_crud/admin/adminListOrder.html"
-        paginate_by = 10
+        paginate_by = 50
         
         #Return the orders by user
         def get_queryset(self):
@@ -116,7 +116,7 @@ class UserPageOrders(LoginRequiredMixin,ListView):
         login_url = reverse_lazy('login')
         model = Order
         template_name = "main_crud/user/UserOrdersList.html"
-        paginate_by = 10
+        paginate_by = 50
         
         #Return the orders by user
         def get_queryset(self):

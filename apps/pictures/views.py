@@ -243,7 +243,7 @@ class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
     group_required = ['Admin'] 
     model = OrderImageGroup
     template_name = 'admin/listFiles.html'
-    paginate_by = 10
+    paginate_by = 50
     
     def get_queryset(self):
         queryset = super().get_queryset().order_by('-created_at')
@@ -305,7 +305,7 @@ class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
     group_required = ['Admin'] 
     model = UserAction
     template_name = 'admin/listLogs.html'
-    paginate_by = 10
+    paginate_by = 50
     
     def get_queryset(self):
         queryset = super().get_queryset()
