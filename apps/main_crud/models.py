@@ -15,7 +15,7 @@ class Order(models.Model):
   )
   
   appointment_team_members = models.CharField(max_length=300,verbose_name="Appointment Member")
-  customer = models.CharField(max_length=200, verbose_name="Customer")
+  customer = models.CharField(max_length=200, verbose_name="Customer", null=True,blank=True)
   appointment_date = models.DateTimeField(max_length=200,verbose_name="Scheduled", null=True)
   address = models.CharField(max_length=200, verbose_name="Address")
   appointment_items = models.CharField(max_length=200, verbose_name="Services")

@@ -80,8 +80,8 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             name, ext = os.path.splitext(filename)
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
-        return unique_name   
-    
+        return unique_name
+  
     
 # Upload 
 
