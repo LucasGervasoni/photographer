@@ -93,12 +93,13 @@
       <td>
         <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
       </td>
-      {% if order.latest_scan_url %}
       <td>
-          <span id="scan-url-{{ order.id }}"><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}">{{ order.latest_scan_url }}</a></span>
-          <button class="btn btn-outline-primary btn-sm ml-2 copy-scan-btn" data-order-id="{{ order.id }}">Copy</button>
+        {% if order.latest_scan_url %}
+        <p><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}" target="_blank">{{ order.latest_scan_url }}</a></p>
+        {% else %}
+        <p><strong>Scan URL:</strong> Not Available</p>
+        {% endif %}
       </td>
-      {% endif %}
       <td>
         <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items|format_services }}</p>
       </td>
@@ -117,18 +118,16 @@
         <p><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
       </td>
-      <td colspan="2">
+      <td class="d-flex" colspan="2">
         {% if request.user.is_superuser or request.user|has_group:"Editor"%}
         {% if order.order_status == "Production" or order.order_status == "Completed" %}
-        <a href="#" class="btn btn-outline-dark download-btn" data-order-id="{{ order.pk }}">Download</a>
+        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}">Download</a>
         {% else %}
-        <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
+        <a href="#" class="btn btn-outline-dark disabled mr-2" aria-disabled="true">Download</a>
         {% endif %}
         {% endif %}
-      </td>
-      <td class="d-flex" colspan="2">
-        <a title="edit" href="{% url 'order-update' order.pk %}" class="btn btn-outline-info mr-2"><i class="fas fa-pen    "></i></a>
-        <a title="delete" href="{% url 'order-delete' order.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>
+          <a title="edit" href="{% url 'order-update' order.pk %}" class="btn btn-outline-info mr-2"><i class="fas fa-pen    "></i></a>
+          <a title="delete" href="{% url 'order-delete' order.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>
       </td>
     </tr>
     {% endfor %}
