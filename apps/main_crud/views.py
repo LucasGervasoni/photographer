@@ -24,6 +24,7 @@ class OrderCreateView(GroupRequiredMixin,LoginRequiredMixin,CreateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Create Order'
         context['button'] = 'Create'
+        context['class'] = 'd-block'
         return context
 
 
@@ -104,6 +105,7 @@ class OrderUpdateView(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Update Order'
         context['button'] = 'Update'
+        context['class'] = 'd-none'
         return context
     
 #Delete

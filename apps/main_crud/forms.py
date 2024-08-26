@@ -1,8 +1,20 @@
 from django import forms
 from apps.main_crud.models import Order
 from apps.pictures.models import OrderImageGroup
+from apps.users.models import CustomUser
 
 class OrderForm(forms.ModelForm):
+    
+    appointment_team_members = forms.ModelChoiceField(
+        queryset=CustomUser.objects.all(),
+        widget=forms.Select,
+        required=True,
+        label="Appointment Member"
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super(OrderForm, self).__init__(*args, **kwargs)
+        self.fields['appointment_team_members'].label_from_instance = lambda obj: f"{obj.get_full_name()}"
     
     appointment_items = forms.MultipleChoiceField(
         choices=OrderImageGroup.select_services,
