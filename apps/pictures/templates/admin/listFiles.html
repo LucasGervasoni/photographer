@@ -31,6 +31,7 @@
     <table class="table table-striped">
       <tr>
         <th scope="col">Order</th>
+        <th scope="col">Scan URL</th>
         <th scope="col">Services</th>
         <th scope="col">Created At</th>
         <th scope="col" colspan="2">Action</th>
@@ -38,6 +39,9 @@
       {% for file in object_list %}
       <tr>
         <td>{{ file.order }}</td>
+        <td>
+          <span id="scan-url-{{ order.id }}">{{ file.scan_url }}</span>
+      </td>
         <td>{{ file.services }}</td>
         <td>{{ file.created_at }}</td>
         <td>

@@ -22,7 +22,7 @@
 <h2 class="mb-4">Your Orders:</h2>
 
 <!-- Filter form -->
-<form method="get" action="{% url 'userOrders--page' %}" class="mb-4">
+<form method="get" action="{% url 'adminOrders--page' %}" class="mb-4">
   <div class="row">
     <div class="col-md-2">
       <label for="status">Status</label>
@@ -96,7 +96,7 @@
       <td>
         {% if order.latest_scan_url %}
           <span id="scan-url-{{ order.id }}"><strong>Scan URL:</strong> {{ order.latest_scan_url }}</span>
-          <button class="btn btn-outline-primary btn-sm ml-2 copy-scan-btn" data-order-id="{{ order.id }}">Copiar</button>
+          <button class="btn btn-outline-primary btn-sm ml-2 copy-scan-btn" data-order-id="{{ order.id }}">Copy</button>
         {% endif %}
       </td>
       <td>

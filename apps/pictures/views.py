@@ -256,7 +256,7 @@ class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
         # Filter by search query
         if search_query:
             queryset = queryset.filter(
-                Q(order__icontains=search_query) |
+                Q(order__address__icontains=search_query) |  # Assuming 'address' is a field in the Order model
                 Q(editor_note__icontains=search_query) |
                 Q(services__icontains=search_query) |
                 Q(scan_url__icontains=search_query)
