@@ -126,6 +126,10 @@
         {% endif %}
         {% endif %}
       </td>
+      <td class="d-flex" colspan="2">
+        <a title="edit" href="{% url 'order-update' order.pk %}" class="btn btn-outline-info mr-2"><i class="fas fa-pen    "></i></a>
+        <a title="delete" href="{% url 'order-delete' order.pk %}" class="btn btn-outline-danger" aria-disabled="true"><i class="fa fa-trash" aria-hidden="true"></i></a>
+      </td>
     </tr>
     {% endfor %}
   </table>
