@@ -93,12 +93,12 @@
       <td>
         <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
       </td>
+      {% if order.latest_scan_url %}
       <td>
-        {% if order.latest_scan_url %}
-          <span id="scan-url-{{ order.id }}"><strong>Scan URL:</strong> {{ order.latest_scan_url }}</span>
+          <span id="scan-url-{{ order.id }}"><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}">{{ order.latest_scan_url }}</a></span>
           <button class="btn btn-outline-primary btn-sm ml-2 copy-scan-btn" data-order-id="{{ order.id }}">Copy</button>
-        {% endif %}
       </td>
+      {% endif %}
       <td>
         <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items|format_services }}</p>
       </td>
