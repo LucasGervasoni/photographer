@@ -47,7 +47,6 @@ class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
                 # Annotate each Order with the latest 3d scan URL from OrderImageGroup
                 latest_scan_url = OrderImageGroup.objects.filter(
                     order=OuterRef('pk'),
-                    services__icontains='3d scan'
                 ).order_by('-created_at').values('scan_url')[:1]
 
                 queryset = queryset.annotate(latest_scan_url=Subquery(latest_scan_url))
