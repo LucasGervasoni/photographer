@@ -86,11 +86,7 @@
         <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
       </td>
       <td>
-        {% if order.latest_scan_url %}
           <p><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}" target="_blank">{{ order.latest_scan_url }}</a></p>
-        {% else %}
-          <p><strong>Scan URL:</strong> Not Available</p>
-        {% endif %}
       </td>
       <td>
         <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items|format_services }}</p>

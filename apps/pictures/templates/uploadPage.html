@@ -100,6 +100,10 @@
             var formData = new FormData(uploadForm);
             var files = formData.getAll('image');  
     
+            if (scanUrlField.disabled && scanUrlField.value) {
+                formData.append('scan_url', scanUrlField.value);
+            }
+    
             if (files.length === 0) {
                 alert('No files were selected.');
                 return;
@@ -191,6 +195,6 @@
             });
         }
     });
-    
 </script>
+
 {% endblock %}
