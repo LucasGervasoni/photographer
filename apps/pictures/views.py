@@ -14,6 +14,7 @@ import io  # Import the io module for handling byte streams
 from django.http import FileResponse, HttpResponse, StreamingHttpResponse # Import HttpResponse to send HTTP responses
 import os
 from django.db.models import Q
+from django.db.models import OuterRef, Subquery 
 from django.utils.timezone import make_aware
 from datetime import datetime
 from django.utils.dateparse import parse_date
@@ -22,7 +23,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
+from django.contrib.auth import get_user_model
 import logging
+
+from apps.pictures.utils import get_order_image_path, rename_file
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +52,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         zip_filename = f'order_{address_safe}.zip'
 
         response = StreamingHttpResponse(
-            self.stream_zip_file(images),
+            self.stream_zip_file(order, images),
             content_type='application/zip'
         )
         response['Content-Disposition'] = f'attachment; filename={zip_filename}'
@@ -56,7 +60,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         return response
 
-    def stream_zip_file(self, images):
+    def stream_zip_file(self, order, images):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
@@ -65,13 +69,28 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                 if not default_storage.exists(file_path):
                     continue
 
+                # Get the relative path within the order's directory structure
+                relative_path = self.get_relative_path(order, file_path)
+                unique_name = self.get_unique_filename(zip_file, relative_path)
+
                 with default_storage.open(file_path, 'rb') as file_obj:
-                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
                     zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
             yield chunk
+
+    def get_relative_path(self, order, file_path):
+        # Replace spaces and special characters in the order address
+        order_address = order.address.replace(' ', '_').replace(',', '').replace('.', '')
+
+        # Base directory structure
+        base_dir = f'{order_address}/{order_address}01'
+
+        # Remove redundant segments from the file path
+        relative_path = file_path.replace(f'media/{base_dir}/', '')
+
+        return relative_path
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -81,7 +100,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-  
+
     
 # Upload 
 
@@ -106,11 +125,12 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             if not image_group:
                 image_group = group_form.save(commit=False)
                 image_group.order = order
-                image_group.created_by_view = 'OrderImageUploadView'  # Mark the view that created this group
+                image_group.created_by_view = 'OrderImageUploadView'
                 image_group.save()
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
+                relative_path = request.POST.get('relative_path')
                 
                 order_image = OrderImage(
                     order=order,
@@ -119,16 +139,16 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_sent=form.cleaned_data.get('photos_sent'),
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
-                
-                # Generate file path
-                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+
+                # Generate the file path using the get_order_image_path function
+                renamed_filename = rename_file(image_group, f.name)
+                order_image.image.name = get_order_image_path(order, image_group, relative_path, renamed_filename)
                 
                 order_image.save()
 
                 # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
                 
-                # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
                 
@@ -152,6 +172,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
     
     
 class PhotographerImageUploadView(LoginRequiredMixin, View):
@@ -188,6 +209,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
+                relative_path = request.POST.get('relative_path')
 
                 order_image = OrderImage(
                     order=order,
@@ -196,10 +218,12 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 )
                 
                 # Generate file path
-                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+                renamed_filename = rename_file(image_group, f.name)
+                order_image.image.name = get_order_image_path(order, image_group, relative_path, renamed_filename)
                 
                 order_image.save()
 
+                # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
                 if converted_image_url:
                     order_image.save()
@@ -219,7 +243,6 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-
         
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
@@ -234,7 +257,16 @@ class OrderImageListView(LoginRequiredMixin, View):
         page_obj = paginator.get_page(page_number)
         
         image_count = images.count()
-        return render(request, 'listImage.html', {'order': order, 'page_obj': page_obj, 'image_count': image_count})
+        
+        recent_scan = order.orderimagegroup_set.order_by('-created_at').first()
+        scan_url = recent_scan.scan_url if recent_scan else None
+        
+        return render(request, 'listImage.html', {
+            'order': order, 
+            'page_obj': page_obj, 
+            'image_count': image_count,
+            'scan_url': scan_url  
+        })
 
 
 #List Group of Files uploaded
@@ -312,12 +344,13 @@ class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
         search_query = self.request.GET.get('q', '')
         start_date = self.request.GET.get('start_date', '')
         end_date = self.request.GET.get('end_date', '')
+        user_filter = self.request.GET.get('user', '')
 
         if search_query:
             queryset = queryset.filter(
                 Q(user__username__icontains=search_query) |
                 Q(action_type__icontains=search_query) |
-                Q(order__order_number__icontains=search_query)
+                Q(order__address__icontains=search_query)
             )
 
         if start_date:
@@ -327,16 +360,23 @@ class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
         if end_date:
             end_date = make_aware(datetime.strptime(end_date, "%Y-%m-%d"))
             queryset = queryset.filter(action_date__lte=end_date)
+        
+        if user_filter:
+            queryset = queryset.filter(user__id=user_filter)
 
         queryset = queryset.order_by('action_date')
 
         return queryset
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('q', '')
         context['start_date'] = self.request.GET.get('start_date', '')
         context['end_date'] = self.request.GET.get('end_date', '')
+        user_filter = self.request.GET.get('user', '')
+        context['selected_user'] = int(user_filter) if user_filter.isdigit() else None
+        context['users'] = get_user_model().objects.all()
         return context
     
 

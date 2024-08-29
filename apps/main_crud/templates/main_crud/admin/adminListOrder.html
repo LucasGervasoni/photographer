@@ -94,10 +94,8 @@
         <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
       </td>
       <td>
-        {% if order.latest_scan_url %}
+        {% if order.latest_scan_url and order.latest_scan_url != 'null' %}
         <p><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}" target="_blank">{{ order.latest_scan_url }}</a></p>
-        {% else %}
-        <p><strong>Scan URL:</strong> Not Available</p>
         {% endif %}
       </td>
       <td>
@@ -200,91 +198,93 @@
 
 
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll('.download-btn').forEach(function(button) {
-      button.addEventListener('click', function(event) {
-        event.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const downloadUrl = `/orders/${orderId}/download/`;
-        
-        // Defina o nome do arquivo que deseja usar
-        const addressSafe = this.getAttribute('data-order-address'); // Supondo que o endereço esteja no atributo data
-        const zipFilename = `order_${addressSafe}.zip`;
-  
-        // Show the progress pop-up
-        showPopup('popup-progress');
-  
-        // Perform the download request via Fetch API
-        fetch(downloadUrl)
-          .then(response => {
-            if (response.ok) {
-              return response.blob();
-            } else {
-              throw new Error('Download error');
-            }
-          })
-          .then(blob => {
-            // Create a temporary link element
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = zipFilename;  // Define o nome do arquivo aqui
-  
-            // Append link to the body
-            document.body.appendChild(a);
-  
-            // Trigger download by clicking the link
-            a.click();
-  
-            // Cleanup: Remove the link and revoke the object URL
-            a.remove();
-            window.URL.revokeObjectURL(url);
-  
-            // Show the success pop-up
-            showPopup('popup-success');
-          })
-          .catch(error => {
-            // Error in connection or request processing
-            showPopup('popup-error');
-          })
-          .finally(() => {
-            // Close the progress pop-up
-            closePopup('popup-progress');
-          });
-      });
-    });
-  
-    // Copiar URL de scan
-    document.querySelectorAll('.copy-scan-btn').forEach(function(button) {
-      button.addEventListener('click', function() {
-        const orderId = this.getAttribute('data-order-id');
-        const urlElement = document.getElementById(`scan-url-${orderId}`);
-  
-        // Create a temporary input element
-        const tempInput = document.createElement('input');
-        tempInput.style.position = 'absolute';
-        tempInput.style.left = '-9999px';
-        tempInput.value = urlElement.textContent;
-        document.body.appendChild(tempInput);
-        
-        // Select the text and copy it to clipboard
-        tempInput.select();
-        document.execCommand('copy');
-        
-        // Remove the temporary input
-        document.body.removeChild(tempInput);
-        
-        // Change button appearance to show it's been copied
-        this.classList.add('copied-btn');
-        this.textContent = 'Copied';
-        
-        // Optionally, disable the button after copying
-        this.disabled = true;
-      });
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll('.download-btn').forEach(function(button) {
+    button.addEventListener('click', function(event) {
+      event.preventDefault();
+      const orderId = this.getAttribute('data-order-id');
+      const downloadUrl = `/orders/${orderId}/download/`;
+      
+      // Define the filename using the order's address
+      const addressSafe = this.getAttribute('data-order-address');
+      const zipFilename = `order_${addressSafe}.zip`;
+
+      // Show the progress pop-up
+      showPopup('popup-progress');
+
+      // Perform the download request via Fetch API
+      fetch(downloadUrl)
+        .then(response => {
+          if (response.ok) {
+            return response.blob();
+          } else {
+            throw new Error('Download error');
+          }
+        })
+        .then(blob => {
+          // Create a temporary link element
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = zipFilename;
+
+          // Append link to the body
+          document.body.appendChild(a);
+
+          // Trigger download by clicking the link
+          a.click();
+
+          // Cleanup: Remove the link and revoke the object URL
+          a.remove();
+          window.URL.revokeObjectURL(url);
+
+          // Show the success pop-up
+          showPopup('popup-success');
+        })
+        .catch(error => {
+          // Error in connection or request processing
+          showPopup('popup-error');
+        })
+        .finally(() => {
+          // Close the progress pop-up
+          closePopup('popup-progress');
+        });
     });
   });
-  
+
+
+
+  // Copiar URL de scan
+  document.querySelectorAll('.copy-scan-btn').forEach(function(button) {
+    button.addEventListener('click', function() {
+      const orderId = this.getAttribute('data-order-id');
+      const urlElement = document.getElementById(`scan-url-${orderId}`);
+
+      // Create a temporary input element
+      const tempInput = document.createElement('input');
+      tempInput.style.position = 'absolute';
+      tempInput.style.left = '-9999px';
+      tempInput.value = urlElement.textContent;
+      document.body.appendChild(tempInput);
+      
+      // Select the text and copy it to clipboard
+      tempInput.select();
+      document.execCommand('copy');
+      
+      // Remove the temporary input
+      document.body.removeChild(tempInput);
+      
+      // Change button appearance to show it's been copied
+      this.classList.add('copied-btn');
+      this.textContent = 'Copied';
+      
+      // Optionally, disable the button after copying
+      this.disabled = true;
+    });
+  });
+});
+
   function showPopup(popupId) {
     document.getElementById(popupId).classList.remove('d-none');
   }

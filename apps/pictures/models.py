@@ -9,27 +9,19 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 # # Create your models here.
 
-# Function to generate the upload path
+from .utils import get_order_image_path, rename_file
+
 def order_image_path(instance, filename):
-    order_address = instance.order.address.replace(' ', '_')
-    group_count = OrderImageGroup.objects.filter(order=instance.order).count()
+    # Use the get_order_image_path function to generate the complete file path
+    renamed_filename = get_order_image_path(
+        order=instance.order,
+        image_group=instance.group,
+        relative_path=filename,
+        renamed_filename=rename_file(instance.group, filename)
+    )
 
-    # Extract the file extension
-    extension = filename.split('.')[-1]
-    # Generate a base filename
-    base_filename = f'Spotlight{instance.group.images.count() + 1:02d}.{extension}'
-    
-    # Define the initial path
-    path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}', base_filename)
-    
-    # Check if the file already exists and append a suffix if necessary
-    counter = 1
-    while os.path.exists(path):
-        base_filename = f'Spotlight{instance.group.images.count() + 1:02d}_{counter}.{extension}'
-        path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}', base_filename)
-        counter += 1
+    return renamed_filename
 
-    return path
 
 
 # Model base for image

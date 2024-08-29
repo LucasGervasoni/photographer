@@ -12,7 +12,7 @@
   {% csrf_token %}
   <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
     <div class="box__input mb-4 align-self-center">
-      <input class="fileInput" type="file" accept="*" name="image" multiple>
+      <input class="fileInput" type="file" accept="*" webkitdirectory directory name="image" multiple data-path>
     </div>
 
     <!-- Editor Note -->
@@ -58,130 +58,128 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var servicesField = document.getElementById('id_services');
-        var scanUrlField = document.getElementById('id_scan_url');
-        var progressCard = document.getElementById('progressCard');
-        var progressBar = document.getElementById('progressBar');
-        var fileNameElement = document.getElementById('fileName');
-        var progressPercent = document.getElementById('progressPercent');
-        var uploadForm = document.getElementById('uploadForm');
-        var retryLimit = 5;
-        var baseTimeout = 60000; // Timeout 60 seconds
+    var servicesField = document.getElementById('id_services');
+    var scanUrlField = document.getElementById('id_scan_url');
+    var progressCard = document.getElementById('progressCard');
+    var progressBar = document.getElementById('progressBar');
+    var fileNameElement = document.getElementById('fileName');
+    var progressPercent = document.getElementById('progressPercent');
+    var uploadForm = document.getElementById('uploadForm');
+    var retryLimit = 5;
+    var baseTimeout = 60000; // Timeout 60 seconds
     
-        function updateScanUrlField() {
-            var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
-                .map(checkbox => checkbox.value);
-            if (selectedServices.includes('3d scan')) {
-                scanUrlField.disabled = false;
-            } else {
-                scanUrlField.disabled = true;
-                scanUrlField.value = '';
-            }
+    function updateScanUrlField() {
+        var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value);
+        if (selectedServices.includes('3d scan')) {
+            scanUrlField.disabled = false;
+        } else {
+            scanUrlField.disabled = true;
+            scanUrlField.value = '';
         }
-    
-        servicesField.addEventListener('change', updateScanUrlField);
-        updateScanUrlField();
-    
-        uploadForm.onsubmit = async function (event) {
-            event.preventDefault();
-            var formData = new FormData(uploadForm);
-            var files = formData.getAll('image'); 
-            
-            if (scanUrlField.disabled && scanUrlField.value) {
-                formData.append('scan_url', scanUrlField.value);
+    }
+
+    servicesField.addEventListener('change', updateScanUrlField);
+    updateScanUrlField();
+
+    uploadForm.onsubmit = async function (event) {
+        event.preventDefault();
+        var formData = new FormData(uploadForm);
+        var files = document.querySelector('.fileInput').files;
+
+        if (files.length === 0) {
+            alert('No files were selected.');
+            return;
+        }
+
+        progressCard.style.display = 'block';
+
+        uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
+            element.disabled = true;
+        });
+
+        try {
+            for (let file of files) {
+                formData.append('relative_path', file.webkitRelativePath);  // Add relative path to FormData
+                await uploadFileWithRetries(file, formData, uploadForm.action);
+                formData.delete('relative_path');  // Remove relative path for the next file
             }
-    
-    
-            if (files.length === 0) {
-                alert('No files were selected.');
-                return;
-            }
-    
-            progressCard.style.display = 'block';
-    
+            window.location.href = "{% url 'userOrders--page' %}"; 
+        } catch (error) {
+            alert(error.message || 'Error during upload.');
+        } finally {
+            progressCard.style.display = 'none';
+
             uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
-                element.disabled = true;
+                element.disabled = false;
             });
-    
-            try {
-                for (let file of files) {
-                    await uploadFileWithRetries(file, formData, uploadForm.action);
-                }
-                window.location.href = "{% url 'userOrders--page' %}"; 
-            } catch (error) {
-                alert(error.message || 'Error during upload.');
-            } finally {
-                progressCard.style.display = 'none';
-    
-                uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
-                    element.disabled = false;
-                });
+        }
+    };
+
+    async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
+        try {
+            await uploadFileAsync(file, formData, actionUrl);
+        } catch (error) {
+            if (retries < retryLimit) {
+                const delay = Math.pow(2, retries) * 1000; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
+            } else {
+                throw error;
             }
-        };
-    
-        async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
-            try {
-                await uploadFileAsync(file, formData, actionUrl);
-            } catch (error) {
-                if (retries < retryLimit) {
-                    const delay = Math.pow(2, retries) * 1000; // Exponential backoff
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
+        }
+    }
+
+    async function uploadFileAsync(file, formData, actionUrl) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', actionUrl, true);
+            xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Adaptive timeout
+
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    var percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.setAttribute('aria-valuenow', percentComplete);
+                    progressPercent.textContent = percentComplete + '% Complete';
+                }
+            };
+
+            xhr.onloadstart = function () {
+                fileNameElement.textContent = 'File: ' + file.name;
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0% Complete';
+            };
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    resolve();
                 } else {
-                    throw error;
+                    reject(new Error('Error during upload.'));
                 }
-            }
-        }
-    
-        async function uploadFileAsync(file, formData, actionUrl) {
-            return new Promise((resolve, reject) => {
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', actionUrl, true);
-                xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Timeout adaptativo
-    
-                xhr.upload.onprogress = function (event) {
-                    if (event.lengthComputable) {
-                        var percentComplete = Math.round((event.loaded / event.total) * 100);
-                        progressBar.style.width = percentComplete + '%';
-                        progressBar.setAttribute('aria-valuenow', percentComplete);
-                        progressPercent.textContent = percentComplete + '% Complete';
-                    }
-                };
-    
-                xhr.onloadstart = function () {
-                    fileNameElement.textContent = 'File: ' + file.name;
-                    progressBar.style.width = '0%';
-                    progressPercent.textContent = '0% Complete';
-                };
-    
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        resolve();
-                    } else {
-                        reject(new Error('Error during upload.'));
-                    }
-                };
-    
-                xhr.onerror = function () {
-                    reject(new Error('Upload timed out.'));
-                };
-    
-                xhr.ontimeout = function () {
-                    reject(new Error('O upload atingiu o tempo limite.'));
-                };
-    
-                var uploadData = new FormData();
-                uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-                uploadData.append('image', file);
-                uploadData.append('editor_note', formData.get('editor_note'));
-                uploadData.append('services', formData.get('services'));
-                uploadData.append('scan_url', formData.get('scan_url'));
-    
-                xhr.send(uploadData);
-            });
-        }
-    });
-    
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Upload timed out.'));
+            };
+
+            xhr.ontimeout = function () {
+                reject(new Error('Upload timed out.'));
+            };
+
+            var uploadData = new FormData();
+            uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
+            uploadData.append('image', file);
+            uploadData.append('relative_path', formData.get('relative_path'));  // Include relative path
+            uploadData.append('editor_note', formData.get('editor_note'));
+            uploadData.append('services', formData.get('services'));
+            uploadData.append('scan_url', formData.get('scan_url'));
+
+            xhr.send(uploadData);
+        });
+    }
+});
+
 </script>
     
 <br>

@@ -85,6 +85,9 @@
           <a class="btn btn-info btn-block" href="{% url 'userOrders--page' %}">Back to Orders</a>
         </div>
       </div>
+      {% if scan_url and scan_url != 'null' %}
+        <iframe width='335' height='440' src='{{ scan_url }}' frameborder='0' allowfullscreen allow='xr-spatial-tracking'></iframe>
+      {% endif %}
     </div>
   </div>
 </div>

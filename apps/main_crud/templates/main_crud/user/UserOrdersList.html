@@ -85,11 +85,11 @@
       <td>
         <p class="text-capitalize"><strong>Customer:</strong> {{ order.customer }}</p>
       </td>
-      {% if order.latest_scan_url %}
       <td>
-          <p><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}" target="_blank">{{ order.latest_scan_url }}</a></p>
+        {% if order.latest_scan_url and order.latest_scan_url != 'null' %}
+        <p><strong>Scan URL:</strong> <a href="{{ order.latest_scan_url }}" target="_blank">{{ order.latest_scan_url }}</a></p>
+        {% endif %}
       </td>
-      {% endif %}
       <td>
         <p class="text-capitalize"><strong>Services:</strong> {{ order.appointment_items|format_services }}</p>
       </td>
@@ -195,8 +195,8 @@ document.addEventListener("DOMContentLoaded", function() {
       const orderId = this.getAttribute('data-order-id');
       const downloadUrl = `/orders/${orderId}/download/`;
       
-      // Defina o nome do arquivo que deseja usar
-      const addressSafe = this.getAttribute('data-order-address'); // Supondo que o endereço esteja no atributo data
+      // Define the filename using the order's address
+      const addressSafe = this.getAttribute('data-order-address');
       const zipFilename = `order_${addressSafe}.zip`;
 
       // Show the progress pop-up
@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", function() {
           const a = document.createElement('a');
           a.style.display = 'none';
           a.href = url;
-          a.download = zipFilename;  // Define o nome do arquivo aqui
+          a.download = zipFilename;
 
           // Append link to the body
           document.body.appendChild(a);
@@ -242,6 +242,8 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
   });
+
+
 
   // Copiar URL de scan
   document.querySelectorAll('.copy-scan-btn').forEach(function(button) {
