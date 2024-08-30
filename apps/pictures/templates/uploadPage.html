@@ -7,6 +7,8 @@
 
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
+
+<img style="width: 340px; position: absolute; top: 10%; left: 0;" src="{% static 'img/help-img.jpg' %}" alt="">
 <form id="uploadForm" method="post" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
