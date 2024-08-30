@@ -88,30 +88,13 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # }
 
 #HEROKU
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'd27qtj21sfr1b0',
-        'USER': 'uekvi0ou38jfmr',
-        'PASSWORD': 'p473912e85023c0677a816c0e3f3bc8d3b1e07fc01eed9d5d2d76b4b919598e4f',
-        'HOST': 'c3nv2ev86aje4j.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
-        'PORT': 5432,
-        'CONN_MAX_AGE': 600,
-        'OPTIONS': {
-            'connect_timeout': 60,
-        },
-    }
-}
-
-
-#AWS
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'spotlightdatabase',
-#         'USER': 'manager',
-#         'PASSWORD': 'l4TJsvRQD6wOWjCr1grd',
-#         'HOST': 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
+#         'NAME': 'd27qtj21sfr1b0',
+#         'USER': 'uekvi0ou38jfmr',
+#         'PASSWORD': 'p473912e85023c0677a816c0e3f3bc8d3b1e07fc01eed9d5d2d76b4b919598e4f',
+#         'HOST': 'c3nv2ev86aje4j.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
 #         'PORT': 5432,
 #         'CONN_MAX_AGE': 600,
 #         'OPTIONS': {
@@ -119,6 +102,23 @@ DATABASES = {
 #         },
 #     }
 # }
+
+
+#AWS
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'spotlightdatabase',
+        'USER': 'manager',
+        'PASSWORD': 'l4TJsvRQD6wOWjCr1grd',
+        'HOST': 'spotlightdatabase.cj0qe448e9p0.us-west-1.rds.amazonaws.com',
+        'PORT': 5432,
+        'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'connect_timeout': 60,
+        },
+    }
+}
 
 
 # Password validation
