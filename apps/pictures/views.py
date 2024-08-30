@@ -24,6 +24,7 @@ from django.utils.decorators import method_decorator
 from django.core.paginator import Paginator
 from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 import logging
 
 
@@ -47,7 +48,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             order=order
         )
 
-        address_safe = order.address.replace(' ', '_').replace(',', '').replace('.', '')
+        address_safe = slugify(order.address)
         zip_filename = f'order_{address_safe}.zip'
 
         response = StreamingHttpResponse(
@@ -68,13 +69,22 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                 if not default_storage.exists(file_path):
                     continue
 
+                # Add the file and its relative path to the zip file
                 with default_storage.open(file_path, 'rb') as file_obj:
-                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
+                    relative_path = self.get_relative_path(file_path)
+                    unique_name = self.get_unique_filename(zip_file, relative_path)
                     zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
             yield chunk
+
+    def get_relative_path(self, file_path):
+        # Remove the leading part of the path to get a relative path for the ZIP
+        base_dir = 'media/'
+        if file_path.startswith(base_dir):
+            return file_path[len(base_dir):]
+        return file_path
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -235,6 +245,8 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!', 'files': file_list})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+
+
 
 class CreateOrderImageGroupView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
