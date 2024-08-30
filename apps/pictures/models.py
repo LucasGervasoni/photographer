@@ -7,34 +7,40 @@ import rawpy
 from PIL import Image
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.utils.text import slugify
 # # Create your models here.
 
 
-def order_image_path(instance, filename):
-    # Utilize o relative_path já definido na instância, que inclui o caminho base
-    if hasattr(instance, 'relative_path'):
-        full_path = instance.relative_path
+def order_image_path(instance, filename, relative_path=None):
+    if relative_path is None and hasattr(instance, 'relative_path_temp'):
+        relative_path = instance.relative_path_temp
     else:
-        order_address = instance.order.address.replace(' ', '_')
-        group_count = OrderImageGroup.objects.filter(order=instance.order).count()
-        full_path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}')
+        instance.relative_path_temp = relative_path
 
-    # Extraia a extensão do arquivo
+    order_address = slugify(instance.order.address)
+
+    existing_groups = OrderImageGroup.objects.filter(order=instance.order)
+    group_count = existing_groups.count() if existing_groups.exists() else 1
+
+    base_path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}')
+
+    if relative_path:
+        base_path = os.path.join(base_path, relative_path)
+
     extension = filename.split('.')[-1]
-    # Gere um nome de arquivo base
     base_filename = f'Spotlight{instance.group.images.count() + 1:02d}.{extension}'
-    
-    # Defina o caminho final com o nome do arquivo
-    final_path = os.path.join(full_path, base_filename)
-    
-    # Verifique se o arquivo já existe e anexe um sufixo, se necessário
+
+    final_path = os.path.join(base_path, base_filename)
+
     counter = 1
     while os.path.exists(final_path):
         base_filename = f'Spotlight{instance.group.images.count() + 1:02d}_{counter}.{extension}'
-        final_path = os.path.join(full_path, base_filename)
+        final_path = os.path.join(base_path, base_filename)
         counter += 1
 
+
     return final_path
+
 
 
 # Model base for image

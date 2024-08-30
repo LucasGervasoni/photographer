@@ -90,7 +90,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
 class OrderImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
-    
+
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         form = OrderImageForm()
@@ -109,12 +109,15 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             if not image_group:
                 image_group = group_form.save(commit=False)
                 image_group.order = order
-                image_group.created_by_view = 'OrderImageUploadView'  # Mark the view that created this group
+                image_group.created_by_view = 'OrderImageUploadView'
                 image_group.save()
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
                 
+                relative_path = request.POST.get('relative_path', '')
+
+                # Definir o order_image antes de gerar o caminho
                 order_image = OrderImage(
                     order=order,
                     image=f,
@@ -122,26 +125,24 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_sent=form.cleaned_data.get('photos_sent'),
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
+
+                # Recalcular a contagem dos grupos após criar o novo grupo
+                file_path = order_image_path(instance=order_image, filename=f.name, relative_path=relative_path)
+
+                f.name = os.path.basename(file_path)
                 
-                # Generate file path
-                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
-                
+                # Agora podemos salvar o order_image
                 order_image.save()
 
-                # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
-                
-                # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
-                
+
                 images.append(order_image)
 
-            # Update order status
             order.order_status = 'Production'
             order.save()
 
-            # Register user actions
             user_actions = [
                 UserAction(
                     user=request.user,
@@ -155,8 +156,8 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-    
-    
+
+
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -173,29 +174,30 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
 
         if form.is_valid() and group_form.is_valid():
-            # Obtenha o último grupo de imagens associado a esta ordem
             last_image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
 
             if last_image_group and request.session.get('current_file_list', []):
-                # Se existir um grupo e há arquivos em progresso, continue usando o mesmo grupo
                 image_group = last_image_group
             else:
-                # Caso contrário, crie um novo grupo e incremente o nome do grupo
-                group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count()
-                group_form.instance.group_name = f"PhotographerGroup{group_count + 1}"
+                # Calculando o group_count
+                group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count() + 1
+                
+                # Decrementando 1 se group_count for maior que o esperado
+                if group_count > 2:
+                    group_count -= 1
+
+                group_form.instance.group_name = f"PhotographerGroup{group_count}"
                 image_group = group_form.save(commit=False)
                 image_group.order = order
                 image_group.created_by_view = 'PhotographerImageUploadView'
                 image_group.save()
 
-                # Reinicie a lista de arquivos na sessão
                 request.session['current_file_list'] = []
 
-            print(f"Arquivos estão sendo atribuídos ao OrderImageGroup: {image_group.id}")
-            
-            # Adicionar arquivos à lista de arquivos na sessão
             file_list = request.session['current_file_list']
             images = []
+            relative_path = request.POST.get('relative_path', '')  # Capture relative_path uma vez
+
             for f in request.FILES.getlist('image'):
                 file_list.append(f.name)
 
@@ -205,8 +207,10 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                     group=image_group
                 )
 
-                # Gerar o caminho do arquivo
-                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+                # Use o relative_path diretamente na função order_image_path
+                file_path = order_image_path(instance=order_image, filename=f.name, relative_path=relative_path)
+
+                f.name = os.path.basename(file_path)
 
                 order_image.save()
 
@@ -216,7 +220,6 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
 
                 images.append(order_image)
 
-            # Atualizar a lista de arquivos na sessão
             request.session['current_file_list'] = file_list
 
             user_actions = [
@@ -232,7 +235,6 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!', 'files': file_list})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
-
 
 class CreateOrderImageGroupView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
