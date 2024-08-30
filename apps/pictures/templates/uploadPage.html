@@ -71,18 +71,16 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var uploadForm = document.getElementById('uploadForm');
+        var servicesField = document.getElementById('id_services');
+        var scanUrlField = document.getElementById('id_scan_url');
         var progressCard = document.getElementById('progressCard');
         var progressBar = document.getElementById('progressBar');
         var fileNameElement = document.getElementById('fileName');
         var progressPercent = document.getElementById('progressPercent');
+        var uploadForm = document.getElementById('uploadForm');
         var retryLimit = 5;
-        var baseTimeout = 60000; // Timeout 60 seconds
+        var baseTimeout = 60000; // 60-second timeout
 
-        var servicesField = document.querySelector('#id_services');
-        var scanUrlField = document.querySelector('#id_scan_url');
-
-        // Function to update the scan URL field
         function updateScanUrlField() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
@@ -94,15 +92,17 @@
             }
         }
 
-        // Attach the updateScanUrlField function to the change event of the servicesField
         servicesField.addEventListener('change', updateScanUrlField);
-        // Call it once to initialize the state correctly
         updateScanUrlField();
 
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
             var files = document.querySelector('.fileInput').files;
+
+            if (scanUrlField.disabled && scanUrlField.value) {
+                formData.append('scan_url', scanUrlField.value);
+            }
 
             if (files.length === 0) {
                 alert('No files were selected.');
@@ -117,11 +117,14 @@
 
             try {
                 for (let file of files) {
-                    formData.append('relative_path', file.webkitRelativePath);  // Add relative path to FormData
+                    let relativePath = file.webkitRelativePath 
+                        ? file.webkitRelativePath.replace(file.name, '') 
+                        : '';  // Exclua o nome do arquivo do caminho relativo
+                    formData.append('relative_path', relativePath);
                     await uploadFileWithRetries(file, formData, uploadForm.action);
-                    formData.delete('relative_path');  // Remove relative path for the next file
+                    formData.delete('relative_path');  // Limpeza após cada arquivo
                 }
-                window.location.href = "{% url 'userOrders--page' %}"; 
+                window.location.href = "{% url 'userOrders--page' %}";
             } catch (error) {
                 alert(error.message || 'Error during upload.');
             } finally {
@@ -177,7 +180,7 @@
                 };
 
                 xhr.onerror = function () {
-                    reject(new Error('Upload timed out.'));
+                    reject(new Error('Upload failed.'));
                 };
 
                 xhr.ontimeout = function () {
@@ -186,18 +189,19 @@
 
                 var uploadData = new FormData();
                 uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-                uploadData.append('image', file);  // Send the correct file
-                uploadData.append('relative_path', formData.get('relative_path'));  // Include the relative path
+                uploadData.append('image', file);
                 uploadData.append('editor_note', formData.get('editor_note'));
                 uploadData.append('services', formData.get('services'));
                 uploadData.append('scan_url', formData.get('scan_url'));
                 uploadData.append('photos_sent', formData.get('photos_sent'));
                 uploadData.append('photos_returned', formData.get('photos_returned'));
+                uploadData.append('relative_path', formData.get('relative_path')); // Inclua o relative path
 
                 xhr.send(uploadData);
             });
         }
     });
 </script>
+
 
 {% endblock %}

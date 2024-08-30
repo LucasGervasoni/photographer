@@ -9,19 +9,32 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 # # Create your models here.
 
-from .utils import get_order_image_path, rename_file
 
 def order_image_path(instance, filename):
-    # Use the get_order_image_path function to generate the complete file path
-    renamed_filename = get_order_image_path(
-        order=instance.order,
-        image_group=instance.group,
-        relative_path=filename,
-        renamed_filename=rename_file(instance.group, filename)
-    )
+    # Utilize o relative_path já definido na instância, que inclui o caminho base
+    if hasattr(instance, 'relative_path'):
+        full_path = instance.relative_path
+    else:
+        order_address = instance.order.address.replace(' ', '_')
+        group_count = OrderImageGroup.objects.filter(order=instance.order).count()
+        full_path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}')
 
-    return renamed_filename
+    # Extraia a extensão do arquivo
+    extension = filename.split('.')[-1]
+    # Gere um nome de arquivo base
+    base_filename = f'Spotlight{instance.group.images.count() + 1:02d}.{extension}'
+    
+    # Defina o caminho final com o nome do arquivo
+    final_path = os.path.join(full_path, base_filename)
+    
+    # Verifique se o arquivo já existe e anexe um sufixo, se necessário
+    counter = 1
+    while os.path.exists(final_path):
+        base_filename = f'Spotlight{instance.group.images.count() + 1:02d}_{counter}.{extension}'
+        final_path = os.path.join(full_path, base_filename)
+        counter += 1
 
+    return final_path
 
 
 # Model base for image

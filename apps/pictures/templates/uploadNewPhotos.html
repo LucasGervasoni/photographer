@@ -9,35 +9,35 @@
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
 <form id="uploadForm" method="POST" enctype="multipart/form-data">
-  {% csrf_token %}
-  <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
-    <div class="box__input mb-4 align-self-center">
-      <input class="fileInput" type="file" accept="*" webkitdirectory directory name="image" multiple data-path>
-    </div>
+    {% csrf_token %}
+    <div class="d-flex flex-column w-80 mr-auto ml-auto align-items-center">
+        <div class="box__input mb-4 align-self-center">
+            <input class="fileInput" type="file" accept="*" webkitdirectory directory name="image" multiple data-path>
+        </div>
 
-    <!-- Editor Note -->
-    <div class="form-group w-50">
-      <label for="id_editor_note">Editor Note:</label>
-      <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
-    </div>
+        <!-- Editor Note -->
+        <div class="form-group w-50">
+            <label for="id_editor_note">Editor Note:</label>
+            <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
+        </div>
 
-    <!-- Selected Service -->
-    <div class="form-group w-50">
-        <label for="id_services">Services:</label>
-        {{ group_form.services }}
-    </div>
+        <!-- Selected Service -->
+        <div class="form-group w-50">
+            <label for="id_services">Services:</label>
+            {{ group_form.services }}
+        </div>
 
-    <!-- 3D Scan URL -->
-    <div class="form-group w-50">
-      <label for="id_scan_url">3D Scan URL (if applicable):</label>
-      <input class="form-control" type="url" name="scan_url" placeholder="Enter URL for 3d scan" maxlength="200" id="id_scan_url" disabled="">
-    </div>
+        <!-- 3D Scan URL -->
+        <div class="form-group w-50">
+            <label for="id_scan_url">3D Scan URL (if applicable):</label>
+            <input class="form-control" type="url" name="scan_url" placeholder="Enter URL for 3d scan" maxlength="200" id="id_scan_url" disabled="">
+        </div>
 
-    <div class="d-flex justify-content-between w-50">
-      <a class="btn btn-info" href="{% url 'userOrders--page' %}">Back to Orders</a>
-      <button class="btn btn-success" type="submit">Upload</button>
+        <div class="d-flex justify-content-between w-50">
+            <a class="btn btn-info" href="{% url 'userOrders--page' %}">Back to Orders</a>
+            <button class="btn btn-success" type="submit">Upload</button>
+        </div>
     </div>
-  </div>
 </form>
 
 <div id="progressCard" class="progress-card" style="display:none;">
@@ -57,17 +57,19 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
+    var uploadForm = document.getElementById('uploadForm');
     var servicesField = document.getElementById('id_services');
     var scanUrlField = document.getElementById('id_scan_url');
     var progressCard = document.getElementById('progressCard');
     var progressBar = document.getElementById('progressBar');
     var fileNameElement = document.getElementById('fileName');
     var progressPercent = document.getElementById('progressPercent');
-    var uploadForm = document.getElementById('uploadForm');
     var retryLimit = 5;
     var baseTimeout = 60000; // Timeout 60 seconds
-    
+    var groupId;
+
+    // Enable or disable the scan URL field based on selected services
     function updateScanUrlField() {
         var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
             .map(checkbox => checkbox.value);
@@ -75,12 +77,12 @@
             scanUrlField.disabled = false;
         } else {
             scanUrlField.disabled = true;
-            scanUrlField.value = '';
+            scanUrlField.value = ''; // Clear the field if it's disabled
         }
     }
 
     servicesField.addEventListener('change', updateScanUrlField);
-    updateScanUrlField();
+    updateScanUrlField(); // Initial call to set the correct state
 
     uploadForm.onsubmit = async function (event) {
         event.preventDefault();
@@ -92,6 +94,16 @@
             return;
         }
 
+        // Fazer uma chamada AJAX para criar um novo grupo de imagens
+        try {
+            groupId = await createOrderImageGroup();
+        } catch (error) {
+            alert('Error creating image group.');
+            return;
+        }
+
+        formData.append('group_id', groupId); // Adicionar o novo group_id ao formData
+
         progressCard.style.display = 'block';
 
         uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
@@ -100,11 +112,15 @@
 
         try {
             for (let file of files) {
-                formData.append('relative_path', file.webkitRelativePath);  // Add relative path to FormData
+                // Remove the filename from the relative path to avoid creating subfolders named after files
+                let relativePath = file.webkitRelativePath 
+                    ? file.webkitRelativePath.replace(file.name, '') 
+                    : '';  // Exclude the filename from the relative path
+                formData.append('relative_path', relativePath);
                 await uploadFileWithRetries(file, formData, uploadForm.action);
-                formData.delete('relative_path');  // Remove relative path for the next file
+                formData.delete('relative_path');  // Clean up after each file
             }
-            window.location.href = "{% url 'userOrders--page' %}"; 
+            window.location.href = "{% url 'userOrders--page' %}";
         } catch (error) {
             alert(error.message || 'Error during upload.');
         } finally {
@@ -115,6 +131,33 @@
             });
         }
     };
+
+    async function createOrderImageGroup() {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '{% url "create_order_image_group" order.pk %}', true);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.status === 'success') {
+                        resolve(response.group_id);
+                    } else {
+                        reject(new Error('Error creating image group.'));
+                    }
+                } else {
+                    reject(new Error('Error creating image group.'));
+                }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Error creating image group.'));
+            };
+
+            xhr.send();
+        });
+    }
 
     async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
         try {
@@ -160,7 +203,7 @@
             };
 
             xhr.onerror = function () {
-                reject(new Error('Upload timed out.'));
+                reject(new Error('Upload failed.'));
             };
 
             xhr.ontimeout = function () {
@@ -174,6 +217,7 @@
             uploadData.append('editor_note', formData.get('editor_note'));
             uploadData.append('services', formData.get('services'));
             uploadData.append('scan_url', formData.get('scan_url'));
+            uploadData.append('group_id', formData.get('group_id')); // Adicionar o group_id ao uploadData
 
             xhr.send(uploadData);
         });
@@ -181,6 +225,6 @@
 });
 
 </script>
-    
+
 <br>
 {% endblock %}

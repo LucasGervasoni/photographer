@@ -26,7 +26,6 @@ from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
 import logging
 
-from apps.pictures.utils import get_order_image_path, rename_file
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         zip_filename = f'order_{address_safe}.zip'
 
         response = StreamingHttpResponse(
-            self.stream_zip_file(order, images),
+            self.stream_zip_file(images),
             content_type='application/zip'
         )
         response['Content-Disposition'] = f'attachment; filename={zip_filename}'
@@ -60,7 +59,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
         return response
 
-    def stream_zip_file(self, order, images):
+    def stream_zip_file(self, images):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
@@ -69,28 +68,13 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
                 if not default_storage.exists(file_path):
                     continue
 
-                # Get the relative path within the order's directory structure
-                relative_path = self.get_relative_path(order, file_path)
-                unique_name = self.get_unique_filename(zip_file, relative_path)
-
                 with default_storage.open(file_path, 'rb') as file_obj:
+                    unique_name = self.get_unique_filename(zip_file, os.path.basename(file_path))
                     zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
         while chunk := buffer.read(8192):
             yield chunk
-
-    def get_relative_path(self, order, file_path):
-        # Replace spaces and special characters in the order address
-        order_address = order.address.replace(' ', '_').replace(',', '').replace('.', '')
-
-        # Base directory structure
-        base_dir = f'{order_address}/{order_address}01'
-
-        # Remove redundant segments from the file path
-        relative_path = file_path.replace(f'media/{base_dir}/', '')
-
-        return relative_path
 
     def get_unique_filename(self, zip_file, filename):
         counter = 1
@@ -100,7 +84,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-
+  
     
 # Upload 
 
@@ -125,12 +109,11 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             if not image_group:
                 image_group = group_form.save(commit=False)
                 image_group.order = order
-                image_group.created_by_view = 'OrderImageUploadView'
+                image_group.created_by_view = 'OrderImageUploadView'  # Mark the view that created this group
                 image_group.save()
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
-                relative_path = request.POST.get('relative_path')
                 
                 order_image = OrderImage(
                     order=order,
@@ -139,16 +122,16 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_sent=form.cleaned_data.get('photos_sent'),
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
-
-                # Generate the file path using the get_order_image_path function
-                renamed_filename = rename_file(image_group, f.name)
-                order_image.image.name = get_order_image_path(order, image_group, relative_path, renamed_filename)
+                
+                # Generate file path
+                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
                 
                 order_image.save()
 
                 # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
                 
+                # Save the order image with the converted image
                 if converted_image_url:
                     order_image.save()
                 
@@ -174,7 +157,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
     
     
-    
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
@@ -183,7 +165,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         form = PhotographerImageForm()
         group_form = OrderImageGroupForm()
         return render(request, 'uploadNewPhotos.html', {'form': form, 'group_form': group_form, 'order': order})
-    
+
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
@@ -191,44 +173,51 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
 
         if form.is_valid() and group_form.is_valid():
-            image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
+            # Obtenha o último grupo de imagens associado a esta ordem
+            last_image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
 
-            if image_group:
-                # Create a new group if one already exists
+            if last_image_group and request.session.get('current_file_list', []):
+                # Se existir um grupo e há arquivos em progresso, continue usando o mesmo grupo
+                image_group = last_image_group
+            else:
+                # Caso contrário, crie um novo grupo e incremente o nome do grupo
                 group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count()
                 group_form.instance.group_name = f"PhotographerGroup{group_count + 1}"
-                image_group = group_form.save(commit=False)
-                image_group.order = order
-                image_group.created_by_view = 'PhotographerImageUploadView'  # Mark the view that created this group
-                image_group.save()
-            else:
                 image_group = group_form.save(commit=False)
                 image_group.order = order
                 image_group.created_by_view = 'PhotographerImageUploadView'
                 image_group.save()
 
+                # Reinicie a lista de arquivos na sessão
+                request.session['current_file_list'] = []
+
+            print(f"Arquivos estão sendo atribuídos ao OrderImageGroup: {image_group.id}")
+            
+            # Adicionar arquivos à lista de arquivos na sessão
+            file_list = request.session['current_file_list']
             images = []
-            for index, f in enumerate(request.FILES.getlist('image')):
-                relative_path = request.POST.get('relative_path')
+            for f in request.FILES.getlist('image'):
+                file_list.append(f.name)
 
                 order_image = OrderImage(
                     order=order,
                     image=f,
                     group=image_group
                 )
-                
-                # Generate file path
-                renamed_filename = rename_file(image_group, f.name)
-                order_image.image.name = get_order_image_path(order, image_group, relative_path, renamed_filename)
-                
+
+                # Gerar o caminho do arquivo
+                f.name = os.path.basename(order_image_path(instance=order_image, filename=f.name))
+
                 order_image.save()
 
-                # Convert the image if necessary
                 converted_image_url = order_image.convert_to_jpeg()
                 if converted_image_url:
                     order_image.save()
 
                 images.append(order_image)
+
+            # Atualizar a lista de arquivos na sessão
+            request.session['current_file_list'] = file_list
 
             user_actions = [
                 UserAction(
@@ -240,10 +229,31 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
 
-            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!'})
+            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!', 'files': file_list})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+
+
+class CreateOrderImageGroupView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('login')
+
+    @method_decorator(csrf_exempt)
+    def post(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
         
+        # Contar os grupos existentes para o pedido (se necessário para lógica de nomeação ou similar)
+        group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count()
+        
+        # Criar um novo grupo de imagens sem o campo `group_name`
+        image_group = OrderImageGroup.objects.create(
+            order=order,
+            created_by_view='PhotographerImageUploadView'
+        )
+
+        return JsonResponse({'status': 'success', 'group_id': image_group.id})
+
+
+
 # View to display all images related to an order
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
