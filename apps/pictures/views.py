@@ -275,8 +275,13 @@ class OrderImageListView(LoginRequiredMixin, View):
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.all().order_by('uploaded_at') 
-        paginator = Paginator(images, 21) 
         
+        # Convertendo imagens ou vídeos para thumbnails
+        for image in images:
+            if not image.converted_image:  # Verifica se o thumbnail já existe
+                image.convert_media()
+
+        paginator = Paginator(images, 21) 
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         
@@ -291,7 +296,6 @@ class OrderImageListView(LoginRequiredMixin, View):
             'image_count': image_count,
             'scan_url': scan_url  
         })
-
 
 #List Group of Files uploaded
 class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):

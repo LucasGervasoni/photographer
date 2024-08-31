@@ -8,6 +8,9 @@ from PIL import Image
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.utils.text import slugify
+from moviepy.editor import VideoFileClip
+import imageio
+import tempfile
 # # Create your models here.
 
 
@@ -94,7 +97,9 @@ class OrderImage(models.Model):
 
     def convert_to_jpeg(self):
         file_extension = self.image.name.split('.')[-1].lower()
+        
         if file_extension in ['raw', 'dng', 'arw']:
+            # Processar arquivos RAW usando rawpy
             with rawpy.imread(self.image) as raw:
                 rgb = raw.postprocess()
 
@@ -102,18 +107,74 @@ class OrderImage(models.Model):
             image_io = ContentFile(b'')
             image.save(image_io, format='JPEG')
 
-            image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
+        elif file_extension in ['hevc', 'heic']:
+            # Processar arquivos HEVC/HEIC usando imageio
+            with self.image.open('rb') as file:
+                image = imageio.imread(file, format='heic')
 
-            # Definir o caminho de salvamento em media/converted_images/
-            converted_image_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
-            
-            # Salvar a imagem convertida usando o default_storage (padrão do Django)
-            self.converted_image.name = default_storage.save(converted_image_path, image_io)
-            self.save()  # Salvar a instância do modelo com a imagem convertida
+            image = Image.fromarray(image)
+            image_io = ContentFile(b'')
+            image.save(image_io, format='JPEG')
 
-            # Retornar a URL diretamente
-            return default_storage.url(self.converted_image.name)
+        else:
+            # Se não for um formato suportado, retornar None
+            return None
+
+        image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
+        converted_image_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
+        
+        # Salvar a imagem convertida usando o default_storage (padrão do Django)
+        self.converted_image.name = default_storage.save(converted_image_path, image_io)
+        self.save()  # Salvar a instância do modelo com a imagem convertida
+
+        # Retornar a URL diretamente
+        return default_storage.url(self.converted_image.name)
+    
+    def convert_video_to_thumbnail(self):
+        video_extensions = ['mp4', 'mov', 'avi', 'mkv']
+        file_extension = self.image.name.split('.')[-1].lower()
+
+        if file_extension in video_extensions:
+            # Abrir o arquivo diretamente da storage backend
+            with self.image.open('rb') as video_file:
+                # Criar um arquivo temporário para armazenar o vídeo
+                with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_extension}') as temp_video:
+                    temp_video.write(video_file.read())
+                    temp_video_path = temp_video.name
+
+            # Agora use o caminho do arquivo temporário com VideoFileClip
+            try:
+                video = VideoFileClip(temp_video_path)
+
+                # Extrair o primeiro frame
+                thumbnail_frame = video.get_frame(0)
+                image = Image.fromarray(thumbnail_frame)
+
+                image_io = ContentFile(b'')
+                image.save(image_io, format='JPEG')
+
+                image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
+                thumbnail_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
+
+                self.converted_image.name = default_storage.save(thumbnail_path, image_io)
+                self.save()
+            finally:
+                # Certifique-se de fechar o VideoFileClip e remover o arquivo temporário
+                video.close()
+                os.remove(temp_video_path)
+
+            return self.converted_image.url
         return None
+    
+    def convert_media(self):
+        """
+        This method will try to convert the file either using convert_to_jpeg or convert_video_to_thumbnail
+        depending on the file type.
+        """
+        # Try to convert raw image files first
+        if not self.convert_to_jpeg():
+            # If not a raw image, try to convert video files
+            self.convert_video_to_thumbnail()
 
         
 # Create User actions that will take automatic the user that did Upload or Download

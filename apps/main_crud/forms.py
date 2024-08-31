@@ -15,8 +15,14 @@ class OrderForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super(OrderForm, self).__init__(*args, **kwargs)
-        photographers_group = Group.objects.get(name='Photographer')
-        self.fields['appointment_team_members'].queryset = CustomUser.objects.filter(groups=photographers_group)
+        
+        try:
+            photographers_group = Group.objects.get(name='Photographer')
+            self.fields['appointment_team_members'].queryset = CustomUser.objects.filter(groups=photographers_group)
+        except Group.DoesNotExist:
+            # Definir um queryset vazio ou um valor padrão se o grupo não existir
+            self.fields['appointment_team_members'].queryset = CustomUser.objects.none()
+        
         self.fields['appointment_team_members'].label_from_instance = lambda obj: f"{obj.get_full_name()}"
     
     appointment_items = forms.MultipleChoiceField(
