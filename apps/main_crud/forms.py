@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import Group
 from apps.main_crud.models import Order
 from apps.pictures.models import OrderImageGroup
 from apps.users.models import CustomUser
@@ -14,6 +15,8 @@ class OrderForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super(OrderForm, self).__init__(*args, **kwargs)
+        photographers_group = Group.objects.get(name='Photographer')
+        self.fields['appointment_team_members'].queryset = CustomUser.objects.filter(groups=photographers_group)
         self.fields['appointment_team_members'].label_from_instance = lambda obj: f"{obj.get_full_name()}"
     
     appointment_items = forms.MultipleChoiceField(

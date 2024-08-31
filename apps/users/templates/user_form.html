@@ -5,7 +5,7 @@
 <div class="d-flex flex-wrap justify-content-center">
   <h2>{{ title }}</h2>
 </div>
-<div class="w-50 mr-auto ml-auto mt-4">
+<div class="w-50 mr-auto ml-auto mt-4" style="max-width: 900px;">
   <form method="post">
     {% csrf_token %}
     {{ form|crispy }}

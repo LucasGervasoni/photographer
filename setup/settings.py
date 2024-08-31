@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.pictures.middlewares.LargeFileUploadMiddleware',
+    'apps.pictures.middlewares.AutoLogoutMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'
@@ -223,3 +224,11 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend', 
     'apps.users.authentication.EmailOrUsernameModelBackend',  
 ]
+
+AUTO_LOGOUT_DELAY = 1800
+
+SESSION_COOKIE_AGE = 1800  # 30 min
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+SESSION_SAVE_EVERY_REQUEST = True

@@ -22,12 +22,9 @@ def order_image_path(instance, filename, relative_path=None):
     existing_groups = OrderImageGroup.objects.filter(order=instance.order)
     group_count = existing_groups.count() if existing_groups.exists() else 1
 
-    # Decremento se o group_count for maior que o esperado
     if group_count > 2:
-        print(f"Debug (order_image_path): Decrementing group_count from {group_count} to {group_count - 1}")
         group_count -= 1
 
-    print(f"Debug (order_image_path): group_count for order {instance.order.id} is {group_count}")
 
     base_path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}')
 
@@ -39,7 +36,6 @@ def order_image_path(instance, filename, relative_path=None):
 
     final_path = os.path.join(base_path, base_filename)
 
-    print(f"Debug (order_image_path): final_path being generated is {final_path}")
 
     counter = 1
     while os.path.exists(final_path):

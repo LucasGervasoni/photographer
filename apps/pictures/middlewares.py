@@ -2,6 +2,9 @@ import logging
 from django.http import HttpResponseBadRequest
 from django.utils.deprecation import MiddlewareMixin
 from django.core.exceptions import SuspiciousOperation
+from django.conf import settings
+from django.contrib.auth import logout
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -34,3 +37,26 @@ class LargeFileUploadMiddleware(MiddlewareMixin):
         if request.method == 'POST' and 'multipart/form-data' in request.content_type:
             response['X-Upload-Large-File'] = 'True'
         return response
+    
+    
+class AutoLogoutMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        if not request.user.is_authenticated:
+            return
+        
+        # Define o tempo limite de inatividade
+        timeout = getattr(settings, 'AUTO_LOGOUT_DELAY', 1800)  # 30 minutos
+        
+        # Obtém o timestamp da última atividade como string
+        last_activity_str = request.session.get('last_activity')
+        
+        if last_activity_str:
+            # Converte a string de volta para datetime
+            last_activity = datetime.datetime.strptime(last_activity_str, '%Y-%m-%d %H:%M:%S.%f')
+            elapsed_time = (datetime.datetime.now() - last_activity).total_seconds()
+            if elapsed_time > timeout:
+                logout(request)
+                return
+        
+        # Atualiza o timestamp da última atividade como string
+        request.session['last_activity'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')

@@ -388,7 +388,7 @@ class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
         if user_filter:
             queryset = queryset.filter(user__id=user_filter)
 
-        queryset = queryset.order_by('action_date')
+        queryset = queryset.order_by('-action_date')
 
         return queryset
 

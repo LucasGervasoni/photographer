@@ -40,8 +40,12 @@
       <tr>
         <td>{{ file.order }}</td>
         <td>
+          {% if file.scan_url and file.scan_url != 'null' %}
           <a href="{{ file.scan_url }}" target="_blank">{{ file.scan_url }}</a>
-      </td>
+          {% else %}
+          <p>No Scan URL available</p>
+          {% endif %}
+        </td>
         <td>{{ file.services }}</td>
         <td>{{ file.created_at }}</td>
         <td>
