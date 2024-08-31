@@ -170,6 +170,13 @@ class UserPageOrders(LoginRequiredMixin, ListView):
         if start_date and end_date:
             queryset = queryset.filter(order_created_at__date__range=[parse_date(start_date), parse_date(end_date)])
 
+        # Annotate each Order with the latest 3D scan URL from OrderImageGroup
+        latest_scan_url = OrderImageGroup.objects.filter(
+            order=OuterRef('pk'),
+        ).order_by('-created_at').values('scan_url')[:1]
+
+        queryset = queryset.annotate(latest_scan_url=Subquery(latest_scan_url))
+
         # Prefetch related OrderEditorAssignment for editor assignment handling
         queryset = queryset.prefetch_related('ordereditorassignment')
 
@@ -181,7 +188,6 @@ class UserPageOrders(LoginRequiredMixin, ListView):
         editor_group = Group.objects.get(name='Editor')
         context['editors'] = editor_group.user_set.all()
         return context
-
 
 # Update orders by select button in html
 class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):
