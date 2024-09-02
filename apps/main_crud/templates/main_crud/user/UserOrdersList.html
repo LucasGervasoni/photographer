@@ -109,7 +109,7 @@
         {% endif %}
       </td>
       <td>
-        {% if request.user.is_superuser and order.order_status == "Production" %}
+        {% if request.user.is_superuser and order.order_status == "Production" or order.order_status == "Completed" %}
         <form method="post" action="{% url 'assign_order_editor' order.id %}">
           {% csrf_token %}
           <div class="form-group d-flex">

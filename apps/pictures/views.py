@@ -180,19 +180,42 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        form = PhotographerImageForm(request.POST, request.FILES)
         group_form = OrderImageGroupForm(request.POST)
+        services = request.POST.getlist('services')
+
+        # Passando os serviços selecionados para o formulário
+        form = PhotographerImageForm(request.POST, request.FILES, services=services)
 
         if form.is_valid() and group_form.is_valid():
+            selected_services = group_form.cleaned_data.get('services', [])
+            scan_url = group_form.cleaned_data.get('scan_url')
+
+            # Verifica se apenas o serviço de 3D scan foi selecionado
+            if '3d scan' in selected_services and len(selected_services) == 1:
+                image_group = group_form.save(commit=False)
+                image_group.order = order
+                image_group.created_by_view = 'PhotographerImageUploadView'
+                image_group.scan_url = scan_url  # Assegura que a URL do 3D scan seja salva
+
+                image_group.save()
+
+                # Registrar a ação de upload do 3D scan
+                UserAction.objects.create(
+                    user=request.user,
+                    action_type='upload',
+                    order=order,
+                    order_image=None  # Sem imagens, apenas 3D scan
+                )
+
+                return JsonResponse({'status': 'success', 'message': '3D scan URL uploaded successfully!'})
+
+            # Se não for apenas 3D scan, continue com a lógica para uploads de arquivos
             last_image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
 
             if last_image_group and request.session.get('current_file_list', []):
                 image_group = last_image_group
             else:
-                # Calculando o group_count
                 group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count() + 1
-                
-                # Decrementando 1 se group_count for maior que o esperado
                 if group_count > 2:
                     group_count -= 1
 
@@ -200,13 +223,15 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 image_group = group_form.save(commit=False)
                 image_group.order = order
                 image_group.created_by_view = 'PhotographerImageUploadView'
+                image_group.scan_url = scan_url  # Assegura que a URL do 3D scan seja salva
+
                 image_group.save()
 
                 request.session['current_file_list'] = []
 
             file_list = request.session['current_file_list']
             images = []
-            relative_path = request.POST.get('relative_path', '')  # Capture relative_path uma vez
+            relative_path = request.POST.get('relative_path', '')
 
             for f in request.FILES.getlist('image'):
                 file_list.append(f.name)
@@ -217,9 +242,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                     group=image_group
                 )
 
-                # Use o relative_path diretamente na função order_image_path
                 file_path = order_image_path(instance=order_image, filename=f.name, relative_path=relative_path)
-
                 f.name = os.path.basename(file_path)
 
                 order_image.save()
@@ -255,10 +278,14 @@ class CreateOrderImageGroupView(LoginRequiredMixin, View):
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         
-        # Contar os grupos existentes para o pedido (se necessário para lógica de nomeação ou similar)
-        group_count = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').count()
-        
-        # Criar um novo grupo de imagens sem o campo `group_name`
+        # Verificar se já existe um grupo de imagens recente não utilizado
+        last_image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
+
+        if last_image_group and not OrderImage.objects.filter(group=last_image_group).exists():
+            # Se o último grupo de imagens não tem imagens associadas, reutilize-o
+            return JsonResponse({'status': 'success', 'group_id': last_image_group.id})
+
+        # Caso contrário, crie um novo grupo de imagens
         image_group = OrderImageGroup.objects.create(
             order=order,
             created_by_view='PhotographerImageUploadView'

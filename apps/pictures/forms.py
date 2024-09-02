@@ -18,6 +18,12 @@ class PhotographerImageForm(forms.ModelForm):
     class Meta:
         model = OrderImage
         fields = ['image']
+    
+    def __init__(self, *args, **kwargs):
+        services = kwargs.pop('services', None)
+        super(PhotographerImageForm, self).__init__(*args, **kwargs)
+        if services and '3d scan' in services and len(services) == 1:
+            self.fields['image'].required = False
 
 # Optional: A new form to handle editor notes for OrderImageGroup
 class OrderImageGroupForm(forms.ModelForm):
@@ -29,3 +35,15 @@ class OrderImageGroupForm(forms.ModelForm):
             'scan_url': forms.URLInput(attrs={'placeholder': 'Enter URL for 3d scan'}),
             'services': forms.CheckboxSelectMultiple,
         }
+        
+    def clean(self):
+        cleaned_data = super().clean()
+        services = cleaned_data.get('services', [])
+        scan_url = cleaned_data.get('scan_url')
+
+        # Se apenas "3d scan" estiver selecionado, verifique se `scan_url` foi preenchido
+        if '3d scan' in services and len(services) == 1:
+            if not scan_url:
+                self.add_error('scan_url', 'URL do 3D scan é obrigatório quando apenas o serviço "3D scan" é selecionado.')
+
+        return cleaned_data
