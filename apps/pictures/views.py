@@ -202,7 +202,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 # Registrar a ação de upload do 3D scan
                 UserAction.objects.create(
                     user=request.user,
-                    action_type='upload',
+                    action_type='3d Scan',
                     order=order,
                     order_image=None  # Sem imagens, apenas 3D scan
                 )
