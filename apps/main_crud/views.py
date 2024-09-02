@@ -82,7 +82,7 @@ class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
             latest_scan_url = OrderImageGroup.objects.filter(
                 order=OuterRef('pk'),
                 scan_url__isnull=False,
-            ).exclude(scan_url='').order_by('-created_at').values('scan_url')[:1]
+            ).exclude(Q(scan_url='') | Q(scan_url='null')).order_by('-created_at').values('scan_url')[:1]
 
             queryset = queryset.annotate(latest_scan_url=Subquery(latest_scan_url))
 
@@ -181,7 +181,7 @@ class UserPageOrders(LoginRequiredMixin, ListView):
         latest_scan_url = OrderImageGroup.objects.filter(
             order=OuterRef('pk'),
             scan_url__isnull=False,
-        ).exclude(scan_url='').order_by('-created_at').values('scan_url')[:1]
+        ).exclude(Q(scan_url='') | Q(scan_url='null')).order_by('-created_at').values('scan_url')[:1]
 
         queryset = queryset.annotate(latest_scan_url=Subquery(latest_scan_url))
 
