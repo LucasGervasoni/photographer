@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic.list import ListView
@@ -209,8 +209,11 @@ class UpdateOrderStatusView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         form.save()
-        return redirect('userOrders--page')
-    
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        return HttpResponse(status=204)  # Return a simple empty response for non-Ajax requests
+
+
 class AssignOrderEditorView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
     
@@ -226,11 +229,10 @@ class AssignOrderEditorView(LoginRequiredMixin, View):
                 order_editor_assignment.assigned_editor = None  # Clear the assigned editor
             order_editor_assignment.save()
 
-            # Set session variable to keep listInfo open
-            request.session['open_list_info'] = order_id
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True})
+        return HttpResponse(status=204)  # Return a simple empty response for non-Ajax requests
+    
+    
+    
         
-        # Clear the session variable after it's been used
-        if 'open_list_info' in request.session:
-            del request.session['open_list_info']
-
-        return redirect('userOrders--page')

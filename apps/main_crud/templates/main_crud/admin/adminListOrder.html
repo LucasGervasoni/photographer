@@ -103,21 +103,20 @@
       </td>
       <td>
         {% if request.user.is_superuser %}
-        <form class="d-flex" method="post" action="{% url 'update_order_status' order.id %}">
+        <form class="d-flex" data-order-id="{{ order.id }}" method="post" action="{% url 'update_order_status' order.id %}">
           {% csrf_token %}
           <label class="mt-2 mr-2" style="font-weight: bold;" for="order_status">Status:</label>
-          <select name="order_status" class="form-control" onchange="this.form.submit()">
+          <select name="order_status" class="form-control" onchange="submitOrderStatusForm(this)">
             <option value="Not Uploaded" {% if order.order_status == "Not Uploaded" %}selected{% endif %}>Not Uploaded</option>
             <option value="Production" {% if order.order_status == "Production" %}selected{% endif %}>Production</option>
             <option value="Completed" {% if order.order_status == "Completed" %}selected{% endif %}>Completed</option>
           </select>
         </form>
         {% else %}
-        <p><strong>Status:</strong> {{ order.order_status }}</p>
+        <p id="order-status-text-{{ order.id }}"><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
       </td>
-      <td>
-        {% if request.user.is_superuser and order.order_status == "Production" %}
+      <td id="assign-editor-wrapper-{{ order.id }}" class="{% if order.order_status != 'Production' and order.order_status != 'Completed' %}d-none{% endif %}">
         <form method="post" action="{% url 'assign_order_editor' order.id %}">
           {% csrf_token %}
           <div class="form-group d-flex">
@@ -132,7 +131,6 @@
           </div>
           <button type="submit" class="btn btn-success">Assign Editor</button>
         </form>
-        {% endif %}
       </td>
       <td class="d-flex" colspan="2">
         {% if request.user.is_superuser or request.user|has_group:"Editor"%}
@@ -310,7 +308,73 @@
   }
   
   
-  
+function submitOrderStatusForm(selectElement) {
+    const form = selectElement.closest('form');
+    const orderId = form.getAttribute('data-order-id');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Optionally, you can show a success message or perform other actions here
+        console.log('Order status updated successfully.');
+
+        // Show or hide the assign editor form based on the new status
+        const assignEditorWrapper = document.getElementById(`assign-editor-wrapper-${orderId}`);
+        const selectedStatus = selectElement.value;
+
+        if (selectedStatus === 'Production' || selectedStatus === 'Completed') {
+            assignEditorWrapper.classList.remove('d-none');
+        } else {
+            assignEditorWrapper.classList.add('d-none');
+        }
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+    });
+}
+
+function submitAssignEditorForm(selectElement) {
+    const form = selectElement.closest('form');
+    const orderId = form.getAttribute('data-order-id');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Handle success (if needed)
+        console.log('Editor assigned successfully.');
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+    });
+}
+
+
     
     
   </script>
