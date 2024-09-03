@@ -221,8 +221,8 @@
         const orderId = this.getAttribute('data-order-id');
         const downloadUrl = `/orders/${orderId}/download/`;
         
-        // Defina o nome do arquivo que deseja usar
-        const addressSafe = this.getAttribute('data-order-address'); // Supondo que o endereço esteja no atributo data
+        // Set the file name you want to use
+        const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the data attribute
         const zipFilename = `order_${addressSafe}.zip`;
   
         // Show the progress pop-up
@@ -243,7 +243,7 @@
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = zipFilename;  // Define o nome do arquivo aqui
+            a.download = zipFilename;  // Set the file name here
   
             // Append link to the body
             document.body.appendChild(a);

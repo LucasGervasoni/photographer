@@ -20,7 +20,7 @@ class OrderForm(forms.ModelForm):
             photographers_group = Group.objects.get(name='Photographer')
             self.fields['appointment_team_members'].queryset = CustomUser.objects.filter(groups=photographers_group)
         except Group.DoesNotExist:
-            # Definir um queryset vazio ou um valor padrão se o grupo não existir
+            # Set an empty queryset or a default value if the group does not exist
             self.fields['appointment_team_members'].queryset = CustomUser.objects.none()
         
         self.fields['appointment_team_members'].label_from_instance = lambda obj: f"{obj.get_full_name()}"

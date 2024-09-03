@@ -26,7 +26,7 @@ class Order(models.Model):
   def __str__(self):
     return "Photographer: {}, Order: {}".format(self.appointment_team_members, self.address)
   
-  # Sobrescreve o método save para garantir que order_created_at não seja nulo
+  # Override the save method to ensure order_created_at is not null
   def save(self, *args, **kwargs):
         if not self.order_created_at:
             self.order_created_at = timezone.now()

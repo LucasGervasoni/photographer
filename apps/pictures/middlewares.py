@@ -19,12 +19,12 @@ class LargeFileUploadMiddleware(MiddlewareMixin):
             content_length = int(request.META.get('CONTENT_LENGTH', 0))
             logger.debug(f"Upload iniciado com tamanho: {content_length} bytes")
 
-            # Verifica se o tamanho do arquivo está acima do limite definido
+            # Checks if the file size is above the defined limit
             if content_length > self.MAX_UPLOAD_SIZE:
                 logger.warning(f"Upload de arquivo excede o limite permitido: {content_length} bytes")
                 raise SuspiciousOperation("O arquivo enviado é muito grande.")
 
-            # O timeout não é mais ajustado aqui, confiamos nas configurações do servidor web
+            # The timeout is no longer adjusted here, we trust the web server settings
 
     def process_exception(self, request, exception):
         if isinstance(exception, SuspiciousOperation):
@@ -33,7 +33,7 @@ class LargeFileUploadMiddleware(MiddlewareMixin):
         return None
 
     def process_response(self, request, response):
-        # Ajusta os cabeçalhos para uploads grandes, se necessário
+        # Adjust headers for large uploads if necessary
         if request.method == 'POST' and 'multipart/form-data' in request.content_type:
             response['X-Upload-Large-File'] = 'True'
         return response
@@ -44,19 +44,19 @@ class AutoLogoutMiddleware(MiddlewareMixin):
         if not request.user.is_authenticated:
             return
         
-        # Define o tempo limite de inatividade
+        # Set the inactivity timeout
         timeout = getattr(settings, 'AUTO_LOGOUT_DELAY', 1800)  # 30 minutos
         
-        # Obtém o timestamp da última atividade como string
+        # Get the timestamp of the last activity as a string
         last_activity_str = request.session.get('last_activity')
         
         if last_activity_str:
-            # Converte a string de volta para datetime
+            # Convert string back to datetime
             last_activity = datetime.datetime.strptime(last_activity_str, '%Y-%m-%d %H:%M:%S.%f')
             elapsed_time = (datetime.datetime.now() - last_activity).total_seconds()
             if elapsed_time > timeout:
                 logout(request)
                 return
         
-        # Atualiza o timestamp da última atividade como string
+        # Update the timestamp of the last activity as a string
         request.session['last_activity'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')

@@ -99,7 +99,7 @@ class OrderImage(models.Model):
         file_extension = self.image.name.split('.')[-1].lower()
         
         if file_extension in ['raw', 'dng', 'arw']:
-            # Processar arquivos RAW usando rawpy
+            # Process RAW files using rawpy
             with rawpy.imread(self.image) as raw:
                 rgb = raw.postprocess()
 
@@ -108,7 +108,7 @@ class OrderImage(models.Model):
             image.save(image_io, format='JPEG')
 
         elif file_extension in ['hevc', 'heic']:
-            # Processar arquivos HEVC/HEIC usando imageio
+            # Process HEVC/HEIC files using imageio
             with self.image.open('rb') as file:
                 image = imageio.imread(file, format='heic')
 
@@ -117,17 +117,17 @@ class OrderImage(models.Model):
             image.save(image_io, format='JPEG')
 
         else:
-            # Se não for um formato suportado, retornar None
+            # If not a supported format, return None
             return None
 
         image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
         converted_image_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
         
-        # Salvar a imagem convertida usando o default_storage (padrão do Django)
+        # Save the converted image using default_storage (Django default)
         self.converted_image.name = default_storage.save(converted_image_path, image_io)
-        self.save()  # Salvar a instância do modelo com a imagem convertida
+        self.save()  # Save the model instance with the converted image
 
-        # Retornar a URL diretamente
+        # Return the URL directly
         return default_storage.url(self.converted_image.name)
     
     def convert_video_to_thumbnail(self):
@@ -135,18 +135,18 @@ class OrderImage(models.Model):
         file_extension = self.image.name.split('.')[-1].lower()
 
         if file_extension in video_extensions:
-            # Abrir o arquivo diretamente da storage backend
+            # Open the file directly from the backend storage
             with self.image.open('rb') as video_file:
-                # Criar um arquivo temporário para armazenar o vídeo
+                # Create a temporary file to store the video
                 with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{file_extension}') as temp_video:
                     temp_video.write(video_file.read())
                     temp_video_path = temp_video.name
 
-            # Agora use o caminho do arquivo temporário com VideoFileClip
+            # Now use temporary file path with VideoFileClip
             try:
                 video = VideoFileClip(temp_video_path)
 
-                # Extrair o primeiro frame
+               # Extract the first frame
                 thumbnail_frame = video.get_frame(0)
                 image = Image.fromarray(thumbnail_frame)
 
@@ -159,7 +159,7 @@ class OrderImage(models.Model):
                 self.converted_image.name = default_storage.save(thumbnail_path, image_io)
                 self.save()
             finally:
-                # Certifique-se de fechar o VideoFileClip e remover o arquivo temporário
+                # Make sure to close VideoFileClip and remove the temporary file
                 video.close()
                 os.remove(temp_video_path)
 

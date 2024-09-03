@@ -140,7 +140,7 @@ class UserUpdateView(GroupRequiredMixin, LoginRequiredMixin, UpdateView):
                 return self.form_invalid(form)
         # Else, if no password provided, we don't change the existing password
         
-        # Atualiza o grupo do usuário
+        # Update user group
         group = form.cleaned_data['group']
         user.groups.clear()
         user.groups.add(group)

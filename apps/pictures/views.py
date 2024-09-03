@@ -127,7 +127,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 
                 relative_path = request.POST.get('relative_path', '')
 
-                # Definir o order_image antes de gerar o caminho
+                # Set the order_image before generating the path
                 order_image = OrderImage(
                     order=order,
                     image=f,
@@ -136,12 +136,11 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
 
-                # Recalcular a contagem dos grupos após criar o novo grupo
+                # Recalculate group count after creating new group
                 file_path = order_image_path(instance=order_image, filename=f.name, relative_path=relative_path)
 
                 f.name = os.path.basename(file_path)
                 
-                # Agora podemos salvar o order_image
                 order_image.save()
 
                 converted_image_url = order_image.convert_to_jpeg()
@@ -183,33 +182,33 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         group_form = OrderImageGroupForm(request.POST)
         services = request.POST.getlist('services')
 
-        # Passando os serviços selecionados para o formulário
+        # Passing the selected services to the form
         form = PhotographerImageForm(request.POST, request.FILES, services=services)
 
         if form.is_valid() and group_form.is_valid():
             selected_services = group_form.cleaned_data.get('services', [])
             scan_url = group_form.cleaned_data.get('scan_url')
 
-            # Verifica se apenas o serviço de 3D scan foi selecionado
+            # Check if only the 3D scan service was selected
             if '3d scan' in selected_services and len(selected_services) == 1:
                 image_group = group_form.save(commit=False)
                 image_group.order = order
                 image_group.created_by_view = 'PhotographerImageUploadView'
-                image_group.scan_url = scan_url  # Assegura que a URL do 3D scan seja salva
+                image_group.scan_url = scan_url  # Ensures that the 3D scan URL is saved
 
                 image_group.save()
 
-                # Registrar a ação de upload do 3D scan
+                # Register the 3D scan upload action
                 UserAction.objects.create(
                     user=request.user,
                     action_type='3d Scan',
                     order=order,
-                    order_image=None  # Sem imagens, apenas 3D scan
+                    order_image=None  # No images, only 3D scan
                 )
 
                 return JsonResponse({'status': 'success', 'message': '3D scan URL uploaded successfully!'})
 
-            # Se não for apenas 3D scan, continue com a lógica para uploads de arquivos
+            # If it is not just 3D scan, continue with the logic for file uploads
             last_image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
 
             if last_image_group and request.session.get('current_file_list', []):
@@ -223,7 +222,7 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 image_group = group_form.save(commit=False)
                 image_group.order = order
                 image_group.created_by_view = 'PhotographerImageUploadView'
-                image_group.scan_url = scan_url  # Assegura que a URL do 3D scan seja salva
+                image_group.scan_url = scan_url  # Ensures that the 3D scan URL is saved
 
                 image_group.save()
 
@@ -278,14 +277,14 @@ class CreateOrderImageGroupView(LoginRequiredMixin, View):
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         
-        # Verificar se já existe um grupo de imagens recente não utilizado
+        # Check if there is already a recent unused group of images
         last_image_group = OrderImageGroup.objects.filter(order=order, created_by_view='PhotographerImageUploadView').last()
 
         if last_image_group and not OrderImage.objects.filter(group=last_image_group).exists():
-            # Se o último grupo de imagens não tem imagens associadas, reutilize-o
+            # If the last group of images has no associated images, reuse it
             return JsonResponse({'status': 'success', 'group_id': last_image_group.id})
 
-        # Caso contrário, crie um novo grupo de imagens
+        # Otherwise, create a new image group
         image_group = OrderImageGroup.objects.create(
             order=order,
             created_by_view='PhotographerImageUploadView'
@@ -303,9 +302,9 @@ class OrderImageListView(LoginRequiredMixin, View):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.all().order_by('uploaded_at') 
         
-        # Convertendo imagens ou vídeos para thumbnails
+        # Converting images or videos to thumbnails
         for image in images:
-            if not image.converted_image:  # Verifica se o thumbnail já existe
+            if not image.converted_image:  # Check if the thumbnail already exists
                 image.convert_media()
 
         paginator = Paginator(images, 21) 

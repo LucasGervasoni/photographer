@@ -41,7 +41,7 @@ class OrderImageGroupForm(forms.ModelForm):
         services = cleaned_data.get('services', [])
         scan_url = cleaned_data.get('scan_url')
 
-        # Se apenas "3d scan" estiver selecionado, verifique se `scan_url` foi preenchido
+        # If only "3d scan" is selected, check if `scan_url` is populated
         if '3d scan' in services and len(services) == 1:
             if not scan_url:
                 self.add_error('scan_url', 'URL do 3D scan é obrigatório quando apenas o serviço "3D scan" é selecionado.')

@@ -157,10 +157,10 @@
                 for (let file of files) {
                     let relativePath = file.webkitRelativePath 
                         ? file.webkitRelativePath.replace(file.name, '') 
-                        : '';  // Exclua o nome do arquivo do caminho relativo
+                        : '';  // Exclude filename from relative path
                     formData.append('relative_path', relativePath);
                     await uploadFileWithRetries(file, formData, uploadForm.action);
-                    formData.delete('relative_path');  // Limpeza após cada arquivo
+                    formData.delete('relative_path');  // Cleaning after each file
                 }
                 window.location.href = "{% url 'userOrders--page' %}";
             } catch (error) {
@@ -233,7 +233,7 @@
                 uploadData.append('scan_url', formData.get('scan_url'));
                 uploadData.append('photos_sent', formData.get('photos_sent'));
                 uploadData.append('photos_returned', formData.get('photos_returned'));
-                uploadData.append('relative_path', formData.get('relative_path')); // Inclua o relative path
+                uploadData.append('relative_path', formData.get('relative_path')); // Include the relative path
 
                 xhr.send(uploadData);
             });

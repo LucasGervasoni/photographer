@@ -50,6 +50,10 @@ class RegisterForms(forms.ModelForm):
             # If we're creating a new user, passwords are required
             self.fields['password_1'].required = True
             self.fields['password_2'].required = True
+            
+        # Ensure first_name and last_name are required
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
 
     def clean(self):
         cleaned_data = super().clean()

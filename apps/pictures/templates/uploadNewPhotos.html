@@ -115,11 +115,11 @@
             
             if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                 scanUrlField.disabled = false;
-                fileInputField.disabled = true;  // Desabilita o upload de arquivos
+                fileInputField.disabled = true;  // Disable file upload
             } else {
                 scanUrlField.disabled = true;
-                scanUrlField.value = '';  // Limpa o campo se for desabilitado
-                fileInputField.disabled = false;  // Habilita o upload de arquivos
+                scanUrlField.value = '';  // Clears the field if disabled
+                fileInputField.disabled = false;  // Enable file upload
             }
         }
     
@@ -136,7 +136,7 @@
                 return;
             }
     
-            // Fazer uma chamada AJAX para criar um novo grupo de imagens
+            // Make an AJAX call to create a new group of images
             try {
                 groupId = await createOrderImageGroup();
             } catch (error) {
@@ -144,7 +144,7 @@
                 return;
             }
     
-            formData.append('group_id', groupId); // Adicionar o novo group_id ao formData
+            formData.append('group_id', groupId); // Add the new group_id to formData
     
             if (files.length > 0) {
                 progressCard.style.display = 'block';
@@ -267,7 +267,7 @@
                 uploadData.append('editor_note', formData.get('editor_note'));
                 uploadData.append('services', formData.get('services'));
                 uploadData.append('scan_url', formData.get('scan_url'));
-                uploadData.append('group_id', formData.get('group_id')); // Adicionar o group_id ao uploadData
+                uploadData.append('group_id', formData.get('group_id')); // Add group_id to uploadData
     
                 xhr.send(uploadData);
             });
