@@ -108,6 +108,7 @@
         <p id="order-status-text-{{ order.id }}"><strong>Status:</strong> {{ order.order_status }}</p>
         {% endif %}
       </td>
+      {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager"  %}
       <td id="assign-editor-wrapper-{{ order.id }}" class="{% if order.order_status != 'Production' and order.order_status != 'Completed' %}d-none{% endif %}">
         <form method="post" action="{% url 'assign_order_editor' order.id %}">
           {% csrf_token %}
@@ -124,6 +125,7 @@
           <button type="submit" class="btn btn-success">Assign Editor</button>
         </form>
       </td>
+      {% endif %}
       <td colspan="2">
         {% if request.user.is_superuser or request.user|has_group:"Editor"%}
         {% if order.order_status == "Production" or order.order_status == "Completed" %}
