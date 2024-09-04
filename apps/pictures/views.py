@@ -110,8 +110,13 @@ class OrderImageUploadView(LoginRequiredMixin, View):
     @method_decorator(csrf_exempt)
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        form = OrderImageForm(request.POST, request.FILES)
         group_form = OrderImageGroupForm(request.POST)
+
+        services = request.POST.getlist('services')
+        is_3d_scan_only = len(services) == 1 and '3d scan' in services
+
+        # Passa o parâmetro is_3d_scan_only ao formulário para ajustar a validação
+        form = OrderImageForm(request.POST, request.FILES, is_3d_scan_only=is_3d_scan_only)
 
         if form.is_valid() and group_form.is_valid():
             image_group = OrderImageGroup.objects.filter(order=order, created_by_view='OrderImageUploadView').first()
@@ -124,10 +129,8 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
             images = []
             for index, f in enumerate(request.FILES.getlist('image')):
-                
                 relative_path = request.POST.get('relative_path', '')
 
-                # Set the order_image before generating the path
                 order_image = OrderImage(
                     order=order,
                     image=f,
@@ -136,9 +139,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
 
-                # Recalculate group count after creating new group
                 file_path = order_image_path(instance=order_image, filename=f.name, relative_path=relative_path)
-
                 f.name = os.path.basename(file_path)
                 
                 order_image.save()
@@ -149,9 +150,23 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
                 images.append(order_image)
 
-            order.order_status = 'Production'
+            scan_url = request.POST.get('scan_url')
+            if is_3d_scan_only and scan_url:
+                order.scan_url = scan_url
+                order.save()
+
+                # Cria uma UserAction específica para o upload do 3D Scan
+                UserAction.objects.create(
+                    user=request.user,
+                    action_type='3d scan',
+                    order=order,
+                )
+
+            # Atualiza o status do pedido
+            order.order_status = 'Uploaded'
             order.save()
 
+            # Cria ações de usuário para cada imagem enviada
             user_actions = [
                 UserAction(
                     user=request.user,
@@ -161,10 +176,10 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 ) for image in images
             ]
             UserAction.objects.bulk_create(user_actions)
-            
-            return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.'})
+
+            return JsonResponse({'status': 'success', 'message': 'Images and/or 3D scan uploaded successfully.'})
         
-        return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+        return JsonResponse({'status': 'error', 'message': 'Error uploading files. Please try again.'})
 
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):

@@ -9,7 +9,17 @@
 {% endblock %}
 
 {% block content %}
+<style>
+  .status-circle {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
 
+</style>
 
 <h2 class="mb-4">Your Orders:</h2>
 
@@ -52,7 +62,9 @@
 <div class="table-responsive">
   <table class="table table-striped">
     <tr>
-      <th scope="col">Photographer</th>
+      <th scope="col">
+        Photographer
+      </th>
       <th scope="col">Scheduled</th>
       <th scope="col">Address</th>
       <th scope="col">Created At</th>
@@ -63,7 +75,17 @@
     {% elif order.order_status == 'Production' %} text-warning 
     {% elif order.order_status == 'Completed' %} text-success 
     {% endif %}">
-      <td>{{ order.appointment_team_members }}</td>
+      <td>
+        <span title="{% if order.order_status == 'Uploaded' %} Uploaded 
+        {% elif order.order_status == 'Production' %} Production 
+        {% elif order.order_status == 'Completed' %} Completed 
+        {% endif %}" class="status-circle {% if order.order_status == 'Uploaded' %} bg-primary 
+      {% elif order.order_status == 'Production' %} bg-warning 
+      {% elif order.order_status == 'Completed' %} bg-success 
+      {% endif %}">
+      </span>
+        {{ order.appointment_team_members }}
+      </td>
       <td>{{ order.appointment_date }}</td>
       <td>{{ order.address }}</td>
       <td>{{ order.order_created_at }}</td>

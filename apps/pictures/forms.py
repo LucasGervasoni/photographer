@@ -11,8 +11,14 @@ class OrderImageForm(forms.ModelForm):
         }
         
     def __init__(self, *args, **kwargs):
+        is_3d_scan_only = kwargs.pop('is_3d_scan_only', False)
         super(OrderImageForm, self).__init__(*args, **kwargs)
         self.fields['photos_returned'].required = False
+
+        # Desativa a obrigatoriedade dos campos se apenas o 3D scan for selecionado
+        if is_3d_scan_only:
+            self.fields['image'].required = False
+            self.fields['photos_sent'].required = False
 
 class PhotographerImageForm(forms.ModelForm):
     class Meta:
