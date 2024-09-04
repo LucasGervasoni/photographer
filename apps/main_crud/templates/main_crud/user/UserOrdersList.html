@@ -149,7 +149,7 @@
               {% endfor %}
             </select>
           </div>
-          <button type="submit" class="btn btn-success">Assign Editor</button>
+          <button type="submit" class="btn btn-success" onclick="submitAssignEditorForm(this)">Assign Editor</button>
         </form>
       </td>
       {% endif %}
@@ -364,8 +364,8 @@ function submitOrderStatusForm(selectElement) {
     });
 }
 
-function submitAssignEditorForm(selectElement) {
-    const form = selectElement.closest('form');
+function submitAssignEditorForm(buttonElement) {
+    const form = buttonElement.closest('form');
     const orderId = form.getAttribute('data-order-id');
     const formData = new FormData(form);
 
