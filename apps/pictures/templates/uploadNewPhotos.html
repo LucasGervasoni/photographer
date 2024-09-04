@@ -95,210 +95,223 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var uploadForm = document.getElementById('uploadForm');
-        var servicesField = document.getElementById('id_services');
-        var scanUrlField = document.getElementById('id_scan_url');
-        var fileInputField = document.querySelector('.fileInput');
-        var progressCard = document.getElementById('progressCard');
-        var progressBar = document.getElementById('progressBar');
-        var fileNameElement = document.getElementById('fileName');
-        var progressPercent = document.getElementById('progressPercent');
-        var retryLimit = 5;
-        var baseTimeout = 60000; // Timeout 60 seconds
-        var groupId;
+document.addEventListener('DOMContentLoaded', function () {
+    var uploadForm = document.getElementById('uploadForm');
+    var servicesField = document.getElementById('id_services');
+    var scanUrlField = document.getElementById('id_scan_url');
+    var fileInputField = document.querySelector('.fileInput');
+    var progressCard = document.getElementById('progressCard');
+    var progressBar = document.getElementById('progressBar');
+    var fileNameElement = document.getElementById('fileName');
+    var progressPercent = document.getElementById('progressPercent');
+    var retryLimit = 5;
+    var baseTimeout = 60000; // Timeout 60 seconds
+    var groupId;
+
+    // Enable or disable the scan URL field and file input based on selected services
+    function updateFields() {
+        var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value);
+        
+        if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
+            // If only "3D scan" is selected, disable the file input
+            scanUrlField.disabled = false;
+            fileInputField.disabled = true;
+        } else if (selectedServices.length > 0 && !selectedServices.includes('3d scan')) {
+            // If at least one service other than "3D scan" is selected, enable the file input
+            scanUrlField.disabled = true;
+            scanUrlField.value = '';  // Clear the field if disabled
+            fileInputField.disabled = false;
+        } else {
+            // If no services are selected, disable both fields
+            scanUrlField.disabled = true;
+            scanUrlField.value = '';  // Clear the field if disabled
+            fileInputField.disabled = true;
+        }
+    }
+
+    // Attach the event listener to update the fields when the services change
+    servicesField.addEventListener('change', updateFields);
+
+    // Call the function initially to set the correct state
+    updateFields();
     
-        // Enable or disable the scan URL field based on selected services
-        function updateFields() {
-            var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
-                .map(checkbox => checkbox.value);
-            
-            if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
-                scanUrlField.disabled = false;
-                fileInputField.disabled = true;  // Disable file upload
-            } else {
-                scanUrlField.disabled = true;
-                scanUrlField.value = '';  // Clears the field if disabled
-                fileInputField.disabled = false;  // Enable file upload
+    uploadForm.onsubmit = async function (event) {
+        event.preventDefault();
+        var formData = new FormData(uploadForm);
+        var files = document.querySelector('.fileInput').files;
+
+        if (files.length === 0 && !formData.get('scan_url')) {
+            alert('No files were selected and no 3D scan URL provided.');
+            return;
+        }
+
+        // Make an AJAX call to create a new group of images
+        try {
+            groupId = await createOrderImageGroup();
+        } catch (error) {
+            alert('Error creating image group.');
+            return;
+        }
+
+        formData.append('group_id', groupId); // Add the new group_id to formData
+
+        if (files.length > 0) {
+            progressCard.style.display = 'block';
+
+            uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
+                element.disabled = true;
+            });
+
+            try {
+                for (let file of files) {
+                    let relativePath = file.webkitRelativePath 
+                        ? file.webkitRelativePath.replace(file.name, '') 
+                        : '';  // Exclude the filename from the relative path
+                    formData.append('relative_path', relativePath);
+                    await uploadFileWithRetries(file, formData, uploadForm.action);
+                    formData.delete('relative_path');  // Clean up after each file
+                }
+                window.location.href = "{% url 'userOrders--page' %}";
+            } catch (error) {
+                alert(error.message || 'Error during upload.');
+            } finally {
+                progressCard.style.display = 'none';
+
+                uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
+                    element.disabled = false;
+                });
+            }
+        } else {
+            try {
+                await submitFormWithoutFiles(formData, uploadForm.action);
+                window.location.href = "{% url 'userOrders--page' %}";
+            } catch (error) {
+                alert(error.message || 'Error submitting form.');
             }
         }
-    
-        servicesField.addEventListener('change', updateFields);
-        updateFields(); // Initial call to set the correct state
-    
-        uploadForm.onsubmit = async function (event) {
-            event.preventDefault();
-            var formData = new FormData(uploadForm);
-            var files = document.querySelector('.fileInput').files;
-    
-            if (files.length === 0 && !formData.get('scan_url')) {
-                alert('No files were selected and no 3D scan URL provided.');
-                return;
-            }
-    
-            // Make an AJAX call to create a new group of images
-            try {
-                groupId = await createOrderImageGroup();
-            } catch (error) {
-                alert('Error creating image group.');
-                return;
-            }
-    
-            formData.append('group_id', groupId); // Add the new group_id to formData
-    
-            if (files.length > 0) {
-                progressCard.style.display = 'block';
-    
-                uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
-                    element.disabled = true;
-                });
-    
-                try {
-                    for (let file of files) {
-                        let relativePath = file.webkitRelativePath 
-                            ? file.webkitRelativePath.replace(file.name, '') 
-                            : '';  // Exclude the filename from the relative path
-                        formData.append('relative_path', relativePath);
-                        await uploadFileWithRetries(file, formData, uploadForm.action);
-                        formData.delete('relative_path');  // Clean up after each file
-                    }
-                    window.location.href = "{% url 'userOrders--page' %}";
-                } catch (error) {
-                    alert(error.message || 'Error during upload.');
-                } finally {
-                    progressCard.style.display = 'none';
-    
-                    uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
-                        element.disabled = false;
-                    });
-                }
-            } else {
-                try {
-                    await submitFormWithoutFiles(formData, uploadForm.action);
-                    window.location.href = "{% url 'userOrders--page' %}";
-                } catch (error) {
-                    alert(error.message || 'Error submitting form.');
-                }
-            }
-        };
-    
-        async function createOrderImageGroup() {
-            return new Promise((resolve, reject) => {
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '{% url "create_order_image_group" order.pk %}', true);
-                xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
-    
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        var response = JSON.parse(xhr.responseText);
-                        if (response.status === 'success') {
-                            resolve(response.group_id);
-                        } else {
-                            reject(new Error('Error creating image group.'));
-                        }
+    };
+
+    async function createOrderImageGroup() {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '{% url "create_order_image_group" order.pk %}', true);
+            xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.status === 'success') {
+                        resolve(response.group_id);
                     } else {
                         reject(new Error('Error creating image group.'));
                     }
-                };
-    
-                xhr.onerror = function () {
-                    reject(new Error('Error creating image group.'));
-                };
-    
-                xhr.send();
-            });
-        }
-    
-        async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
-            try {
-                await uploadFileAsync(file, formData, actionUrl);
-            } catch (error) {
-                if (retries < retryLimit) {
-                    const delay = Math.pow(2, retries) * 1000; // Exponential backoff
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
                 } else {
-                    throw error;
+                    reject(new Error('Error creating image group.'));
                 }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Error creating image group.'));
+            };
+
+            xhr.send();
+        });
+    }
+
+    async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
+        try {
+            await uploadFileAsync(file, formData, actionUrl);
+        } catch (error) {
+            if (retries < retryLimit) {
+                const delay = Math.pow(2, retries) * 1000; // Exponential backoff
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
+            } else {
+                throw error;
             }
         }
-    
-        async function uploadFileAsync(file, formData, actionUrl) {
-            return new Promise((resolve, reject) => {
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', actionUrl, true);
-                xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Adaptive timeout
-    
-                xhr.upload.onprogress = function (event) {
-                    if (event.lengthComputable) {
-                        var percentComplete = Math.round((event.loaded / event.total) * 100);
-                        progressBar.style.width = percentComplete + '%';
-                        progressBar.setAttribute('aria-valuenow', percentComplete);
-                        progressPercent.textContent = percentComplete + '% Complete';
-                    }
-                };
-    
-                xhr.onloadstart = function () {
-                    fileNameElement.textContent = 'File: ' + file.name;
-                    progressBar.style.width = '0%';
-                    progressPercent.textContent = '0% Complete';
-                };
-    
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        resolve();
-                    } else {
-                        reject(new Error('Error during upload.'));
-                    }
-                };
-    
-                xhr.onerror = function () {
-                    reject(new Error('Upload failed.'));
-                };
-    
-                xhr.ontimeout = function () {
-                    reject(new Error('Upload timed out.'));
-                };
-    
-                var uploadData = new FormData();
-                uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
-                uploadData.append('image', file);
-                uploadData.append('relative_path', formData.get('relative_path'));  // Include relative path
-                uploadData.append('editor_note', formData.get('editor_note'));
-                uploadData.append('services', formData.get('services'));
-                uploadData.append('scan_url', formData.get('scan_url'));
-                uploadData.append('group_id', formData.get('group_id')); // Add group_id to uploadData
-    
-                xhr.send(uploadData);
-            });
-        }
-    
-        async function submitFormWithoutFiles(formData, actionUrl) {
-            return new Promise((resolve, reject) => {
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', actionUrl, true);
-                xhr.timeout = baseTimeout;
-    
-                xhr.onload = function () {
-                    if (xhr.status === 200) {
-                        resolve();
-                    } else {
-                        reject(new Error('Error submitting form.'));
-                    }
-                };
-    
-                xhr.onerror = function () {
-                    reject(new Error('Form submission failed.'));
-                };
-    
-                xhr.ontimeout = function () {
-                    reject(new Error('Form submission timed out.'));
-                };
-    
-                xhr.send(formData);
-            });
-        }
-    });
+    }
+
+    async function uploadFileAsync(file, formData, actionUrl) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', actionUrl, true);
+            xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Adaptive timeout
+
+            xhr.upload.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    var percentComplete = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.setAttribute('aria-valuenow', percentComplete);
+                    progressPercent.textContent = percentComplete + '% Complete';
+                }
+            };
+
+            xhr.onloadstart = function () {
+                fileNameElement.textContent = 'File: ' + file.name;
+                progressBar.style.width = '0%';
+                progressPercent.textContent = '0% Complete';
+            };
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    resolve();
+                } else {
+                    reject(new Error('Error during upload.'));
+                }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Upload failed.'));
+            };
+
+            xhr.ontimeout = function () {
+                reject(new Error('Upload timed out.'));
+            };
+
+            var uploadData = new FormData();
+            uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
+            uploadData.append('image', file);
+            uploadData.append('relative_path', formData.get('relative_path'));  // Include relative path
+            uploadData.append('editor_note', formData.get('editor_note'));
+            uploadData.append('services', formData.get('services'));
+            uploadData.append('scan_url', formData.get('scan_url'));
+            uploadData.append('group_id', formData.get('group_id')); // Add group_id to uploadData
+
+            xhr.send(uploadData);
+        });
+    }
+
+    async function submitFormWithoutFiles(formData, actionUrl) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', actionUrl, true);
+            xhr.timeout = baseTimeout;
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    resolve();
+                } else {
+                    reject(new Error('Error submitting form.'));
+                }
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Form submission failed.'));
+            };
+
+            xhr.ontimeout = function () {
+                reject(new Error('Form submission timed out.'));
+            };
+
+            xhr.send(formData);
+        });
+    }
+});
+
+
+
 </script>
     
 

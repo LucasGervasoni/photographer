@@ -11,6 +11,7 @@ class Order(models.Model):
   
   status = (
     ("Not Uploaded","Not Uploaded"),
+    ("Uploaded","Uploaded"),
     ("Production","Production"),
     ("Completed","Completed"),
   )

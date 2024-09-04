@@ -67,7 +67,10 @@
       <th scope="col" colspan="2">Action</th>
     </tr>
     {% for order in object_list %}
-    <tr>
+    <tr class="{% if order.order_status == 'Uploaded' %} text-primary 
+    {% elif order.order_status == 'Production' %} text-warning 
+    {% elif order.order_status == 'Completed' %} text-success 
+    {% endif %}">
       <td>{{ order.appointment_team_members }}</td>
       <td>{{ order.appointment_date }}</td>
       <td>{{ order.address }}</td>
@@ -108,6 +111,7 @@
           <label class="mt-2 mr-2" style="font-weight: bold;" for="order_status">Status:</label>
           <select name="order_status" class="form-control" onchange="submitOrderStatusForm(this)">
             <option value="Not Uploaded" {% if order.order_status == "Not Uploaded" %}selected{% endif %}>Not Uploaded</option>
+            <option value="Uploaded" {% if order.order_status == "Uploaded" %}selected{% endif %}>Uploaded</option>
             <option value="Production" {% if order.order_status == "Production" %}selected{% endif %}>Production</option>
             <option value="Completed" {% if order.order_status == "Completed" %}selected{% endif %}>Completed</option>
           </select>
@@ -328,10 +332,10 @@ function submitOrderStatusForm(selectElement) {
         return response.json();
     })
     .then(data => {
-        // Optionally, you can show a success message or perform other actions here
-        console.log('Order status updated successfully.');
+        // Mostrar um alerta de sucesso quando o status do pedido for atualizado
+        alert('Order status updated successfully!');
 
-        // Show or hide the assign editor form based on the new status
+        // Mostrar ou ocultar o formulário de atribuição de editor com base no novo status
         const assignEditorWrapper = document.getElementById(`assign-editor-wrapper-${orderId}`);
         const selectedStatus = selectElement.value;
 
@@ -366,8 +370,8 @@ function submitAssignEditorForm(selectElement) {
         return response.json();
     })
     .then(data => {
-        // Handle success (if needed)
-        console.log('Editor assigned successfully.');
+        // Mostrar um alerta de sucesso quando o editor for atribuído com sucesso
+        alert('Editor assigned successfully!');
     })
     .catch(error => {
         console.error('There was a problem with the fetch operation:', error);
