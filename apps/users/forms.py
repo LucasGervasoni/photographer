@@ -21,7 +21,7 @@ class RegisterForms(forms.ModelForm):
     group = forms.ModelChoiceField(
         queryset=Group.objects.all(),
         label="Select Group",
-        required=True
+        required=False
     )
     password_1 = forms.CharField(
         label='Password',
@@ -46,10 +46,12 @@ class RegisterForms(forms.ModelForm):
             # If we're updating an existing user, passwords are optional
             self.fields['password_1'].required = False
             self.fields['password_2'].required = False
+            self.fields['group'].required = False 
         else:
             # If we're creating a new user, passwords are required
             self.fields['password_1'].required = True
             self.fields['password_2'].required = True
+            self.fields['group'].required = True 
             
         # Ensure first_name and last_name are required
         self.fields['first_name'].required = True

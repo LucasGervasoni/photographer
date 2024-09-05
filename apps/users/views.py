@@ -83,6 +83,11 @@ class RegisterView(LoginRequiredMixin, GroupRequiredMixin, FormView):
 
         # Add user to the selected group
         group.user_set.add(user)
+        
+        if group.name == 'Manager' or group.name == 'Admin':
+            user.is_superuser = True
+            user.is_staff = True
+            user.save()
 
         return super().form_valid(form)
 
@@ -140,10 +145,21 @@ class UserUpdateView(GroupRequiredMixin, LoginRequiredMixin, UpdateView):
                 return self.form_invalid(form)
         # Else, if no password provided, we don't change the existing password
         
-        # Update user group
-        group = form.cleaned_data['group']
-        user.groups.clear()
-        user.groups.add(group)
+        group = form.cleaned_data.get('group')
+        if group:  # Se o grupo foi selecionado no formulário
+            user.groups.clear()
+            user.groups.add(group)
+
+            # Verificar se o grupo é "Manager" e atribuir as permissões apropriadas
+            if group.name == 'Manager' or group.name == 'Admin':
+                user.is_superuser = True
+                user.is_staff = True
+            else:
+                user.is_superuser = False
+                user.is_staff = False
+
+        # Salvar as alterações do usuário
+        user.save()
         
         return super().form_valid(form)
     

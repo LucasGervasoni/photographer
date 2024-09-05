@@ -392,14 +392,13 @@ function submitAssignEditorForm(buttonElement) {
         return response.json();
     })
     .then(data => {
-        // Mostrar um alerta de sucesso quando o editor for atribuído com sucesso
-        alert('Editor assigned successfully!');
+        // Recarregar a página automaticamente após atribuir o editor
+        window.location.reload();
     })
     .catch(error => {
         console.error('There was a problem with the fetch operation:', error);
     });
 }
-
 
     
     
