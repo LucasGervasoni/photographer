@@ -18,7 +18,7 @@ from apps.users.models import CustomUser
 
 #Create
 class OrderCreateView(GroupRequiredMixin,LoginRequiredMixin,CreateView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = Order
     form_class = OrderForm
@@ -35,7 +35,7 @@ class OrderCreateView(GroupRequiredMixin,LoginRequiredMixin,CreateView):
 
 #List Order for Admin
 class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
-        group_required = ['Admin']
+        group_required = ['Admin','Manager']
         login_url = reverse_lazy('login')
         model = Order
         template_name = "main_crud/admin/adminListOrder.html"
@@ -49,7 +49,7 @@ class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
             # Filter to get orders the user is involved in or is assigned as an editor
             queryset = Order.objects.all()
 
-            if not user.is_superuser:
+            if not user.is_superuser and not user.groups.filter(name__in=['Admin', 'Manager']).exists():
                 queryset = queryset.filter(
                     Q(appointment_team_members__icontains=user.username) |
                     Q(appointment_team_members__icontains=full_name) |
@@ -105,7 +105,7 @@ class AdminListOrders(GroupRequiredMixin,LoginRequiredMixin,ListView):
 #Update Order
 
 class OrderUpdateView(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = Order
     form_class = OrderForm
@@ -122,7 +122,7 @@ class OrderUpdateView(GroupRequiredMixin,LoginRequiredMixin,UpdateView):
 #Delete
 
 class OrderDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = Order
     template_name = 'main_crud/admin/deleteOrder.html'
@@ -148,7 +148,7 @@ class UserPageOrders(LoginRequiredMixin, ListView):
         # Filter to get orders the user is involved in or is assigned as an editor
         queryset = Order.objects.all()
 
-        if not user.is_superuser:
+        if not user.is_superuser and not user.groups.filter(name__in=['Admin', 'Manager']).exists():
             queryset = queryset.filter(
                 Q(appointment_team_members__icontains=user.username) |
                 Q(appointment_team_members__icontains=full_name) |

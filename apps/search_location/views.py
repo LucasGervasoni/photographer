@@ -31,7 +31,7 @@ def do_geocode(address, geolocator, attempt=1, max_attempts=3):
         raise
 
 class SearchNearbyUsersView(LoginRequiredMixin, GroupRequiredMixin, View):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
 
     def get(self, request):

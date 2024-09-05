@@ -13,7 +13,7 @@
 <br>
 <div class="d-flex justify-content-between flex-wrap" style="min-width: 300px;">
   <div class="w-50">
-    {% if request.user.is_superuser or request.user|has_group:"Editor" %}
+    {% if request.user.is_superuser or request.user|has_group:"Editor" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
     {% if order.orderimagegroup_set.exists %}
     <h4>Editor Notes:</h4>
     <div class="border pt-4 pb-4 col-md-6 mb-2">

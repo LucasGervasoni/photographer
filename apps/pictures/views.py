@@ -341,7 +341,7 @@ class OrderImageListView(LoginRequiredMixin, View):
 #List Group of Files uploaded
 class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
     login_url = reverse_lazy('login')
-    group_required = ['Admin'] 
+    group_required = ['Admin','Manager'] 
     model = OrderImageGroup
     template_name = 'admin/listFiles.html'
     paginate_by = 50
@@ -387,7 +387,7 @@ class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
 #Delete Files uploaded
 
 class FileDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = OrderImageGroup
     template_name = 'admin/delete.html'
@@ -403,7 +403,7 @@ class FileDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
 
 class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
     login_url = reverse_lazy('login')
-    group_required = ['Admin'] 
+    group_required = ['Admin','Manager'] 
     model = UserAction
     template_name = 'admin/listLogs.html'
     paginate_by = 50
@@ -452,7 +452,7 @@ class LogListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
 #Delete Logs
 
 class LogDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = UserAction
     template_name = 'admin/delete.html'

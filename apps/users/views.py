@@ -48,7 +48,7 @@ def logout(request):
     
 #Register
 class RegisterView(LoginRequiredMixin, GroupRequiredMixin, FormView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     form_class = RegisterForms
     template_name = 'user_form.html'
@@ -95,7 +95,7 @@ class RegisterView(LoginRequiredMixin, GroupRequiredMixin, FormView):
 #List Users
 class UserListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
     login_url = reverse_lazy('login')
-    group_required = ['Admin'] 
+    group_required = ['Admin','Manager'] 
     model = CustomUser
     template_name = 'listUsers.html'
     paginate_by = 10
@@ -120,7 +120,7 @@ class UserListView(LoginRequiredMixin, GroupRequiredMixin, ListView):
 #Update
 
 class UserUpdateView(GroupRequiredMixin, LoginRequiredMixin, UpdateView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = CustomUser
     form_class = RegisterForms
@@ -156,7 +156,7 @@ class UserUpdateView(GroupRequiredMixin, LoginRequiredMixin, UpdateView):
 #Delete
 
 class UserDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
-    group_required = ['Admin']
+    group_required = ['Admin','Manager']
     login_url = reverse_lazy('login')
     model = CustomUser
     template_name = 'deleteUser.html'

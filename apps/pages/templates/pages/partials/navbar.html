@@ -21,7 +21,7 @@
       <li class="nav-item">
         <a class="nav-link text-secondary" href="{% url 'support' %}">Support</a>
       </li>
-      {% if request.user.is_superuser or request.user|has_group:"Admin" %}
+      {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
       <li class="nav-item">
         <a class="nav-link text-secondary" href="{% url 'adminOrders--page' %}">Dashboard</a>
       </li>
