@@ -120,11 +120,11 @@
         var progressPercent = document.getElementById('progressPercent');
         var retryLimit = 5;
         var baseTimeout = 60000; // 60-second timeout
-    
+
         function updateFields() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
-    
+
             // Habilitar/desabilitar campo "Choose Files"
             if (selectedServices.length === 0 || (selectedServices.includes('3d scan') && selectedServices.length === 1)) {
                 fileInput.disabled = true;
@@ -133,7 +133,7 @@
                 fileInput.disabled = false;
                 assetsUploadedField.required = true;  // Requerido se outros serviços forem selecionados
             }
-    
+
             // Habilitar/desabilitar campo de URL do 3D Scan
             if (selectedServices.includes('3d scan')) {
                 scanUrlField.disabled = false;
@@ -142,37 +142,43 @@
                 scanUrlField.value = '';
             }
         }
-    
+
         servicesField.addEventListener('change', updateFields);
         updateFields();  // Inicializa a função quando a página carrega
-    
+
         // Função para filtrar arquivos .DS_Store antes da leitura
         fileInput.addEventListener('change', function(event) {
             var files = Array.from(fileInput.files);  // Converte FileList para um array
             var filteredFiles = files.filter(file => file.name !== '.DS_Store');  // Filtra arquivos .DS_Store
-    
+
+            // Ordenar os arquivos com base no nome (considerando a ordenação numérica adequada)
+            filteredFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
             // Cria uma nova DataTransfer para atualizar o FileList
             var dataTransfer = new DataTransfer();
-    
+
             filteredFiles.forEach(file => {
                 dataTransfer.items.add(file);  // Adiciona arquivos restantes ao FileList
             });
-    
-            // Atualiza o FileList com os arquivos filtrados
+
+            // Atualiza o FileList com os arquivos filtrados e ordenados
             fileInput.files = dataTransfer.files;
         });
-    
+
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
             var files = Array.from(document.querySelector('.fileInput').files);
-            
+
             // Filtrar arquivos .DS_Store novamente antes de enviar, por segurança
             files = files.filter(file => file.name !== '.DS_Store');
-            
+
+            // Ordenar os arquivos com base no nome (considerando a ordenação numérica adequada)
+            files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
-    
+
             // Se o serviço "3D Scan" for o único selecionado, o upload de arquivos não é necessário
             if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                 if (scanUrlField.value === "") {
@@ -186,13 +192,13 @@
                     return;
                 }
             }
-    
+
             progressCard.style.display = 'block';
-    
+
             uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                 element.disabled = true;
             });
-    
+
             try {
                 if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                     // Envia o formulário sem arquivos (apenas com o 3D Scan URL)
@@ -213,13 +219,13 @@
                 alert(error.message || 'Error during upload.');
             } finally {
                 progressCard.style.display = 'none';
-    
+
                 uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                     element.disabled = false;
                 });
             }
         };
-    
+
         async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
             try {
                 await uploadFileAsync(file, formData, actionUrl);
@@ -233,13 +239,13 @@
                 }
             }
         }
-    
+
         async function uploadFileAsync(file, formData, actionUrl) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
                 xhr.timeout = baseTimeout + (file ? (file.size / (1024 * 1024)) * 1000 : 0); // Timeout adaptável para arquivos
-    
+
                 if (file) {
                     xhr.upload.onprogress = function (event) {
                         if (event.lengthComputable) {
@@ -250,13 +256,13 @@
                         }
                     };
                 }
-    
+
                 xhr.onloadstart = function () {
                     fileNameElement.textContent = file ? 'File: ' + file.name : '';
                     progressBar.style.width = '0%';
                     progressPercent.textContent = '0% Complete';
                 };
-    
+
                 xhr.onload = function () {
                     if (xhr.status === 200) {
                         resolve();
@@ -264,15 +270,15 @@
                         reject(new Error('Error during upload.'));
                     }
                 };
-    
+
                 xhr.onerror = function () {
                     reject(new Error('Upload failed.'));
                 };
-    
+
                 xhr.ontimeout = function () {
                     reject(new Error('Upload timed out.'));
                 };
-    
+
                 var uploadData = new FormData();
                 uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
                 uploadData.append('image', file);
@@ -282,12 +288,13 @@
                 uploadData.append('photos_sent', formData.get('photos_sent'));
                 uploadData.append('photos_returned', formData.get('photos_returned'));
                 uploadData.append('relative_path', formData.get('relative_path')); // Include the relative path
-    
+
                 xhr.send(uploadData);
             });
         }
     });
 </script>
+
     
     
 
