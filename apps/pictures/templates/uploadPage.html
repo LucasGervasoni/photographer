@@ -146,12 +146,28 @@
         servicesField.addEventListener('change', updateFields);
         updateFields();  // Inicializa a função quando a página carrega
     
+        // Função para filtrar arquivos .DS_Store antes da leitura
+        fileInput.addEventListener('change', function(event) {
+            var files = Array.from(fileInput.files);  // Converte FileList para um array
+            var filteredFiles = files.filter(file => file.name !== '.DS_Store');  // Filtra arquivos .DS_Store
+    
+            // Cria uma nova DataTransfer para atualizar o FileList
+            var dataTransfer = new DataTransfer();
+    
+            filteredFiles.forEach(file => {
+                dataTransfer.items.add(file);  // Adiciona arquivos restantes ao FileList
+            });
+    
+            // Atualiza o FileList com os arquivos filtrados
+            fileInput.files = dataTransfer.files;
+        });
+    
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
             var files = Array.from(document.querySelector('.fileInput').files);
             
-            // Filtrar arquivos .DS_Store
+            // Filtrar arquivos .DS_Store novamente antes de enviar, por segurança
             files = files.filter(file => file.name !== '.DS_Store');
             
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
@@ -272,6 +288,7 @@
         }
     });
 </script>
+    
     
 
 
