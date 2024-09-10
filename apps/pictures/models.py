@@ -28,26 +28,22 @@ def order_image_path(instance, filename, relative_path=None):
     if group_count > 2:
         group_count -= 1
 
-
     base_path = os.path.join('media', order_address, f'{order_address}.{group_count:02d}')
 
     if relative_path:
         base_path = os.path.join(base_path, relative_path)
 
-    extension = filename.split('.')[-1]
-    base_filename = f'Spotlight{instance.group.images.count() + 1:02d}.{extension}'
+    # Use the original filename
+    final_path = os.path.join(base_path, filename)
 
-    final_path = os.path.join(base_path, base_filename)
-
-
+    # Ensure the file name is unique if a file with the same name already exists
     counter = 1
+    file_root, file_extension = os.path.splitext(filename)
     while os.path.exists(final_path):
-        base_filename = f'Spotlight{instance.group.images.count() + 1:02d}_{counter}.{extension}'
-        final_path = os.path.join(base_path, base_filename)
+        final_path = os.path.join(base_path, f"{file_root}_{counter}{file_extension}")
         counter += 1
 
     return final_path
-
 
 
 # Model base for image
@@ -86,6 +82,7 @@ class OrderImage(models.Model):
     photos_returned = models.CharField(verbose_name="Assets to be returned", max_length=150, default="0")
     group = models.ForeignKey(OrderImageGroup, on_delete=models.CASCADE, related_name='images')
     converted_image = models.ImageField(upload_to='converted_images/', blank=True, null=True)
+    selected_for_exclusion = models.BooleanField(default=False)
     
     def __str__(self):
         return f"Image for {self.order}"

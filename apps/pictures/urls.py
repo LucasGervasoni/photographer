@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.pictures.views import  OrderImageListView, OrderImageUploadView, OrderImageDownloadView, PhotographerImageUploadView, FilesListView, FileDeleteView, LogListView, LogDeleteView, CreateOrderImageGroupView
+from apps.pictures.views import  OrderImageListView, OrderImageUploadView, OrderImageDownloadView, PhotographerImageUploadView, FilesListView, FileDeleteView, LogListView, LogDeleteView, CreateOrderImageGroupView, ToggleImageSelectionView
 
 urlpatterns = [
     #UPLOAD
@@ -15,4 +15,5 @@ urlpatterns = [
     path('logs/<int:pk>/delete', LogDeleteView.as_view(), name='delete_logs'),
     #DOWNLOAD
     path('orders/<int:pk>/download/', OrderImageDownloadView.as_view(), name='order_image_download'),
+    path('toggle-image-selection/<int:image_id>/', ToggleImageSelectionView.as_view(), name='toggle_image_selection')
 ]

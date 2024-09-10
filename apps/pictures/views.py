@@ -39,7 +39,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.all()
+        images = order.image.filter(selected_for_exclusion=False)
 
         # Log the download action
         UserAction.objects.create(
@@ -337,6 +337,19 @@ class OrderImageListView(LoginRequiredMixin, View):
             'image_count': image_count,
             'scan_url': scan_url  
         })
+
+
+class ToggleImageSelectionView(View):
+    def post(self, request, image_id):
+        selected = request.POST.get('selected') == 'true'
+        image = get_object_or_404(OrderImage, id=image_id)
+        
+        # Atualizar a flag selected_for_exclusion
+        image.selected_for_exclusion = selected
+        image.save()
+
+        return JsonResponse({'status': 'success', 'selected': image.selected_for_exclusion})
+
 
 #List Group of Files uploaded
 class FilesListView(LoginRequiredMixin, GroupRequiredMixin, ListView):

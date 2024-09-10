@@ -8,7 +8,35 @@
 {% endblock %}
 
 {% block content %}
-<h2 class="mb-4 h5">{{ order }}</h2>
+<style>
+  .blurred-image {
+    filter: blur(8px);
+    transition: filter 0.3s ease;
+}
+
+.image-checkbox {
+    display: none;  /* Checkboxes ocultas até o botão ser clicado */
+    width: 20px;
+    height: 20px;
+}
+
+
+.image-container {
+    position: relative;
+}
+
+.selected {
+    filter: blur(8px);
+}
+
+</style>
+
+{% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
+<div class="d-flex justify-content-between">
+  <h2 class="mb-4 h5">{{ order }}</h2>
+  <button id="select-toggle-btn" class="btn btn-primary mb-3">Click to select</button>
+</div>
+{% endif %}
 <hr>
 <br>
 <div class="d-flex justify-content-between flex-wrap" style="min-width: 300px;">
@@ -34,12 +62,23 @@
       <div class="row">
         {% for image in page_obj %}
         <div class="col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
-          {% if image.converted_image %}
-          <img src="{{ image.converted_image.url }}" class="img-fluid" alt="Converted Image">
-          {% else %}
-          <img src="{{ image.image.url }}" class="img-fluid" alt="Image">
-          {% endif %}
-          <small>{{ image.image.url|filename }}</small>
+            <div class="image-container" style="position: relative;">
+                <input type="checkbox" class="image-checkbox" data-image-id="{{ image.id }}" style="position: absolute; top: 10px; left: 10px; display: none;">
+                {% if image.selected_for_exclusion %}
+                    {% if image.converted_image %}
+                        <img src="{{ image.converted_image.url }}" class="img-fluid blurred-image" alt="Converted Image">
+                    {% else %}
+                        <img src="{{ image.image.url }}" class="img-fluid blurred-image" alt="Original Image">
+                    {% endif %}
+                {% else %}
+                    {% if image.converted_image %}
+                        <img src="{{ image.converted_image.url }}" class="img-fluid" alt="Converted Image">
+                    {% else %}
+                        <img src="{{ image.image.url }}" class="img-fluid" alt="Original Image">
+                    {% endif %}
+                {% endif %}
+                <small>{{ image.image.url|filename }}</small>
+            </div>
         </div>
         {% endfor %}
       </div>
@@ -91,4 +130,102 @@
     </div>
   </div>
 </div>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectToggleBtn = document.getElementById('select-toggle-btn');
+    const checkboxes = document.querySelectorAll('.image-checkbox');
+    let isSelecting = false;
+
+    // Function to enable/disable selection
+    function enableSelection() {
+      checkboxes.forEach(checkbox => {
+        checkbox.style.display = isSelecting ? 'block' : 'none';
+      });
+    }
+
+    // Toggle checkbox visibility and change button color when "Click to select" is clicked
+    selectToggleBtn.addEventListener('click', function() {
+      isSelecting = !isSelecting;
+      enableSelection();
+      selectToggleBtn.innerHTML = isSelecting ? 'Cancel selection' : 'Click to select';
+      
+      // Toggle button color
+      if (isSelecting) {
+        selectToggleBtn.classList.remove('btn-primary');  // Remove the default color
+        selectToggleBtn.classList.add('btn-danger');      // Add the red color
+      } else {
+        selectToggleBtn.classList.remove('btn-danger');   // Remove the red color
+        selectToggleBtn.classList.add('btn-primary');     // Revert to the original color
+      }
+    });
+
+    // Handle checkbox and image clicks for selection, but only when in selection mode
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        if (!isSelecting) return;  // Block selection if the mode is not activated
+
+        const imageId = this.dataset.imageId;
+        const imageContainer = this.closest('.image-container');
+        const image = imageContainer.querySelector('img');
+
+        if (this.checked) {
+          image.classList.add('blurred-image');
+          updateSelection(imageId, true);  // Save selection in the backend
+        } else {
+          image.classList.remove('blurred-image');
+          updateSelection(imageId, false);  // Remove selection in the backend
+        }
+      });
+    });
+
+    // Handle image clicks (selecting the image by clicking the image itself), but only when in selection mode
+    document.querySelectorAll('.image-container img').forEach(img => {
+      img.addEventListener('click', function() {
+        if (!isSelecting) return;  // Block clicks if the mode is not activated
+
+        const checkbox = this.closest('.image-container').querySelector('.image-checkbox');
+        checkbox.checked = !checkbox.checked;
+
+        if (checkbox.checked) {
+          this.classList.add('blurred-image');
+          updateSelection(checkbox.dataset.imageId, true);  // Save selection in the backend
+        } else {
+          this.classList.remove('blurred-image');
+          updateSelection(checkbox.dataset.imageId, false);  // Remove selection in the backend
+        }
+      });
+    });
+
+    // Function to send the selection to the backend via AJAX
+    function updateSelection(imageId, selected) {
+      fetch(`/toggle-image-selection/${imageId}/`, {  // Using imageId in the URL
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': '{{ csrf_token }}',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          'selected': selected
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status !== 'success') {
+          console.error('Failed to update selection');
+        }
+      })
+      .catch(error => console.error('Error:', error));
+    }
+
+    // Initially disable checkboxes
+    enableSelection();
+  });
+</script>
+
+
+
+
+
 {% endblock %}
