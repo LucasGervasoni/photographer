@@ -115,6 +115,14 @@ class OrderImage(models.Model):
             image = Image.fromarray(image)
             image_io = ContentFile(b'')
             image.save(image_io, format='JPEG')
+        
+        elif file_extension in ['jpg']:
+            # Process JPG files (convert JPG to JPEG)
+            with self.image.open('rb') as file:
+                image = Image.open(file)
+
+            image_io = ContentFile(b'')
+            image.save(image_io, format='JPEG')
 
         else:
             # If not a supported format, return None
