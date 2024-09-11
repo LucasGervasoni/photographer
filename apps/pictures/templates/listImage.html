@@ -9,6 +9,11 @@
 
 {% block content %}
 <style>
+
+.d-none {
+  display: none !important;
+}
+
   .blurred-image {
     filter: blur(8px);
     transition: filter 0.3s ease;
@@ -129,6 +134,11 @@
           <p>No images available.</p>
           {% endif %}
           <a class="btn btn-info btn-block" href="{% url 'userOrders--page' %}">Back to Orders</a>
+          {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
+          <a href="#" class="btn btn-outline-dark btn-block download-btn" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
+          {% else %}
+          <a href="#" class="btn btn-outline-dark btn-block disabled" aria-disabled="true">Download</a>
+          {% endif %}
         </div>
       </div>
       {% if scan_url and scan_url != 'null' %}
@@ -137,6 +147,51 @@
     </div>
   </div>
 </div>
+
+<!-- Progress Pop-up -->
+<div id="popup-progress" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Your download is in progress...</h2>
+    </div>
+    <div class="popup-body">
+      <p>Please wait while we process your download.</p>
+      <!-- Bootstrap Spinner -->
+      <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Pop-up -->
+<div id="popup-success" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Success!</h2>
+    </div>
+    <div class="popup-body">
+      <p>Your download has been completed successfully!</p>
+      <button onclick="closePopup('popup-success')">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Pop-up -->
+<div id="popup-error" class="popup d-none">
+  <div class="popup-content">
+    <div class="popup-header">
+      <h2>Error!</h2>
+    </div>
+    <div class="popup-body">
+      <p>An error occurred during the download. Please try again.</p>
+      <button onclick="closePopup('popup-error')">Try Again</button>
+    </div>
+  </div>
+</div>
+
 
 
 <script>
@@ -215,8 +270,73 @@
       })
       .catch(error => console.error('Error:', error));
     }
+
+    // Script for downloading selected images
+    document.querySelectorAll('.download-btn').forEach(function (button) {
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+        const orderId = this.getAttribute('data-order-id');
+        const downloadUrl = `/orders/${orderId}/download/`;
+
+        // Set the file name you want to use
+        const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
+        const zipFilename = `order_${addressSafe}.zip`;
+
+        // Show the progress pop-up
+        showPopup('popup-progress');
+
+        // Perform the download request via Fetch API
+        fetch(downloadUrl)
+          .then(response => {
+            if (response.ok) {
+              return response.blob();
+            } else {
+              throw new Error('Download error');
+            }
+          })
+          .then(blob => {
+            // Create a temporary link element
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = zipFilename;  // Set the file name here
+
+            // Append link to the body
+            document.body.appendChild(a);
+
+            // Trigger download by clicking the link
+            a.click();
+
+            // Cleanup: Remove the link and revoke the object URL
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            // Show the success pop-up
+            showPopup('popup-success');
+          })
+          .catch(error => {
+            // Error in connection or request processing
+            showPopup('popup-error');
+          })
+          .finally(() => {
+            // Close the progress pop-up
+            closePopup('popup-progress');
+          });
+      });
+    });
+
+    // Helper functions for showing/hiding popups
+    function showPopup(popupId) {
+      document.getElementById(popupId).classList.remove('d-none');
+    }
+
+    function closePopup(popupId) {
+      document.getElementById(popupId).classList.add('d-none');
+    }
   });
 </script>
+
 
 
 
