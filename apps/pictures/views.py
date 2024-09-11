@@ -1,4 +1,5 @@
 
+import threading
 import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 import requests
@@ -144,9 +145,9 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 
                 order_image.save()
 
-                converted_image_url = order_image.convert_to_jpeg()
-                if converted_image_url:
-                    order_image.save()
+                # Não fazemos a conversão aqui, chamaremos isso em um thread separado
+                thread = threading.Thread(target=self.convert_image_in_background, args=(order_image,))
+                thread.start()
 
                 images.append(order_image)
 
@@ -181,6 +182,13 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading files. Please try again.'})
 
+    def convert_image_in_background(self, order_image):
+        """
+        Função para realizar a conversão da imagem em um thread separado.
+        """
+        converted_image_url = order_image.convert_to_jpeg()  # Converte para PNG
+        if converted_image_url:
+            order_image.save()
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')

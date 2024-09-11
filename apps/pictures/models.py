@@ -91,7 +91,14 @@ class OrderImage(models.Model):
         verbose_name = "File uploaded"  # Singular name
         verbose_name_plural = "Files uploaded"  # Plural name (optional)
         
-
+    def get_order_address_folder(self):
+        """
+        Get the folder path for this order based on the order's address.
+        The converted image will be saved in the 'converted_image' folder inside this directory.
+        """
+        order_address = self.order.address  # Assuming 'address' is a field in the Order model
+        return os.path.join(order_address, 'converted_image')
+        
     def convert_to_jpeg(self):
         file_extension = self.image.name.split('.')[-1].lower()
         
@@ -102,7 +109,7 @@ class OrderImage(models.Model):
 
             image = Image.fromarray(rgb)
             image_io = ContentFile(b'')
-            image.save(image_io, format='JPEG')
+            image.save(image_io, format='PNG')
 
         elif file_extension in ['hevc', 'heic']:
             # Process HEVC/HEIC files using imageio
@@ -111,14 +118,14 @@ class OrderImage(models.Model):
 
             image = Image.fromarray(image)
             image_io = ContentFile(b'')
-            image.save(image_io, format='JPEG')
+            image.save(image_io, format='PNG')
 
         else:
             # If not a supported format, return None
             return None
 
         image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-        converted_image_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
+        converted_image_path = os.path.join('converted_images',self.get_order_address_folder(), f'{image_name_without_extension}.png')
         
         # Save the converted image using default_storage (Django default)
         self.converted_image.name = default_storage.save(converted_image_path, image_io)
@@ -148,10 +155,10 @@ class OrderImage(models.Model):
                 image = Image.fromarray(thumbnail_frame)
 
                 image_io = ContentFile(b'')
-                image.save(image_io, format='JPEG')
+                image.save(image_io, format='PNG')
 
                 image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-                thumbnail_path = os.path.join('converted_images', f'{image_name_without_extension}.jpeg')
+                thumbnail_path = os.path.join('converted_images',self.get_order_address_folder(), f'{image_name_without_extension}.png')
 
                 self.converted_image.name = default_storage.save(thumbnail_path, image_io)
                 self.save()
