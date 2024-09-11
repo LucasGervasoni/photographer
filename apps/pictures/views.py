@@ -262,9 +262,9 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
 
                 order_image.save()
 
-                converted_image_url = order_image.convert_to_jpeg()
-                if converted_image_url:
-                    order_image.save()
+                # Conversão em thread separada
+                thread = threading.Thread(target=self.convert_image_in_background, args=(order_image,))
+                thread.start()
 
                 images.append(order_image)
 
@@ -283,6 +283,12 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully!', 'files': file_list})
 
         return JsonResponse({'status': 'error', 'message': 'Error uploading images. Please try again.'})
+    
+    def convert_image_in_background(self, order_image):
+        """
+        Função para realizar a compressão e conversão da imagem em um thread separado.
+        """
+        order_image.compress_and_convert()
 
 
 
