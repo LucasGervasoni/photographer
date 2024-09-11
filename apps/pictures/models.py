@@ -99,13 +99,13 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
         
-    def compress_png(self, image, max_size_mb=5, quality=50):
+    def compress_webp(self, image, max_size_mb=5, quality=50):
         """
-        Compress the image to PNG format and ensure it does not exceed max_size_mb.
-        The image will be resized if necessary. For formats that support quality, reduce by the given percentage.
+        Compress the image to WebP format and ensure it does not exceed max_size_mb.
+        The image will be resized if necessary. The quality parameter adjusts the compression level.
         """
         image_io = ContentFile(b'')
-        image.save(image_io, format='PNG', optimize=True)
+        image.save(image_io, format='WEBP', quality=quality, optimize=True)
 
         # Check the size of the image in MB
         size_in_mb = image_io.tell() / (1024 * 1024)
@@ -120,28 +120,28 @@ class OrderImage(models.Model):
             # Resize the image using LANCZOS resampling
             image = image.resize((new_width, new_height), Image.LANCZOS)
 
-            # Save the resized image with reduced quality
+            # Save the resized image as WebP with reduced quality
             image_io = ContentFile(b'')
-            image.save(image_io, format='PNG', optimize=True, quality=quality)
+            image.save(image_io, format='WEBP', quality=quality, optimize=True)
 
         return image_io
 
     def save_compressed_image(self, image, file_basename, quality=50):
         """
-        Save the compressed PNG image using Django's default storage and return the URL.
+        Save the compressed WebP image using Django's default storage and return the URL.
         """
-        compressed_image = self.compress_png(image, max_size_mb=5, quality=quality)
-        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.png')
+        compressed_image = self.compress_webp(image, max_size_mb=5, quality=quality)
+        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.webp')
         
         # Save the compressed image using default_storage
         self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
         self.save()
 
         return default_storage.url(self.converted_image.name)
-    
+
     def compress_and_convert(self):
         """
-        Handle the conversion and compression of the image to PNG.
+        Handle the conversion and compression of the image to WebP.
         """
         file_extension = self.image.name.split('.')[-1].lower()
         
@@ -169,7 +169,7 @@ class OrderImage(models.Model):
 
     def convert_video_to_thumbnail(self):
         """
-        Convert the first frame of a video to a PNG thumbnail.
+        Convert the first frame of a video to a WebP thumbnail.
         """
         video_extensions = ['mp4', 'mov', 'avi', 'mkv']
         file_extension = self.image.name.split('.')[-1].lower()
@@ -193,14 +193,14 @@ class OrderImage(models.Model):
                 # Save the compressed thumbnail and return the URL
                 image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
                 return self.save_compressed_image(image, image_name_without_extension)
-                
+                    
             finally:
                 # Make sure to close VideoFileClip and remove the temporary file
                 video.close()
                 os.remove(temp_video_path)
         
         return None
-    
+
     def convert_media(self):
         """
         This method will try to convert the file either using compress_and_convert or convert_video_to_thumbnail
