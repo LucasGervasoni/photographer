@@ -78,15 +78,15 @@
               {% endif %}
                 {% if image.selected_for_exclusion %}
                     {% if image.converted_image %}
-                        <img src="{{ image.converted_image.url }}" class="img-fluid blurred-image" alt="Converted Image">
+                        <img src="{{ image.converted_image.url }}" class="img-fluid blurred-image" alt="Converted Image" loading="lazy">
                     {% else %}
-                        <img src="{{ image.image.url }}" class="img-fluid blurred-image" alt="Original Image">
+                        <img src="{{ image.image.url }}" class="img-fluid blurred-image" alt="Original Image" loading="lazy">
                     {% endif %}
                 {% else %}
                     {% if image.converted_image %}
-                        <img src="{{ image.converted_image.url }}" class="img-fluid" alt="Converted Image">
+                        <img src="{{ image.converted_image.url }}" class="img-fluid" alt="Converted Image" loading="lazy">
                     {% else %}
-                        <img src="{{ image.image.url }}" class="img-fluid" alt="Original Image">
+                        <img src="{{ image.image.url }}" class="img-fluid" alt="Original Image" loading="lazy">
                     {% endif %}
                 {% endif %}
                 <small>{{ image.image.url|filename }}</small>
