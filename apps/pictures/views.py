@@ -116,7 +116,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         services = request.POST.getlist('services')
         is_3d_scan_only = len(services) == 1 and '3d scan' in services
 
-        # Passa o parâmetro is_3d_scan_only ao formulário para ajustar a validação
         form = OrderImageForm(request.POST, request.FILES, is_3d_scan_only=is_3d_scan_only)
 
         if form.is_valid() and group_form.is_valid():
@@ -129,7 +128,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 image_group.save()
 
             images = []
-            for index, f in enumerate(request.FILES.getlist('image')):
+            for f in request.FILES.getlist('image'):
                 relative_path = request.POST.get('relative_path', '')
 
                 order_image = OrderImage(
@@ -140,12 +139,9 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
 
-                file_path = order_image_path(instance=order_image, filename=f.name, relative_path=relative_path)
-                f.name = os.path.basename(file_path)
-                
                 order_image.save()
 
-                # Não fazemos a conversão aqui, chamaremos isso em um thread separado
+                # Conversão em thread separada
                 thread = threading.Thread(target=self.convert_image_in_background, args=(order_image,))
                 thread.start()
 
@@ -156,18 +152,15 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 order.scan_url = scan_url
                 order.save()
 
-                # Cria uma UserAction específica para o upload do 3D Scan
                 UserAction.objects.create(
                     user=request.user,
                     action_type='3d scan',
                     order=order,
                 )
 
-            # Atualiza o status do pedido
             order.order_status = 'Uploaded'
             order.save()
 
-            # Cria ações de usuário para cada imagem enviada
             user_actions = [
                 UserAction(
                     user=request.user,
@@ -184,11 +177,11 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
     def convert_image_in_background(self, order_image):
         """
-        Função para realizar a conversão da imagem em um thread separado.
+        Função para realizar a compressão e conversão da imagem em um thread separado.
         """
-        converted_image_url = order_image.convert_to_jpeg()  # Converte para PNG
-        if converted_image_url:
-            order_image.save()
+        order_image.compress_and_convert()
+
+
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')

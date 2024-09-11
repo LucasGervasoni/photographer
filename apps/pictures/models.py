@@ -99,7 +99,37 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
         
-    def convert_to_jpeg(self):
+    def compress_png(self, image, max_size_mb=5):
+        """
+        Compress the image to PNG format and ensure it does not exceed max_size_mb.
+        The image will be resized if necessary.
+        """
+        image_io = ContentFile(b'')
+        image.save(image_io, format='PNG', optimize=True)
+        
+        # Check the size of the image in MB
+        size_in_mb = image_io.tell() / (1024 * 1024)
+        
+        if size_in_mb > max_size_mb:
+            # If the file is larger than max_size_mb, resize it
+            width, height = image.size
+            resize_factor = (max_size_mb / size_in_mb) ** 0.5  # Reduce both width and height proportionally
+            new_width = int(width * resize_factor)
+            new_height = int(height * resize_factor)
+            
+            # Resize the image using LANCZOS resampling
+            image = image.resize((new_width, new_height), Image.LANCZOS)
+            
+            # Save the resized image again
+            image_io = ContentFile(b'')
+            image.save(image_io, format='PNG', optimize=True)
+        
+        return image_io
+
+    def compress_and_convert(self):
+        """
+        Handle the conversion and compression of the image to PNG.
+        """
         file_extension = self.image.name.split('.')[-1].lower()
         
         if file_extension in ['raw', 'dng', 'arw']:
@@ -108,8 +138,6 @@ class OrderImage(models.Model):
                 rgb = raw.postprocess()
 
             image = Image.fromarray(rgb)
-            image_io = ContentFile(b'')
-            image.save(image_io, format='PNG')
 
         elif file_extension in ['hevc', 'heic']:
             # Process HEVC/HEIC files using imageio
@@ -117,24 +145,28 @@ class OrderImage(models.Model):
                 image = imageio.imread(file, format='heic')
 
             image = Image.fromarray(image)
-            image_io = ContentFile(b'')
-            image.save(image_io, format='PNG')
 
         else:
             # If not a supported format, return None
             return None
 
+        # Compress the PNG and ensure it is <= 5 MB
+        compressed_image = self.compress_png(image, max_size_mb=5)
+
         image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-        converted_image_path = os.path.join('converted_images',self.get_order_address_folder(), f'{image_name_without_extension}.png')
+        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{image_name_without_extension}.png')
         
-        # Save the converted image using default_storage (Django default)
-        self.converted_image.name = default_storage.save(converted_image_path, image_io)
-        self.save()  # Save the model instance with the converted image
+        # Save the compressed image using default_storage (Django default)
+        self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
+        self.save()
 
         # Return the URL directly
         return default_storage.url(self.converted_image.name)
     
     def convert_video_to_thumbnail(self):
+        """
+        Convert the first frame of a video to a PNG thumbnail.
+        """
         video_extensions = ['mp4', 'mov', 'avi', 'mkv']
         file_extension = self.image.name.split('.')[-1].lower()
 
@@ -146,21 +178,21 @@ class OrderImage(models.Model):
                     temp_video.write(video_file.read())
                     temp_video_path = temp_video.name
 
-            # Now use temporary file path with VideoFileClip
+            # Use temporary file path with VideoFileClip
             try:
                 video = VideoFileClip(temp_video_path)
 
-               # Extract the first frame
+                # Extract the first frame
                 thumbnail_frame = video.get_frame(0)
                 image = Image.fromarray(thumbnail_frame)
 
-                image_io = ContentFile(b'')
-                image.save(image_io, format='PNG')
+                # Compress the thumbnail image to PNG (ensure <= 5 MB)
+                compressed_thumbnail = self.compress_png(image, max_size_mb=5)
 
                 image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-                thumbnail_path = os.path.join('converted_images',self.get_order_address_folder(), f'{image_name_without_extension}.png')
+                thumbnail_path = os.path.join('converted_images', self.get_order_address_folder(), f'{image_name_without_extension}.png')
 
-                self.converted_image.name = default_storage.save(thumbnail_path, image_io)
+                self.converted_image.name = default_storage.save(thumbnail_path, compressed_thumbnail)
                 self.save()
             finally:
                 # Make sure to close VideoFileClip and remove the temporary file
@@ -172,15 +204,14 @@ class OrderImage(models.Model):
     
     def convert_media(self):
         """
-        This method will try to convert the file either using convert_to_jpeg or convert_video_to_thumbnail
+        This method will try to convert the file either using compress_and_convert or convert_video_to_thumbnail
         depending on the file type.
         """
         # Try to convert raw image files first
-        if not self.convert_to_jpeg():
+        if not self.compress_and_convert():
             # If not a raw image, try to convert video files
             self.convert_video_to_thumbnail()
 
-        
 # Create User actions that will take automatic the user that did Upload or Download
 class UserAction(models.Model):
     ACTION_CHOICES = [
