@@ -15,11 +15,14 @@
 }
 
 .image-checkbox {
-    display: none;  /* Checkboxes ocultas até o botão ser clicado */
-    width: 20px;
+    width:20px;
     height: 20px;
+    border: 2px solid #fff;  /* Adiciona uma borda branca para maior contraste */
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;  /* Garantir que o checkbox fique acima da imagem */
 }
-
 
 .image-container {
     position: relative;
@@ -34,7 +37,7 @@
 {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
 <div class="d-flex justify-content-between">
   <h2 class="mb-4 h5">{{ order }}</h2>
-  <button id="select-toggle-btn" class="btn btn-primary mb-3">Click to select</button>
+  <button id="cancel-selection-btn" class="btn btn-danger mb-3">Cancel all selection</button>
 </div>
 {% endif %}
 <hr>
@@ -63,7 +66,11 @@
         {% for image in page_obj %}
         <div class="col-lg-4 col-md-6 col-sm-6 col-12 mb-3">
             <div class="image-container" style="position: relative;">
-                <input type="checkbox" class="image-checkbox" data-image-id="{{ image.id }}" style="position: absolute; top: 10px; left: 10px; display: none;">
+              {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
+                <input type="checkbox" class="image-checkbox" data-image-id="{{ image.id }}" 
+                      {% if image.selected_for_exclusion %} checked {% endif %} 
+                      style="position: absolute; top: 10px; left: 10px;">
+              {% endif %}
                 {% if image.selected_for_exclusion %}
                     {% if image.converted_image %}
                         <img src="{{ image.converted_image.url }}" class="img-fluid blurred-image" alt="Converted Image">
@@ -134,67 +141,57 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const selectToggleBtn = document.getElementById('select-toggle-btn');
     const checkboxes = document.querySelectorAll('.image-checkbox');
-    let isSelecting = false;
+    const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
 
-    // Function to enable/disable selection
-    function enableSelection() {
-      checkboxes.forEach(checkbox => {
-        checkbox.style.display = isSelecting ? 'block' : 'none';
-      });
-    }
-
-    // Toggle checkbox visibility and change button color when "Click to select" is clicked
-    selectToggleBtn.addEventListener('click', function() {
-      isSelecting = !isSelecting;
-      enableSelection();
-      selectToggleBtn.innerHTML = isSelecting ? 'Cancel selection' : 'Click to select';
-      
-      // Toggle button color
-      if (isSelecting) {
-        selectToggleBtn.classList.remove('btn-primary');  // Remove the default color
-        selectToggleBtn.classList.add('btn-danger');      // Add the red color
-      } else {
-        selectToggleBtn.classList.remove('btn-danger');   // Remove the red color
-        selectToggleBtn.classList.add('btn-primary');     // Revert to the original color
-      }
-    });
-
-    // Handle checkbox and image clicks for selection, but only when in selection mode
+    // Function to apply blur to checked images when the page loads
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', function() {
-        if (!isSelecting) return;  // Block selection if the mode is not activated
+      const imageContainer = checkbox.closest('.image-container');
+      const image = imageContainer.querySelector('img');
 
+      // Automatically apply blur if the checkbox is checked when the page loads
+      if (checkbox.checked) {
+        image.classList.add('blurred-image');  
+      }
+
+      // Function to enable/disable blur on images when selected
+      checkbox.addEventListener('change', function() {
         const imageId = this.dataset.imageId;
-        const imageContainer = this.closest('.image-container');
-        const image = imageContainer.querySelector('img');
 
         if (this.checked) {
           image.classList.add('blurred-image');
-          updateSelection(imageId, true);  // Save selection in the backend
+          updateSelection(imageId, true);  // Save the selection to the backend
         } else {
           image.classList.remove('blurred-image');
-          updateSelection(imageId, false);  // Remove selection in the backend
+          updateSelection(imageId, false);  // Remove the selection from the backend
+        }
+      });
+
+      // Add a click event to the image that checks/unchecks the checkbox
+      image.addEventListener('click', function() {
+        checkbox.checked = !checkbox.checked;  // Toggle the checkbox state
+
+        const imageId = checkbox.dataset.imageId;
+        
+        // Apply or remove blur depending on the checkbox state
+        if (checkbox.checked) {
+          this.classList.add('blurred-image');
+          updateSelection(imageId, true);  // Save the selection to the backend
+        } else {
+          this.classList.remove('blurred-image');
+          updateSelection(imageId, false);  // Remove the selection from the backend
         }
       });
     });
 
-    // Handle image clicks (selecting the image by clicking the image itself), but only when in selection mode
-    document.querySelectorAll('.image-container img').forEach(img => {
-      img.addEventListener('click', function() {
-        if (!isSelecting) return;  // Block clicks if the mode is not activated
-
-        const checkbox = this.closest('.image-container').querySelector('.image-checkbox');
-        checkbox.checked = !checkbox.checked;
-
-        if (checkbox.checked) {
-          this.classList.add('blurred-image');
-          updateSelection(checkbox.dataset.imageId, true);  // Save selection in the backend
-        } else {
-          this.classList.remove('blurred-image');
-          updateSelection(checkbox.dataset.imageId, false);  // Remove selection in the backend
-        }
+    // Function to cancel all selections
+    cancelSelectionBtn.addEventListener('click', function() {
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = false;  // Uncheck all checkboxes
+        const imageContainer = checkbox.closest('.image-container');
+        const image = imageContainer.querySelector('img');
+        image.classList.remove('blurred-image');  // Remove blur from all images
+        updateSelection(checkbox.dataset.imageId, false);  // Update all selections in the backend
       });
     });
 
@@ -218,11 +215,9 @@
       })
       .catch(error => console.error('Error:', error));
     }
-
-    // Initially disable checkboxes
-    enableSelection();
   });
 </script>
+
 
 
 

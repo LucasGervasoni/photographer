@@ -100,7 +100,7 @@
       <td class="d-flex align-items-center justify-content-center">
         <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
-        {% if not request.user.is_superuser %}
+        {% if request.user|has_group:"Photographer" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
         {% if order.order_status == "Production" or order.order_status == "Completed" %}
         <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Files</a>
         {% else %}

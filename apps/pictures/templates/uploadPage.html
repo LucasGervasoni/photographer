@@ -110,31 +110,29 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var servicesField = document.getElementById('id_services');
-        var fileInput = document.querySelector('.fileInput');  // Campo "Choose Files"
+        var fileInput = document.querySelector('.fileInput');
         var scanUrlField = document.getElementById('id_scan_url');
-        var assetsUploadedField = document.getElementById('id_photos_sent');  // Campo "Assets to be uploaded"
+        var assetsUploadedField = document.getElementById('id_photos_sent');
         var uploadForm = document.getElementById('uploadForm');
         var progressCard = document.getElementById('progressCard');
         var progressBar = document.getElementById('progressBar');
         var fileNameElement = document.getElementById('fileName');
         var progressPercent = document.getElementById('progressPercent');
-        var retryLimit = 5;
-        var baseTimeout = 60000; // 60-second timeout
+        var retryLimit = 5;  // Set a retry limit
+        var baseTimeout = 60000; // Set a base timeout of 60 seconds
 
         function updateFields() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
 
-            // Habilitar/desabilitar campo "Choose Files"
             if (selectedServices.length === 0 || (selectedServices.includes('3d scan') && selectedServices.length === 1)) {
                 fileInput.disabled = true;
-                assetsUploadedField.required = false;  // Não requerido se somente "3D Scan" for selecionado
+                assetsUploadedField.required = false;
             } else {
                 fileInput.disabled = false;
-                assetsUploadedField.required = true;  // Requerido se outros serviços forem selecionados
+                assetsUploadedField.required = true;
             }
 
-            // Habilitar/desabilitar campo de URL do 3D Scan
             if (selectedServices.includes('3d scan')) {
                 scanUrlField.disabled = false;
             } else {
@@ -144,24 +142,16 @@
         }
 
         servicesField.addEventListener('change', updateFields);
-        updateFields();  // Inicializa a função quando a página carrega
+        updateFields();
 
-        // Função para filtrar arquivos .DS_Store antes da leitura
-        fileInput.addEventListener('change', function(event) {
-            var files = Array.from(fileInput.files);  // Converte FileList para um array
-            var filteredFiles = files.filter(file => file.name !== '.DS_Store');  // Filtra arquivos .DS_Store
+        fileInput.addEventListener('change', function (event) {
+            var files = Array.from(fileInput.files);
+            var filteredFiles = files.filter(file => file.name !== '.DS_Store');
 
-            // Ordenar os arquivos com base no nome (considerando a ordenação numérica adequada)
             filteredFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
-            // Cria uma nova DataTransfer para atualizar o FileList
             var dataTransfer = new DataTransfer();
-
-            filteredFiles.forEach(file => {
-                dataTransfer.items.add(file);  // Adiciona arquivos restantes ao FileList
-            });
-
-            // Atualiza o FileList com os arquivos filtrados e ordenados
+            filteredFiles.forEach(file => dataTransfer.items.add(file));
             fileInput.files = dataTransfer.files;
         });
 
@@ -170,23 +160,18 @@
             var formData = new FormData(uploadForm);
             var files = Array.from(document.querySelector('.fileInput').files);
 
-            // Filtrar arquivos .DS_Store novamente antes de enviar, por segurança
             files = files.filter(file => file.name !== '.DS_Store');
-
-            // Ordenar os arquivos com base no nome (considerando a ordenação numérica adequada)
             files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
 
-            // Se o serviço "3D Scan" for o único selecionado, o upload de arquivos não é necessário
             if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                 if (scanUrlField.value === "") {
                     alert('Please provide a valid 3D scan URL.');
                     return;
                 }
             } else {
-                // Verifica se há arquivos selecionados quando outros serviços são selecionados
                 if (files.length === 0) {
                     alert('No files were selected.');
                     return;
@@ -201,17 +186,16 @@
 
             try {
                 if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
-                    // Envia o formulário sem arquivos (apenas com o 3D Scan URL)
                     formData.append('scan_url', scanUrlField.value);
                     await uploadFileWithRetries(null, formData, uploadForm.action);
                 } else {
                     for (let file of files) {
                         let relativePath = file.webkitRelativePath 
                             ? file.webkitRelativePath.replace(file.name, '') 
-                            : '';  // Exclui o nome do arquivo do caminho relativo
+                            : '';  
                         formData.append('relative_path', relativePath);
                         await uploadFileWithRetries(file, formData, uploadForm.action);
-                        formData.delete('relative_path');  // Limpa após cada arquivo
+                        formData.delete('relative_path');
                     }
                 }
                 window.location.href = "{% url 'userOrders--page' %}";
@@ -244,7 +228,7 @@
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
-                xhr.timeout = baseTimeout + (file ? (file.size / (1024 * 1024)) * 1000 : 0); // Timeout adaptável para arquivos
+                xhr.timeout = baseTimeout + (file ? (file.size / (1024 * 1024)) * 1000 : 0); 
 
                 if (file) {
                     xhr.upload.onprogress = function (event) {
@@ -287,7 +271,7 @@
                 uploadData.append('scan_url', formData.get('scan_url'));
                 uploadData.append('photos_sent', formData.get('photos_sent'));
                 uploadData.append('photos_returned', formData.get('photos_returned'));
-                uploadData.append('relative_path', formData.get('relative_path')); // Include the relative path
+                uploadData.append('relative_path', formData.get('relative_path'));
 
                 xhr.send(uploadData);
             });
