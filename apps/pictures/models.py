@@ -99,14 +99,14 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
         
-    def compress_png(self, image, max_size_mb=5):
+    def compress_png(self, image, max_size_mb=5, quality=50):
         """
         Compress the image to PNG format and ensure it does not exceed max_size_mb.
-        The image will be resized if necessary.
+        The image will be resized if necessary. For formats that support quality, reduce by the given percentage.
         """
         image_io = ContentFile(b'')
         image.save(image_io, format='PNG', optimize=True)
-        
+
         # Check the size of the image in MB
         size_in_mb = image_io.tell() / (1024 * 1024)
         
@@ -119,13 +119,26 @@ class OrderImage(models.Model):
             
             # Resize the image using LANCZOS resampling
             image = image.resize((new_width, new_height), Image.LANCZOS)
-            
-            # Save the resized image again
+
+            # Save the resized image with reduced quality
             image_io = ContentFile(b'')
-            image.save(image_io, format='PNG', optimize=True)
-        
+            image.save(image_io, format='PNG', optimize=True, quality=quality)
+
         return image_io
 
+    def save_compressed_image(self, image, file_basename, quality=50):
+        """
+        Save the compressed PNG image using Django's default storage and return the URL.
+        """
+        compressed_image = self.compress_png(image, max_size_mb=5, quality=quality)
+        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.png')
+        
+        # Save the compressed image using default_storage
+        self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
+        self.save()
+
+        return default_storage.url(self.converted_image.name)
+    
     def compress_and_convert(self):
         """
         Handle the conversion and compression of the image to PNG.
@@ -150,19 +163,10 @@ class OrderImage(models.Model):
             # If not a supported format, return None
             return None
 
-        # Compress the PNG and ensure it is <= 5 MB
-        compressed_image = self.compress_png(image, max_size_mb=5)
-
+        # Save the compressed image and return the URL
         image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{image_name_without_extension}.png')
-        
-        # Save the compressed image using default_storage (Django default)
-        self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
-        self.save()
+        return self.save_compressed_image(image, image_name_without_extension)
 
-        # Return the URL directly
-        return default_storage.url(self.converted_image.name)
-    
     def convert_video_to_thumbnail(self):
         """
         Convert the first frame of a video to a PNG thumbnail.
@@ -178,28 +182,23 @@ class OrderImage(models.Model):
                     temp_video.write(video_file.read())
                     temp_video_path = temp_video.name
 
-            # Use temporary file path with VideoFileClip
             try:
+                # Use temporary file path with VideoFileClip
                 video = VideoFileClip(temp_video_path)
 
                 # Extract the first frame
                 thumbnail_frame = video.get_frame(0)
                 image = Image.fromarray(thumbnail_frame)
 
-                # Compress the thumbnail image to PNG (ensure <= 5 MB)
-                compressed_thumbnail = self.compress_png(image, max_size_mb=5)
-
+                # Save the compressed thumbnail and return the URL
                 image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-                thumbnail_path = os.path.join('converted_images', self.get_order_address_folder(), f'{image_name_without_extension}.png')
-
-                self.converted_image.name = default_storage.save(thumbnail_path, compressed_thumbnail)
-                self.save()
+                return self.save_compressed_image(image, image_name_without_extension)
+                
             finally:
                 # Make sure to close VideoFileClip and remove the temporary file
                 video.close()
                 os.remove(temp_video_path)
-
-            return self.converted_image.url
+        
         return None
     
     def convert_media(self):
