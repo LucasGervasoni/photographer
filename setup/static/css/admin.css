@@ -92,37 +92,6 @@ ul.errorlist{
   display: none;
 }
 
-.progress-card {
-    background-color: #2c2c2c;
-    color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 300px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1000;
-    text-align: center;
-}
-
-.progress-header {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-}
-
-.progress-details p {
-  margin-bottom: 5px;
-  font-size: 0.9rem;
-  color: #cfcfcf;
-}
-
-.progress-footer p {
-  margin-top: 10px;
-  font-size: 0.9rem;
-  color: #cfcfcf;
-}
 
 .popup {
   position: fixed;

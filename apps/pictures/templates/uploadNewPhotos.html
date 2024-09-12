@@ -9,39 +9,130 @@
 {% block content %}
 <h2 class="mb-4 h5">Upload Images for {{ order }}</h2>
 <style>
-    .help-img{
-        width: 340px; 
-        position: absolute; 
-        top: 10%; 
-        left: 0;
-    }
 
-    @media screen and (min-width:320px) and (max-width:767px){
+    .progress--card {
+        background-color: #2c2c2c;
+        color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 320px;  /* Slightly increased width for better visibility */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Increased shadow opacity */
+        position: fixed;
+        bottom: 20px;  /* Moved to the bottom-right */
+        right: 20px;
+        z-index: 1000;
+        text-align: left; /* Left-aligned text for better readability */
+        font-family: Arial, sans-serif;
+    }
+    
+    .progress--header {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        font-weight: bold;
+    }
+    
+    .progress-file-list {
+        max-height: 200px; /* Adjust based on your preference */
+        overflow-y: auto;
+        margin-top: 10px;
+    }
+    
+    /* Custom Scrollbar */
+    .progress-file-list::-webkit-scrollbar {
+        width: 8px; /* Adjust the width to make it smaller */
+    }
+    
+    /* Track of the scrollbar */
+    .progress-file-list::-webkit-scrollbar-track {
+        background: #2c2c2c; /* Dark gray background */
+        border-radius: 10px; /* Rounded corners */
+    }
+    
+    /* Handle of the scrollbar */
+    .progress-file-list::-webkit-scrollbar-thumb {
+        background-color: #555; /* Dark gray scrollbar handle */
+        border-radius: 10px; /* Rounded scrollbar handle */
+        border: 2px solid #2c2c2c; /* Padding around the handle */
+    }
+    
+    /* For Firefox (optional) */
+    .progress-file-list {
+        scrollbar-width: thin; /* Make the scrollbar thin */
+        scrollbar-color: #555 #2c2c2c; /* Dark gray handle and track */
+    }
+    
+    .file-item {
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: #ffffff;
+    }
+    
+    .file-item p {
+        margin: 0;
+    }
+    
+    .progress {
+        height: 8px;
+        background-color: #555; /* Darker background for the progress bar */
+        border-radius: 4px;
+        margin-top: 5px;
+    }
+    
+    .progress--bar {
+        height: 8px;
+        background-color: #4CAF50; /* Green color for progress */
+        border-radius: 4px;
+    }
+    
+    #totalTimeRemaining {
+        font-size: 0.9rem;
+        color: #cfcfcf;
+        margin-top: 10px;
+    }
+    
+    #uploadProgressCard p {
+        margin-bottom: 0; /* To avoid extra space */
+    }
+    
+    .progress--footer p {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #cfcfcf;
+    }
+    
         .help-img{
-            display: none;
+            width: 340px; 
+            position: absolute; 
+            top: 10%; 
+            left: 0;
         }
-    }
-
-    @media screen and (min-width:768px) and (max-width:1439px){
-        .help-img{
-            min-width: 200px;
-            width: 250px;
-            max-width: 320px;
-
+    
+        @media screen and (min-width:320px) and (max-width:767px){
+            .help-img{
+                display: none;
+            }
         }
-    }
-    @media screen and (min-width:1660px) and (max-width:2100px){
-        .help-img{
-            left: 10%;
-
+    
+        @media screen and (min-width:768px) and (max-width:1439px){
+            .help-img{
+                min-width: 200px;
+                width: 250px;
+                max-width: 320px;
+    
+            }
         }
-    }
-    @media screen and (min-width:2100px){
-        .help-img{
-            left: 20%;
-
+        @media screen and (min-width:1660px) and (max-width:2100px){
+            .help-img{
+                left: 10%;
+    
+            }
         }
-    }
+        @media screen and (min-width:2100px){
+            .help-img{
+                left: 20%;
+    
+            }
+        }
 </style>
 
 
@@ -78,19 +169,12 @@
     </div>
 </form>
 
-<div id="progressCard" class="progress-card" style="display:none;">
-    <div class="progress-header">
-        <strong>Progress</strong>
+<div id="uploadProgressCard" class="progress--card" style="position: fixed; bottom: 20px; right: 20px; width: 320px; display:none; background-color:#2e2e2e; color:white; border-radius: 8px; padding: 15px; z-index: 1000;">
+    <div class="progress--header" style="text-align: center; margin-bottom: 10px;">
+        <strong>Uploading <span id="currentFileCount">0</span> of <span id="totalFileCount">0</span> items</strong>
+        <p id="totalTimeRemaining">Calculating time...</p>
     </div>
-    <div class="progress-details">
-        <p id="fileName">File: </p>
-    </div>
-    <div class="progress">
-        <div id="progressBar" class="progress-bar progress-bar-striped bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-    </div>
-    <div class="progress-footer">
-        <p id="progressPercent" class="text-center">0% Complete</p>
-    </div>
+    <div id="uploadList" class="progress-file-list" style="max-height: 300px; overflow-y: auto; margin-top: 10px;"></div>
 </div>
 
 
@@ -107,69 +191,79 @@
         var retryLimit = 5;
         var baseTimeout = 60000; // Timeout 60 seconds
         var groupId;
-    
+
+        // New progress card variables
+        var uploadProgressCard = document.getElementById('uploadProgressCard');
+        var currentFileCount = document.getElementById('currentFileCount');
+        var totalFileCount = document.getElementById('totalFileCount');
+        var uploadList = document.getElementById('uploadList');
+        var totalTimeRemaining = document.getElementById('totalTimeRemaining');
+        var totalFiles; // Track total number of files
+        var startTime; // To calculate the remaining time
+
         // Enable or disable the scan URL field and file input based on selected services
         function updateFields() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
-            
-            if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
-                // If only "3D scan" is selected, disable the file input
+
+            // Habilitar o campo scanUrlField se o "3D scan" estiver selecionado
+            if (selectedServices.includes('3d scan')) {
                 scanUrlField.disabled = false;
-                fileInputField.disabled = true;
-            } else if (selectedServices.length > 0 && !selectedServices.includes('3d scan')) {
-                // If at least one service other than "3D scan" is selected, enable the file input
+            } else {
                 scanUrlField.disabled = true;
-                scanUrlField.value = '';  // Clear the field if disabled
+                scanUrlField.value = '';  // Limpar o campo caso desativado
+            }
+
+            // Condição para habilitar o campo de upload de arquivos
+            if (selectedServices.length > 1 || (selectedServices.length === 1 && !selectedServices.includes('3d scan'))) {
+                // Se mais de um serviço estiver selecionado OU um serviço diferente de "3D scan" estiver selecionado, habilite o upload de arquivos
                 fileInputField.disabled = false;
             } else {
-                // If no services are selected, disable both fields
-                scanUrlField.disabled = true;
-                scanUrlField.value = '';  // Clear the field if disabled
+                // Se apenas "3D scan" estiver selecionado ou nenhum serviço, desabilite o upload de arquivos
                 fileInputField.disabled = true;
             }
         }
-    
+
         // Attach the event listener to update the fields when the services change
         servicesField.addEventListener('change', updateFields);
-    
+
         // Call the function initially to set the correct state
         updateFields();
-    
+
         // Filter .DS_Store files and sort files before submission
         fileInputField.addEventListener('change', function(event) {
             var files = Array.from(fileInputField.files);  // Convert FileList to array
-    
+
             // Filter out .DS_Store files
             var filteredFiles = files.filter(file => file.name !== '.DS_Store');
-    
+
             // Sort the files by name, handling numeric ordering
             filteredFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-    
+
             // Create a new DataTransfer to update the FileList
             var dataTransfer = new DataTransfer();
-    
+
             filteredFiles.forEach(file => {
                 dataTransfer.items.add(file);  // Add filtered and sorted files to DataTransfer
             });
-    
+
             // Update the FileList with filtered and sorted files
             fileInputField.files = dataTransfer.files;
         });
-    
+
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
             var files = Array.from(document.querySelector('.fileInput').files);
-    
+
             // Filtrar arquivos .DS_Store antes de enviar, por segurança
             files = files.filter(file => file.name !== '.DS_Store');
-    
+
             if (files.length === 0 && !formData.get('scan_url')) {
                 alert('No files were selected and no 3D scan URL provided.');
                 return;
             }
-    
+
             // Make an AJAX call to create a new group of images
             try {
                 groupId = await createOrderImageGroup();
@@ -177,31 +271,38 @@
                 alert('Error creating image group.');
                 return;
             }
-    
+
             formData.append('group_id', groupId); // Add the new group_id to formData
-    
+
             if (files.length > 0) {
-                progressCard.style.display = 'block';
-    
+                // Display new progress card
+                uploadProgressCard.style.display = 'block';
+                totalFiles = files.length; // Store total files count
+                totalFileCount.textContent = totalFiles; // Update the total file count in the progress card
+                currentFileCount.textContent = 0; // Reset current file count
+                startTime = Date.now(); // Start time for time estimation
+
                 uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                     element.disabled = true;
                 });
-    
+
                 try {
-                    for (let file of files) {
+                    for (let i = 0; i < files.length; i++) {
+                        let file = files[i];
                         let relativePath = file.webkitRelativePath 
                             ? file.webkitRelativePath.replace(file.name, '') 
                             : '';  // Exclude the filename from the relative path
+
                         formData.append('relative_path', relativePath);
-                        await uploadFileWithRetries(file, formData, uploadForm.action);
+                        createFileItem(file.name, i); // Create file progress item in the card
+                        await uploadFileWithRetries(file, formData, uploadForm.action, i);
                         formData.delete('relative_path');  // Clean up after each file
                     }
                     window.location.href = "{% url 'userOrders--page' %}";
                 } catch (error) {
                     alert(error.message || 'Error during upload.');
                 } finally {
-                    progressCard.style.display = 'none';
-    
+                    uploadProgressCard.style.display = 'none'; // Hide the new progress card
                     uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                         element.disabled = false;
                     });
@@ -215,13 +316,46 @@
                 }
             }
         };
-    
+
+        // Create a new file item in the progress card
+        function createFileItem(fileName, fileId) {
+            var fileItem = document.createElement('div');
+            fileItem.classList.add('file-item');
+            fileItem.setAttribute('id', `fileItem-${fileId}`);
+            fileItem.innerHTML = `
+                <p>${fileName} <span id="fileStatus-${fileId}">0%</span></p>
+                <div class="progress">
+                    <div id="progressBar-${fileId}" class="progress--bar" style="width: 0%;"></div>
+                </div>
+            `;
+            uploadList.appendChild(fileItem);
+        }
+
+        // Calculate the remaining time
+        function calculateRemainingTime() {
+            const uploadedFiles = parseInt(currentFileCount.textContent);
+            const elapsedTime = (Date.now() - startTime) / 1000; // in seconds
+            const avgTimePerFile = elapsedTime / uploadedFiles;
+
+            if (uploadedFiles > 0) {
+                const remainingFiles = totalFiles - uploadedFiles;
+                const estimatedTimeRemaining = remainingFiles * avgTimePerFile; // seconds remaining
+
+                const minutes = Math.floor(estimatedTimeRemaining / 60);
+                const seconds = Math.floor(estimatedTimeRemaining % 60);
+
+                totalTimeRemaining.textContent = `${minutes} minutes ${seconds} seconds remaining`;
+            } else {
+                totalTimeRemaining.textContent = 'Calculating time...';
+            }
+        }
+
         async function createOrderImageGroup() {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '{% url "create_order_image_group" order.pk %}', true);
                 xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
-    
+
                 xhr.onload = function () {
                     if (xhr.status === 200) {
                         var response = JSON.parse(xhr.responseText);
@@ -234,66 +368,67 @@
                         reject(new Error('Error creating image group.'));
                     }
                 };
-    
+
                 xhr.onerror = function () {
                     reject(new Error('Error creating image group.'));
                 };
-    
+
                 xhr.send();
             });
         }
-    
-        async function uploadFileWithRetries(file, formData, actionUrl, retries = 0) {
+
+        async function uploadFileWithRetries(file, formData, actionUrl, fileId, retries = 0) {
             try {
-                await uploadFileAsync(file, formData, actionUrl);
+                await uploadFileAsync(file, formData, actionUrl, fileId);
             } catch (error) {
                 if (retries < retryLimit) {
                     const delay = Math.pow(2, retries) * 1000; // Exponential backoff
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    return uploadFileWithRetries(file, formData, actionUrl, retries + 1);
+                    return uploadFileWithRetries(file, formData, actionUrl, fileId, retries + 1);
                 } else {
                     throw error;
                 }
             }
         }
-    
-        async function uploadFileAsync(file, formData, actionUrl) {
+
+        async function uploadFileAsync(file, formData, actionUrl, fileId) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
                 xhr.timeout = baseTimeout + (file.size / (1024 * 1024)) * 1000; // Adaptive timeout
-    
+
                 xhr.upload.onprogress = function (event) {
                     if (event.lengthComputable) {
                         var percentComplete = Math.round((event.loaded / event.total) * 100);
-                        progressBar.style.width = percentComplete + '%';
-                        progressBar.setAttribute('aria-valuenow', percentComplete);
-                        progressPercent.textContent = percentComplete + '% Complete';
+                        updateFileProgress(fileId, percentComplete);
                     }
                 };
-    
+
                 xhr.onloadstart = function () {
                     fileNameElement.textContent = 'File: ' + file.name;
                     progressBar.style.width = '0%';
                     progressPercent.textContent = '0% Complete';
                 };
-    
+
                 xhr.onload = function () {
                     if (xhr.status === 200) {
+                        currentFileCount.textContent = parseInt(currentFileCount.textContent) + 1; // Increment file count
+                        calculateRemainingTime(); // Calculate the remaining time
+                        markFileComplete(fileId);
                         resolve();
                     } else {
                         reject(new Error('Error during upload.'));
                     }
                 };
-    
+
                 xhr.onerror = function () {
                     reject(new Error('Upload failed.'));
                 };
-    
+
                 xhr.ontimeout = function () {
                     reject(new Error('Upload timed out.'));
                 };
-    
+
                 var uploadData = new FormData();
                 uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
                 uploadData.append('image', file);
@@ -302,17 +437,29 @@
                 uploadData.append('services', formData.get('services'));
                 uploadData.append('scan_url', formData.get('scan_url'));
                 uploadData.append('group_id', formData.get('group_id')); // Add group_id to uploadData
-    
+
                 xhr.send(uploadData);
             });
         }
-    
+
+        function updateFileProgress(fileId, percentComplete) {
+            var progressBar = document.getElementById(`progressBar-${fileId}`);
+            var fileStatus = document.getElementById(`fileStatus-${fileId}`);
+            progressBar.style.width = percentComplete + '%';
+            fileStatus.textContent = percentComplete + '%';
+        }
+
+        function markFileComplete(fileId) {
+            var fileStatus = document.getElementById(`fileStatus-${fileId}`);
+            fileStatus.innerHTML = `<span style="color: green;">&#10003;</span>`;
+        }
+
         async function submitFormWithoutFiles(formData, actionUrl) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
                 xhr.timeout = baseTimeout;
-    
+
                 xhr.onload = function () {
                     if (xhr.status === 200) {
                         resolve();
@@ -320,21 +467,21 @@
                         reject(new Error('Error submitting form.'));
                     }
                 };
-    
+
                 xhr.onerror = function () {
                     reject(new Error('Form submission failed.'));
                 };
-    
+
                 xhr.ontimeout = function () {
                     reject(new Error('Form submission timed out.'));
                 };
-    
+
                 xhr.send(formData);
             });
         }
     });
 </script>
-    
+
 
 <br>
 {% endblock %}

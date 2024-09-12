@@ -158,6 +158,10 @@ class OrderImage(models.Model):
                 image = imageio.imread(file, format='heic')
 
             image = Image.fromarray(image)
+            
+        elif file_extension in ['jpg', 'jpeg']:
+            # Process JPG/JPEG files
+            image = Image.open(self.image)
 
         else:
             # If not a supported format, return None
