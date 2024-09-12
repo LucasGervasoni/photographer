@@ -285,7 +285,14 @@
             });
 
             try {
-                if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
+                if (files.length === 0) {
+                    try {
+                        await submitFormWithoutFiles(formData, uploadForm.action);
+                        window.location.href = "{% url 'userOrders--page' %}";
+                    } catch (error) {
+                        alert(error.message || 'Error submitting form.');
+                    }
+                } else if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                     formData.append('scan_url', scanUrlField.value);
                     await uploadFileWithRetries(null, formData, uploadForm.action);
                 } else {
@@ -301,7 +308,6 @@
                         formData.delete('relative_path');
                     }
                 }
-                window.location.href = "{% url 'userOrders--page' %}";
             } catch (error) {
                 alert(error.message || 'Error during upload.');
             } finally {
@@ -417,7 +423,34 @@
             var fileStatus = document.getElementById(`fileStatus-${fileId}`);
             fileStatus.innerHTML = `<span style="color: green;">&#10003;</span>`;
         }
+
+        async function submitFormWithoutFiles(formData, actionUrl) {
+            return new Promise((resolve, reject) => {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', actionUrl, true);
+                xhr.timeout = baseTimeout;
+
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        resolve();
+                    } else {
+                        reject(new Error('Error submitting form.'));
+                    }
+                };
+
+                xhr.onerror = function () {
+                    reject(new Error('Form submission failed.'));
+                };
+
+                xhr.ontimeout = function () {
+                    reject(new Error('Form submission timed out.'));
+                };
+
+                xhr.send(formData);
+            });
+        }
     });
+
 </script>
 
     
