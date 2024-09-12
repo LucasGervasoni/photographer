@@ -329,6 +329,9 @@
                 </div>
             `;
             uploadList.appendChild(fileItem);
+
+            // Scroll to the bottom of the file list whenever a new file is added
+            uploadList.scrollTop = uploadList.scrollHeight;
         }
 
         // Calculate the remaining time
