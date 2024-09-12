@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.pictures.middlewares.LargeFileUploadMiddleware',
     'apps.pictures.middlewares.AutoLogoutMiddleware',
+    'apps.pictures.middleware.CrossOriginOpenerPolicyMiddleware',
 ]
 
 ROOT_URLCONF = 'setup.urls'

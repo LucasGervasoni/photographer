@@ -60,3 +60,18 @@ class AutoLogoutMiddleware(MiddlewareMixin):
         
         # Update the timestamp of the last activity as a string
         request.session['last_activity'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
+        
+class CrossOriginOpenerPolicyMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Definir COOP de acordo com a origem
+        if request.is_secure:  # HTTPS
+            response['Cross-Origin-Opener-Policy'] = 'same-origin'
+        else:  # HTTP
+            response['Cross-Origin-Opener-Policy'] = 'unsafe-none'
+        
+        return response
