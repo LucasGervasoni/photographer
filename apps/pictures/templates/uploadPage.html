@@ -216,6 +216,23 @@
         var totalFiles; // Keep track of the total number of files
         var startTime; // To calculate the remaining time
 
+        // Added: Function to adjust settings based on user network connection
+        function adjustBasedOnNetworkSpeed() {
+            var connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            var uploadSpeed = 10; // Fallback value if no network data is available
+
+            if (connection) {
+                uploadSpeed = connection.downlink || 10;  // Use downlink speed (Mbps)
+                console.log(`Detected network speed: ${uploadSpeed} Mbps`);
+                
+                // Adjust timeout based on network speed
+                baseTimeout = 60000 + (1 / uploadSpeed) * 60000;  // Adjust base timeout
+            }
+        }
+
+        // Call the function to adjust settings before any upload
+        adjustBasedOnNetworkSpeed();
+
         function updateFields() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
@@ -453,8 +470,8 @@
             });
         }
     });
-
 </script>
+
 
     
     
