@@ -10,6 +10,7 @@ from django.core.files.storage import default_storage
 from django.utils.text import slugify
 from moviepy.editor import VideoFileClip
 import imageio
+import pillow_heif
 import tempfile
 # # Create your models here.
 
@@ -129,11 +130,17 @@ class OrderImage(models.Model):
     def save_compressed_image(self, image, file_basename, quality=50):
         """
         Save the compressed WebP image using Django's default storage and return the URL.
+        Verifies if the file already exists before saving.
         """
-        compressed_image = self.compress_webp(image, max_size_mb=5, quality=quality)
         converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.webp')
+
+        # Verifica se o arquivo já existe no storage
+        if default_storage.exists(converted_image_path):
+            return default_storage.url(converted_image_path)
+
+        # Se o arquivo não existir, faz a compressão e salva
+        compressed_image = self.compress_webp(image, max_size_mb=5, quality=quality)
         
-        # Save the compressed image using default_storage
         self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
         self.save()
 
@@ -153,11 +160,21 @@ class OrderImage(models.Model):
             image = Image.fromarray(rgb)
 
         elif file_extension in ['hevc', 'heic']:
-            # Process HEVC/HEIC files using imageio
-            with self.image.open('rb') as file:
-                image = imageio.imread(file, format='heic')
-
-            image = Image.fromarray(image)
+            try:
+                # Abrir o arquivo no modo binário usando o backend de armazenamento
+                with self.image.open('rb') as image_file:
+                    heif_image = pillow_heif.read_heif(image_file.read())
+                    image = Image.frombytes(
+                        heif_image.mode,
+                        heif_image.size,
+                        heif_image.data,
+                        "raw",
+                        heif_image.mode,
+                        heif_image.stride,
+                    )
+            except Exception as e:
+                print(f"Error processing HEIC/HEVC file: {e}")
+                return None
             
         elif file_extension in ['jpg', 'jpeg']:
             # Process JPG/JPEG files

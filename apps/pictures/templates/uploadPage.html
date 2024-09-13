@@ -273,7 +273,7 @@
                 if (files.length === 0) {
                     try {
                         await submitFormWithoutFiles(formData, uploadForm.action);
-                        window.location.href = "{% url 'userOrders--page' %}";
+                        showSuccessAlert()
                     } catch (error) {
                         alert(error.message || 'Error submitting form.');
                     }
@@ -291,6 +291,7 @@
                         await uploadFileWithRetries(file, formData, uploadForm.action, i);
                         formData.delete('relative_path');
                     }
+                    showSuccessAlert()
                 }
             } catch (error) {
                 alert(error.message || 'Error during upload.');
@@ -301,6 +302,14 @@
                 });
             }
         };
+        
+        
+        function showSuccessAlert() {
+        alert('Upload Successfully', function() {
+            window.location.href = "{% url 'userOrders--page' %}";
+        });
+    }
+
         // Create a new file item in the progress card
         function createFileItem(fileName, fileId) {
             var fileItem = document.createElement('div');
