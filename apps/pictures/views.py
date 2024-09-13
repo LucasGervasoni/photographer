@@ -143,7 +143,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                     photos_returned=form.cleaned_data.get('photos_returned')
                 )
 
-                # Salvar a imagem para gerar o caminho
                 order_image.save()
 
                 # Conversão em thread separada
@@ -153,7 +152,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
                 images.append(order_image)
 
             scan_url = request.POST.get('scan_url')
-
             if is_3d_scan_only and scan_url:
                 order.scan_url = scan_url
                 order.save()
@@ -177,33 +175,16 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
 
-            try:
-                s3_config = Config(signature_version='s3v4')
-                s3_client = boto3.client('s3', region_name=settings.AWS_S3_REGION_NAME, config=s3_config)
-                urls = []
-                for image in images:
-                    file_name = image.image.name
-                    file_path = order_image_path(image, file_name, relative_path)
-
-                    presigned_url = s3_client.generate_presigned_url(
-                        'put_object',
-                        Params={'Bucket': settings.AWS_STORAGE_BUCKET_NAME, 'Key': file_path},
-                        ExpiresIn=3600
-                    )
-                    urls.append({'url': presigned_url, 'file_name': file_name, 'file_path': file_path})
-
-                return JsonResponse({'status': 'success', 'message': 'Images uploaded successfully.', 'urls': urls})
-
-            except Exception as e:
-                return JsonResponse({'status': 'error', 'message': f'Error generating S3 upload URLs: {str(e)}'})
-
+            return JsonResponse({'status': 'success', 'message': 'Images and/or 3D scan uploaded successfully.'})
+        
         return JsonResponse({'status': 'error', 'message': 'Error uploading files. Please try again.'})
-    
+
     def convert_image_in_background(self, order_image):
         """
         Função para realizar a compressão e conversão da imagem em um thread separado.
         """
         order_image.compress_and_convert()
+
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
