@@ -150,43 +150,48 @@ class OrderImage(models.Model):
         """
         Handle the conversion and compression of the image to WebP.
         """
-        file_extension = self.image.name.split('.')[-1].lower()
-        
-        if file_extension in ['raw', 'dng', 'arw']:
-            # Process RAW files using rawpy
-            with rawpy.imread(self.image) as raw:
-                rgb = raw.postprocess()
-
-            image = Image.fromarray(rgb)
-
-        elif file_extension in ['hevc', 'heic']:
-            try:
-                # Abrir o arquivo no modo binário usando o backend de armazenamento
-                with self.image.open('rb') as image_file:
-                    heif_image = pillow_heif.read_heif(image_file.read())
-                    image = Image.frombytes(
-                        heif_image.mode,
-                        heif_image.size,
-                        heif_image.data,
-                        "raw",
-                        heif_image.mode,
-                        heif_image.stride,
-                    )
-            except Exception as e:
-                print(f"Error processing HEIC/HEVC file: {e}")
-                return None
+        try:
+            file_extension = self.image.name.split('.')[-1].lower()
             
-        elif file_extension in ['jpg', 'jpeg']:
-            # Process JPG/JPEG files
-            image = Image.open(self.image)
+            if file_extension in ['raw', 'dng', 'arw']:
+                # Process RAW files using rawpy
+                with rawpy.imread(self.image) as raw:
+                    rgb = raw.postprocess()
 
-        else:
-            # If not a supported format, return None
+                image = Image.fromarray(rgb)
+
+            elif file_extension in ['hevc', 'heic']:
+                try:
+                    # Abrir o arquivo no modo binário usando o backend de armazenamento
+                    with self.image.open('rb') as image_file:
+                        heif_image = pillow_heif.read_heif(image_file.read())
+                        image = Image.frombytes(
+                            heif_image.mode,
+                            heif_image.size,
+                            heif_image.data,
+                            "raw",
+                            heif_image.mode,
+                            heif_image.stride,
+                        )
+                except Exception as e:
+                    print(f"Error processing HEIC/HEVC file: {e}")
+                    return None
+                
+            elif file_extension in ['jpg', 'jpeg']:
+                # Process JPG/JPEG files
+                image = Image.open(self.image)
+
+            else:
+                # If not a supported format, return None
+                return None
+
+            # Save the compressed image and return the URL
+            image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
+            return self.save_compressed_image(image, image_name_without_extension)
+
+        except Exception as e:
+            print(f"Error during image compression and conversion: {e}")
             return None
-
-        # Save the compressed image and return the URL
-        image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-        return self.save_compressed_image(image, image_name_without_extension)
 
     def convert_video_to_thumbnail(self):
         """

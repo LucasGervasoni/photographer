@@ -133,23 +133,28 @@ class OrderImageUploadView(LoginRequiredMixin, View):
 
             images = []
             for f in request.FILES.getlist('image'):
-                relative_path = request.POST.get('relative_path', '')
+                try:
+                    relative_path = request.POST.get('relative_path', '')
 
-                order_image = OrderImage(
-                    order=order,
-                    image=f,
-                    group=image_group,
-                    photos_sent=form.cleaned_data.get('photos_sent'),
-                    photos_returned=form.cleaned_data.get('photos_returned')
-                )
+                    order_image = OrderImage(
+                        order=order,
+                        image=f,
+                        group=image_group,
+                        photos_sent=form.cleaned_data.get('photos_sent'),
+                        photos_returned=form.cleaned_data.get('photos_returned')
+                    )
 
-                order_image.save()
+                    order_image.save()
 
-                # Conversão em thread separada
-                thread = threading.Thread(target=self.convert_image_in_background, args=(order_image,))
-                thread.start()
+                    # Conversão em thread separada
+                    thread = threading.Thread(target=self.convert_image_in_background, args=(order_image,))
+                    thread.start()
 
-                images.append(order_image)
+                    images.append(order_image)
+
+                except Exception as e:
+                    print(f"Error during file upload and processing: {e}")
+                    return JsonResponse({'status': 'error', 'message': f"Error processing image: {e}"})
 
             scan_url = request.POST.get('scan_url')
             if is_3d_scan_only and scan_url:
@@ -183,7 +188,10 @@ class OrderImageUploadView(LoginRequiredMixin, View):
         """
         Função para realizar a compressão e conversão da imagem em um thread separado.
         """
-        order_image.compress_and_convert()
+        try:
+            order_image.compress_and_convert()
+        except Exception as e:
+            print(f"Error during image conversion in background: {e}")
 
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
