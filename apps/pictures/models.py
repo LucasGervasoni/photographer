@@ -100,7 +100,7 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
         
-    def compress_webp(self, image, max_size_mb=5, quality=50):
+    def compress_webp(self, image, max_size_mb=1, quality=50):
         """
         Compress the image to WebP format and ensure it does not exceed max_size_mb.
         The image will be resized if necessary. The quality parameter adjusts the compression level.
@@ -109,7 +109,7 @@ class OrderImage(models.Model):
         image.save(image_io, format='WEBP', quality=quality, optimize=True)
 
         # Check the size of the image in MB
-        size_in_mb = image_io.tell() / (1024 * 1024)
+        size_in_mb = image_io.tell() / (512 * 512)
         
         if size_in_mb > max_size_mb:
             # If the file is larger than max_size_mb, resize it
@@ -139,7 +139,7 @@ class OrderImage(models.Model):
             return default_storage.url(converted_image_path)
 
         # Se o arquivo não existir, faz a compressão e salva
-        compressed_image = self.compress_webp(image, max_size_mb=5, quality=quality)
+        compressed_image = self.compress_webp(image, max_size_mb=1, quality=quality)
         
         self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
         self.save()
