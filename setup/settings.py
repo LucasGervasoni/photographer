@@ -190,7 +190,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Media files (uploaded files)
 MEDIAFILES_LOCATION = 'media'
 DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+MEDIA_URL = f'media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Converted images storage

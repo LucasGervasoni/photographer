@@ -214,6 +214,7 @@
         var totalTimeRemaining = document.getElementById('totalTimeRemaining');
         var totalFiles; // Keep track of the total number of files
         var startTime; // To calculate the remaining time
+
         function updateFields() {
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
@@ -233,6 +234,7 @@
         }
         servicesField.addEventListener('change', updateFields);
         updateFields();
+
         fileInput.addEventListener('change', function (event) {
             var files = Array.from(fileInput.files);
             var filteredFiles = files.filter(file => file.name !== '.DS_Store');
@@ -241,6 +243,7 @@
             filteredFiles.forEach(file => dataTransfer.items.add(file));
             fileInput.files = dataTransfer.files;
         });
+
         uploadForm.onsubmit = async function (event) {
             event.preventDefault();
             var formData = new FormData(uploadForm);
@@ -273,13 +276,14 @@
                 if (files.length === 0) {
                     try {
                         await submitFormWithoutFiles(formData, uploadForm.action);
-                        showSuccessAlert()
+                        showSuccessAlert();  // Redirect after success
                     } catch (error) {
                         alert(error.message || 'Error submitting form.');
                     }
                 } else if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                     formData.append('scan_url', scanUrlField.value);
                     await uploadFileWithRetries(null, formData, uploadForm.action);
+                    showSuccessAlert();  // Redirect after success
                 } else {
                     for (let i = 0; i < files.length; i++) {
                         let file = files[i];
@@ -291,7 +295,7 @@
                         await uploadFileWithRetries(file, formData, uploadForm.action, i);
                         formData.delete('relative_path');
                     }
-                    showSuccessAlert()
+                    showSuccessAlert();  // Redirect after success
                 }
             } catch (error) {
                 alert(error.message || 'Error during upload.');
@@ -302,13 +306,11 @@
                 });
             }
         };
-        
-        
+
         function showSuccessAlert() {
-        alert('Upload Successfully', function() {
+            // Redirection to the userOrders--page after successful upload
             window.location.href = "{% url 'userOrders--page' %}";
-        });
-    }
+        }
 
         // Create a new file item in the progress card
         function createFileItem(fileName, fileId) {
@@ -342,6 +344,7 @@
                 totalTimeRemaining.textContent = 'Calculating time...';
             }
         }
+
         async function uploadFileWithRetries(file, formData, actionUrl, fileId, retries = 0) {
             try {
                 await uploadFileAsync(file, formData, actionUrl, fileId);
@@ -355,6 +358,7 @@
                 }
             }
         }
+
         async function uploadFileAsync(file, formData, actionUrl, fileId) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
@@ -395,16 +399,19 @@
                 xhr.send(uploadData); // Send the modified upload data
             });
         }
+
         function updateFileProgress(fileId, percentComplete) {
             var progressBar = document.getElementById(`progressBar-${fileId}`);
             var fileStatus = document.getElementById(`fileStatus-${fileId}`);
             progressBar.style.width = percentComplete + '%';
             fileStatus.textContent = percentComplete + '%';
         }
+
         function markFileComplete(fileId) {
             var fileStatus = document.getElementById(`fileStatus-${fileId}`);
             fileStatus.innerHTML = `<span style="color: green;">&#10003;</span>`;
         }
+
         async function submitFormWithoutFiles(formData, actionUrl) {
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
@@ -428,5 +435,6 @@
         }
     });
 </script>
+
 
 {% endblock %}
