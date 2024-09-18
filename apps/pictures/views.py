@@ -43,50 +43,39 @@ logger = logging.getLogger(__name__)
 class OrderImageDownloadView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
-    def get(self, request, pk):
+    def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
         images = order.image.filter(selected_for_exclusion=False)
-
-        # Log the download action
-        UserAction.objects.create(
-            user=request.user,
-            action_type='download',
-            order=order
-        )
-
+        
         address_safe = slugify(order.address)
         zip_filename = f'order_{address_safe}.zip'
-
-        response = StreamingHttpResponse(
-            self.stream_zip_file(images),
-            content_type='application/zip'
-        )
-        response['Content-Disposition'] = f'attachment; filename={zip_filename}'
-        response['Content-Transfer-Encoding'] = 'binary'
-
-        return response
-
-    def stream_zip_file(self, images):
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
+        zip_buffer = io.BytesIO()
+        
+        # Create the zip file
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
             for image in images:
                 file_path = image.image.name
-
                 if not default_storage.exists(file_path):
                     continue
-
-                # Add the file and its relative path to the zip file
                 with default_storage.open(file_path, 'rb') as file_obj:
                     relative_path = self.get_relative_path(file_path)
                     unique_name = self.get_unique_filename(zip_file, relative_path)
                     zip_file.writestr(unique_name, file_obj.read())
+        
+        zip_buffer.seek(0)
 
-        buffer.seek(0)
-        while chunk := buffer.read(1024):
-            yield chunk
+        # Save the ZIP to S3 or your media storage
+        zip_file_path = f'media/zips/{zip_filename}'
+        default_storage.save(zip_file_path, zip_buffer)
+        
+        # Update the order's zip file path in the model
+        order_group = order.orderimagegroup_set.last()  # Assuming there's always a group
+        order_group.zip_file_path = zip_file_path
+        order_group.save()
+
+        return JsonResponse({'zip_url': default_storage.url(zip_file_path)})
 
     def get_relative_path(self, file_path):
-        # Remove the leading part of the path to get a relative path for the ZIP
         base_dir = 'media/'
         if file_path.startswith(base_dir):
             return file_path[len(base_dir):]
