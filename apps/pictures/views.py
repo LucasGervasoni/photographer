@@ -27,6 +27,7 @@ from django.core.files.storage import default_storage
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 import boto3
+import tarfile
 from botocore.config import Config
 import logging
 
@@ -54,35 +55,36 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         )
 
         address_safe = slugify(order.address)
-        zip_filename = f'order_{address_safe}.zip'
+        targz_filename = f'order_{address_safe}.tar.gz'
 
         response = StreamingHttpResponse(
-            self.stream_zip_file(images),
-            content_type='application/zip'
+            self.stream_tar_file(images),
+            content_type='application/gzip'
         )
-        response['Content-Disposition'] = f'attachment; filename={zip_filename}'
+        response['Content-Disposition'] = f'attachment; filename={targz_filename}'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
-
-    def stream_zip_file(self, images):
+    
+    def stream_tar_file(self, images):
         buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, 'w') as zip_file:
+        with tarfile.open(fileobj=buffer, mode='w:gz') as tar_file:
             for image in images:
                 file_path = image.image.name
 
                 if not default_storage.exists(file_path):
                     continue
 
-                # Add the file and its relative path to the zip file
                 with default_storage.open(file_path, 'rb') as file_obj:
                     relative_path = self.get_relative_path(file_path)
-                    unique_name = self.get_unique_filename(zip_file, relative_path)
-                    zip_file.writestr(unique_name, file_obj.read())
+                    tar_info = tarfile.TarInfo(name=relative_path)
+                    tar_info.size = file_obj.size
+                    tar_file.addfile(tar_info, file_obj)
 
         buffer.seek(0)
-        while chunk := buffer.read(8192):
+        while chunk := buffer.read(1024):
             yield chunk
+
 
     def get_relative_path(self, file_path):
         # Remove the leading part of the path to get a relative path for the ZIP
@@ -99,7 +101,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-  
+
     
 # Upload 
 

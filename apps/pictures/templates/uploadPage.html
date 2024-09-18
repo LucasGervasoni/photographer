@@ -248,7 +248,7 @@
             event.preventDefault();
             var formData = new FormData(uploadForm);
             var files = Array.from(document.querySelector('.fileInput').files);
-            files = files.filter(file => file.name !== '.DS_Store');
+            // files = files.filter(file => file.name !== '.DS_Store');
             files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);

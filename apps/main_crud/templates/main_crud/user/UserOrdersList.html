@@ -242,7 +242,7 @@
 
         // Set the file name you want to use
         const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
-        const zipFilename = `order_${addressSafe}.zip`;
+        const targzFilename = `order_${addressSafe}.tar.gz`;
 
         // Show the progress pop-up
         showPopup('popup-progress');
@@ -262,7 +262,7 @@
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = zipFilename;  // Set the file name here
+            a.download = targzFilename;  // Set the file name here
 
             // Append link to the body
             document.body.appendChild(a);
