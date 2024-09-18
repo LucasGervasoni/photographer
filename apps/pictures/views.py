@@ -55,36 +55,35 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         )
 
         address_safe = slugify(order.address)
-        targz_filename = f'order_{address_safe}.tar.gz'
+        zip_filename = f'order_{address_safe}.zip'
 
         response = StreamingHttpResponse(
-            self.stream_tar_file(images),
-            content_type='application/gzip'
+            self.stream_zip_file(images),
+            content_type='application/zip'
         )
-        response['Content-Disposition'] = f'attachment; filename={targz_filename}'
+        response['Content-Disposition'] = f'attachment; filename={zip_filename}'
         response['Content-Transfer-Encoding'] = 'binary'
 
         return response
-    
-    def stream_tar_file(self, images):
+
+    def stream_zip_file(self, images):
         buffer = io.BytesIO()
-        with tarfile.open(fileobj=buffer, mode='w:gz') as tar_file:
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
             for image in images:
                 file_path = image.image.name
 
                 if not default_storage.exists(file_path):
                     continue
 
+                # Add the file and its relative path to the zip file
                 with default_storage.open(file_path, 'rb') as file_obj:
                     relative_path = self.get_relative_path(file_path)
-                    tar_info = tarfile.TarInfo(name=relative_path)
-                    tar_info.size = file_obj.size
-                    tar_file.addfile(tar_info, file_obj)
+                    unique_name = self.get_unique_filename(zip_file, relative_path)
+                    zip_file.writestr(unique_name, file_obj.read())
 
         buffer.seek(0)
         while chunk := buffer.read(1024):
             yield chunk
-
 
     def get_relative_path(self, file_path):
         # Remove the leading part of the path to get a relative path for the ZIP
@@ -101,7 +100,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-
+  
     
 # Upload 
 
