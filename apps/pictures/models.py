@@ -95,20 +95,10 @@ class OrderImage(models.Model):
     def get_order_address_folder(self):
         """
         Get the folder path for this order based on the order's address.
-        If a 'converted_image' folder already exists, a new folder with a count will be created.
+        The converted image will be saved in the 'converted_image' folder inside this directory.
         """
-        base_folder = self.order.address  # Endereço da order
-        folder_name = 'converted_image'
-        folder_path = os.path.join(base_folder, folder_name)
-
-        # Se o caminho já existir, adicionar um contador
-        counter = 1
-        while os.path.exists(folder_path):
-            folder_name_with_count = f'{folder_name}{counter}'
-            folder_path = os.path.join(base_folder, folder_name_with_count)
-            counter += 1
-
-        return folder_path
+        order_address = self.order.address  # Assuming 'address' is a field in the Order model
+        return os.path.join(order_address, 'converted_image')
         
     def compress_webp(self, image, max_size_mb=1, quality=5):
         """
@@ -143,10 +133,6 @@ class OrderImage(models.Model):
         Verifies if the file already exists before saving.
         """
         converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.webp')
-
-        # Verifica se o arquivo já existe no storage
-        if default_storage.exists(converted_image_path):
-            return default_storage.url(converted_image_path)
 
         # Se o arquivo não existir, faz a compressão e salva
         compressed_image = self.compress_webp(image, max_size_mb=1, quality=quality)
