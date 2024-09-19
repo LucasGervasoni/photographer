@@ -98,7 +98,7 @@ class OrderImage(models.Model):
         The converted image will be saved in the 'converted_image' folder inside this directory.
         """
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
-        return os.path.join(order_address, 'converted_image')
+        return os.path.join(order_address, 'converted_image' + 1)
         
     def compress_webp(self, image, max_size_mb=1, quality=5):
         """
