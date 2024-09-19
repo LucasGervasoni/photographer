@@ -10,6 +10,10 @@
 {% block content %}
 <style>
 
+.hidden{
+  display: none !important;
+}
+
 .d-none {
   display: none !important;
 }
@@ -149,7 +153,7 @@
 </div>
 
 <!-- Progress Pop-up -->
-<div id="popup-progress" class="popup d-none">
+<div id="popup-progress" class="popup hidden">
   <div class="popup-content">
     <div class="popup-header">
       <h2>Your download is in progress...</h2>
@@ -167,20 +171,20 @@
 </div>
 
 <!-- Success Pop-up -->
-<div id="popup-success" class="popup d-none">
+<div id="popup-success" class="popup hidden">
   <div class="popup-content">
     <div class="popup-header">
       <h2>Success!</h2>
     </div>
     <div class="popup-body">
       <p>Your download has been completed successfully!</p>
-      <button onclick="closePopup('popup-success')">Continue</button>
+      <button id="continue-btn" onclick="closePopup('popup-success')">Continue</button>
     </div>
   </div>
 </div>
 
 <!-- Error Pop-up -->
-<div id="popup-error" class="popup d-none">
+<div id="popup-error" class="popup hidden">
   <div class="popup-content">
     <div class="popup-header">
       <h2>Error!</h2>
@@ -326,15 +330,65 @@
       });
     });
 
-    // Helper functions for showing/hiding popups
-    function showPopup(popupId) {
-      document.getElementById(popupId).classList.remove('d-none');
-    }
+    // Copy scan URL
+    document.querySelectorAll('.copy-scan-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        const orderId = this.getAttribute('data-order-id');
+        const urlElement = document.getElementById(`scan-url-${orderId}`);
 
-    function closePopup(popupId) {
-      document.getElementById(popupId).classList.add('d-none');
+        // Create a temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        tempInput.value = urlElement.textContent;
+        document.body.appendChild(tempInput);
+
+        // Select the text and copy it to clipboard
+        tempInput.select();
+        document.execCommand('copy');
+
+        // Remove the temporary input
+        document.body.removeChild(tempInput);
+
+        // Change button appearance to show it's been copied
+        this.classList.add('copied-btn');
+        this.textContent = 'Copied';
+
+        // Optionally, disable the button after copying
+        this.disabled = true;
+      });
+    });
+
+  // Função para mostrar o pop-up
+  function showPopup(popupId) {
+    const popupElement = document.getElementById(popupId);
+    if (popupElement) {
+      popupElement.classList.remove('hidden');
+    } else {
+      console.error(`Popup com ID ${popupId} não encontrado.`);
     }
-  });
+  }
+
+  // Função para fechar o pop-up
+  function closePopup(popupId) {
+    const popupElement = document.getElementById(popupId);
+    if (popupElement && !popupElement.classList.contains('hidden')) {
+      popupElement.classList.add('hidden');  // Adiciona a classe 'hidden' para esconder o modal
+    }
+  }
+
+  // Captura o evento de clique no botão "Continue"
+  const continueBtn = document.getElementById('continue-btn');
+  
+  // Verifique se o botão existe antes de adicionar o ouvinte de eventos
+  if (continueBtn) {
+    continueBtn.addEventListener('click', function() {
+      closePopup('popup-success');  // Fecha o modal de sucesso
+    });
+  } else {
+    console.error('Botão "Continue" não encontrado.');
+  }
+});
 </script>
 
 
