@@ -156,10 +156,9 @@
       <td colspan="2">
         {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
         {% if order.order_status == "Uploaded" or order.order_status == "Production" or order.order_status == "Completed" %}
-        <a href="#" class="btn btn-outline-dark generate-zip-btn" data-order-id="{{ order.pk }}">Generate ZIP</a>
-        <a href="#" class="btn btn-outline-dark download-btn" id="download-btn-{{ order.pk }}" download>Download</a>
+        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
         {% else %}
-        <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Generate ZIP</a>
+        <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
         {% endif %}
         {% endif %}
       </td>
@@ -235,29 +234,46 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-      document.querySelectorAll('.generate-zip-btn').forEach(function (button) {
-        button.addEventListener('click', function (event) {
-          event.preventDefault();
-          const orderId = this.getAttribute('data-order-id');
-          const generateUrl = `/orders/${orderId}/generate-zip/`;
-  
-          // Show the progress pop-up
-          showPopup('popup-progress');
-  
-          // Perform the ZIP generation request via Fetch API
-          fetch(generateUrl, {
-            method: 'POST',
-            headers: {
-              'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+    document.querySelectorAll('.download-btn').forEach(function (button) {
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+        const orderId = this.getAttribute('data-order-id');
+        const downloadUrl = `/orders/${orderId}/download/`;
+
+        // Set the file name you want to use
+        const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
+        const zipFilename = `order_${addressSafe}.zip`;
+
+        // Show the progress pop-up
+        showPopup('popup-progress');
+
+        // Perform the download request via Fetch API
+        fetch(downloadUrl)
+          .then(response => {
+            if (response.ok) {
+              return response.blob();
+            } else {
+              throw new Error('Download error');
             }
           })
-          .then(response => response.json())
-          .then(data => {
-            // Activate the download button with the new ZIP file link
-            const downloadBtn = document.getElementById(`download-btn-${orderId}`);
-            downloadBtn.href = data.zip_url;
-            downloadBtn.classList.remove('d-none');
-  
+          .then(blob => {
+            // Create a temporary link element
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = zipFilename;  // Set the file name here
+
+            // Append link to the body
+            document.body.appendChild(a);
+
+            // Trigger download by clicking the link
+            a.click();
+
+            // Cleanup: Remove the link and revoke the object URL
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
             // Show the success pop-up
             showPopup('popup-success');
           })
@@ -269,83 +285,112 @@
             // Close the progress pop-up
             closePopup('popup-progress');
           });
-        });
       });
     });
-  
-    function showPopup(popupId) {
-      document.getElementById(popupId).classList.remove('d-none');
-    }
-  
-    function closePopup(popupId) {
-      document.getElementById(popupId).classList.add('d-none');
-    }
-  
-  function submitOrderStatusForm(selectElement) {
-      const form = selectElement.closest('form');
-      const orderId = form.getAttribute('data-order-id');
-      const formData = new FormData(form);
-  
-      fetch(form.action, {
-          method: 'POST',
-          headers: {
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-          },
-          body: formData
-      })
-      .then(response => {
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          return response.json();
-      })
-      .then(data => {
-          // Mostrar um alerta de sucesso quando o status do pedido for atualizado
-          alert('Order status updated successfully!');
-  
-          // Mostrar ou ocultar o formulário de atribuição de editor com base no novo status
-          const assignEditorWrapper = document.getElementById(`assign-editor-wrapper-${orderId}`);
-          const selectedStatus = selectElement.value;
-  
-          if (selectedStatus === 'Production' || selectedStatus === 'Completed') {
-              assignEditorWrapper.classList.remove('d-none');
-          } else {
-              assignEditorWrapper.classList.add('d-none');
-          }
-      })
-      .catch(error => {
-          console.error('There was a problem with the fetch operation:', error);
+
+    // Copy scan URL
+    document.querySelectorAll('.copy-scan-btn').forEach(function (button) {
+      button.addEventListener('click', function () {
+        const orderId = this.getAttribute('data-order-id');
+        const urlElement = document.getElementById(`scan-url-${orderId}`);
+
+        // Create a temporary input element
+        const tempInput = document.createElement('input');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        tempInput.value = urlElement.textContent;
+        document.body.appendChild(tempInput);
+
+        // Select the text and copy it to clipboard
+        tempInput.select();
+        document.execCommand('copy');
+
+        // Remove the temporary input
+        document.body.removeChild(tempInput);
+
+        // Change button appearance to show it's been copied
+        this.classList.add('copied-btn');
+        this.textContent = 'Copied';
+
+        // Optionally, disable the button after copying
+        this.disabled = true;
       });
+    });
+  });
+
+  function showPopup(popupId) {
+    document.getElementById(popupId).classList.remove('d-none');
   }
-  
-  function submitAssignEditorForm(buttonElement) {
-      const form = buttonElement.closest('form');
-      const orderId = form.getAttribute('data-order-id');
-      const formData = new FormData(form);
-  
-      fetch(form.action, {
-          method: 'POST',
-          headers: {
-              'X-Requested-With': 'XMLHttpRequest',
-              'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-          },
-          body: formData
-      })
-      .then(response => {
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          return response.json();
-      })
-      .then(data => {
-          // Recarregar a página automaticamente após atribuir o editor
-          window.location.reload();
-      })
-      .catch(error => {
-          console.error('There was a problem with the fetch operation:', error);
-      });
+
+  function closePopup(popupId) {
+    document.getElementById(popupId).classList.add('d-none');
   }
-  
+
+function submitOrderStatusForm(selectElement) {
+    const form = selectElement.closest('form');
+    const orderId = form.getAttribute('data-order-id');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Mostrar um alerta de sucesso quando o status do pedido for atualizado
+        alert('Order status updated successfully!');
+
+        // Mostrar ou ocultar o formulário de atribuição de editor com base no novo status
+        const assignEditorWrapper = document.getElementById(`assign-editor-wrapper-${orderId}`);
+        const selectedStatus = selectElement.value;
+
+        if (selectedStatus === 'Production' || selectedStatus === 'Completed') {
+            assignEditorWrapper.classList.remove('d-none');
+        } else {
+            assignEditorWrapper.classList.add('d-none');
+        }
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+    });
+}
+
+function submitAssignEditorForm(buttonElement) {
+    const form = buttonElement.closest('form');
+    const orderId = form.getAttribute('data-order-id');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Recarregar a página automaticamente após atribuir o editor
+        window.location.reload();
+    })
+    .catch(error => {
+        console.error('There was a problem with the fetch operation:', error);
+    });
+}
+
 </script>
 {% endblock %}
