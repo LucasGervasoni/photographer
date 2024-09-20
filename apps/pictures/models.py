@@ -100,13 +100,25 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
         
+    def convert_to_tiff(image):
+        """
+        Convert the image to TIFF format to avoid issues when converting directly to WebP.
+        """
+        image_io = ContentFile(b'')
+        image.save(image_io, format='TIFF')  # Convert to TIFF first
+        image_io.seek(0)
+        return Image.open(image_io)  # Reopen the image as a TIFF for further processing
+    
     def compress_webp(self, image, max_size_mb=1, quality=85):
         """
         Compress the image to WebP format and ensure it does not exceed max_size_mb.
         The image will be resized if necessary. The quality parameter adjusts the compression level.
         """
+        # Convert the image to TIFF format first
+        tiff_image = self.convert_to_tiff(image)
+        
         image_io = ContentFile(b'')
-        image.save(image_io, format='WEBP', quality=quality, optimize=True)
+        tiff_image.save(image_io, format='WEBP', quality=quality, optimize=True)
 
         # Check the size of the image in MB
         size_in_mb = image_io.tell() / (512 * 512)
