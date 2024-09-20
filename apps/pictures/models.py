@@ -154,7 +154,7 @@ class OrderImage(models.Model):
                 with rawpy.imread(self.image) as raw:
                     rgb = raw.postprocess()
 
-                image = Image.fromarray(rgb)
+                image = Image.fromarray(rgb).convert('RGB')  # Ensure the image is in 'RGB' mode
 
             elif file_extension in ['hevc', 'heic']:
                 try:
@@ -168,14 +168,14 @@ class OrderImage(models.Model):
                             "raw",
                             heif_image.mode,
                             heif_image.stride,
-                        )
+                        ).convert('RGB')  # Ensure the image is in 'RGB' mode
                 except Exception as e:
                     print(f"Error processing HEIC/HEVC file: {e}")
                     return None
                 
             elif file_extension in ['jpg', 'jpeg']:
                 # Process JPG/JPEG files
-                image = Image.open(self.image)
+                image = Image.open(self.image).convert('RGB')  # Ensure the image is in 'RGB' mode
 
             else:
                 # If not a supported format, return None
