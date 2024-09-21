@@ -346,25 +346,28 @@ class OrderImageListView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        
-        # Verifique se o filtro para as fotos enviadas pelo Editor foi ativado
+
+        # Verifica se o filtro para exibir apenas as fotos do Editor foi ativado
         filter_by_editor = request.GET.get('filter', '') == 'editor'
 
         if filter_by_editor:
-            # Obtenha o grupo "Editor"
+            # Obtém o grupo "Editor"
             editor_group = Group.objects.get(name='Editor')
-            
-            # Filtre as ações de upload feitas por usuários do grupo Editor
+
+            # Filtra os usuários do grupo Editor que fizeram uploads
             editor_user_ids = editor_group.user_set.values_list('id', flat=True)
+
+            # Obtém as imagens que foram enviadas pelos editores
             user_actions = UserAction.objects.filter(
-                user_id__in=editor_user_ids, 
-                action_type='upload',  # Assumindo que o 'upload' é registrado no campo action_type
+                user_id__in=editor_user_ids,
+                action_type='upload',  # Assumindo que 'upload' é registrado no campo action_type
                 order=order
-            ).values_list('order_image_id', flat=True)  # Obtém IDs das imagens enviadas pelos editores
+            ).values_list('order_image_id', flat=True)  # Obtém os IDs das imagens enviadas pelos editores
 
             # Filtrar as imagens relacionadas às ações dos editores
             images = order.image.filter(id__in=user_actions).order_by('uploaded_at')
         else:
+            # Caso o filtro não esteja ativado, exibe todas as imagens do pedido
             images = order.image.all().order_by('uploaded_at')
 
         # Convertendo as imagens ou vídeos para miniaturas
@@ -372,20 +375,20 @@ class OrderImageListView(LoginRequiredMixin, View):
             if not image.converted_image:  # Verifica se a miniatura já existe
                 image.convert_media()
 
-        paginator = Paginator(images, 21) 
+        paginator = Paginator(images, 21)  # Paginação com 21 imagens por página
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
-        
+
         image_count = images.count()
-        
+
         recent_scan = order.orderimagegroup_set.order_by('-created_at').first()
         scan_url = recent_scan.scan_url if recent_scan else None
-        
+
         return render(request, 'listImage.html', {
-            'order': order, 
-            'page_obj': page_obj, 
+            'order': order,
+            'page_obj': page_obj,
             'image_count': image_count,
-            'scan_url': scan_url  
+            'scan_url': scan_url
         })
 
 class ToggleImageSelectionView(View):

@@ -237,7 +237,7 @@
 
         fileInput.addEventListener('change', function (event) {
             var files = Array.from(fileInput.files);
-            var filteredFiles = files.filter(file => file.name !== '.DS_Store');
+            var filteredFiles = files.filter(file => file.name !== '.DS_Store' && !file.name.endsWith('.BridgeSort'));
             filteredFiles.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
             var dataTransfer = new DataTransfer();
             filteredFiles.forEach(file => dataTransfer.items.add(file));
