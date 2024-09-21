@@ -64,6 +64,15 @@
     {% endif %}
     {% else %}
     {% endif %}
+    {% if request.user.is_superuser or request.user|has_group:"Editor" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
+    <form method="GET" action="">
+      <label for="folder-select">Filter:</label>
+      <select name="filter" id="folder-select" class="form-control mb-2" onchange="this.form.submit()">
+          <option value="">All Files</option>
+          <option value="editor" {% if request.GET.filter == "editor" %}selected{% endif %}>Editor-Uploaded Files</option>
+      </select>
+  </form>
+  {% endif %}
   </div>
 </div>
 <br>
@@ -139,6 +148,10 @@
           {% endif %}
           <a class="btn btn-info btn-block" href="{% url 'userOrders--page' %}">Back to Orders</a>
           {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
+          <select id="folder-select-{{ order.id }}" class="form-control mb-2">
+            <option value="default">Default images</option>
+            <option value="edited" selected>Edited images</option>
+        </select>
           <a href="#" class="btn btn-outline-dark btn-block download-btn" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
           {% else %}
           <a href="#" class="btn btn-outline-dark btn-block disabled" aria-disabled="true">Download</a>
@@ -277,57 +290,67 @@
 
     // Script for downloading selected images
     document.querySelectorAll('.download-btn').forEach(function (button) {
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const downloadUrl = `/orders/${orderId}/download/`;
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const orderId = this.getAttribute('data-order-id');
+            const downloadUrl = `/orders/${orderId}/download/`;
 
-        // Set the file name you want to use
-        const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
-        const zipFilename = `order_${addressSafe}.zip`;
-
-        // Show the progress pop-up
-        showPopup('popup-progress');
-
-        // Perform the download request via Fetch API
-        fetch(downloadUrl)
-          .then(response => {
-            if (response.ok) {
-              return response.blob();
-            } else {
-              throw new Error('Download error');
+            // Check if the user selected the "Edited" folder
+            const folderSelect = document.getElementById(`folder-select-${orderId}`);
+            let folderType = 'default';
+            if (folderSelect) {
+                folderType = folderSelect.value;
             }
-          })
-          .then(blob => {
-            // Create a temporary link element
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = zipFilename;  // Set the file name here
 
-            // Append link to the body
-            document.body.appendChild(a);
+            // Set the file name you want to use
+            const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
+            const zipFilename = `order_${addressSafe}.zip`;
 
-            // Trigger download by clicking the link
-            a.click();
+            // Modify the download URL based on the folder selection
+            const finalDownloadUrl = folderType === 'edited' ? `${downloadUrl}?folder=edited` : downloadUrl;
 
-            // Cleanup: Remove the link and revoke the object URL
-            a.remove();
-            window.URL.revokeObjectURL(url);
+            // Show the progress pop-up
+            showPopup('popup-progress');
 
-            // Show the success pop-up
-            showPopup('popup-success');
-          })
-          .catch(error => {
-            // Error in connection or request processing
-            showPopup('popup-error');
-          })
-          .finally(() => {
-            // Close the progress pop-up
-            closePopup('popup-progress');
-          });
-      });
+            // Perform the download request via Fetch API
+            fetch(finalDownloadUrl)
+              .then(response => {
+                  if (response.ok) {
+                      return response.blob();
+                  } else {
+                      throw new Error('Download error');
+                  }
+              })
+              .then(blob => {
+                  // Create a temporary link element
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.style.display = 'none';
+                  a.href = url;
+                  a.download = zipFilename;  // Set the file name here
+
+                  // Append link to the body
+                  document.body.appendChild(a);
+
+                  // Trigger download by clicking the link
+                  a.click();
+
+                  // Cleanup: Remove the link and revoke the object URL
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+
+                  // Show the success pop-up
+                  showPopup('popup-success');
+              })
+              .catch(error => {
+                  // Error in connection or request processing
+                  showPopup('popup-error');
+              })
+              .finally(() => {
+                  // Close the progress pop-up
+                  closePopup('popup-progress');
+              });
+        });
     });
 
     // Copy scan URL

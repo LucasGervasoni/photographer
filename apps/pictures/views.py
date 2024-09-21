@@ -45,7 +45,14 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.filter(selected_for_exclusion=False)
+        folder = request.GET.get('folder', 'default')
+
+        if folder == 'edited':
+            # Filter images from the "Edited" folder
+            images = order.image.filter(image__icontains='/Edited/', selected_for_exclusion=False)
+        else:
+            # Default behavior
+            images = order.image.filter(selected_for_exclusion=False)
 
         # Log the download action
         UserAction.objects.create(
@@ -86,7 +93,6 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             yield chunk
 
     def get_relative_path(self, file_path):
-        # Remove the leading part of the path to get a relative path for the ZIP
         base_dir = 'media/'
         if file_path.startswith(base_dir):
             return file_path[len(base_dir):]
@@ -100,7 +106,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             unique_name = f"{name}_{counter}{ext}"
             counter += 1
         return unique_name
-  
+
 # Upload 
 
 class OrderImageUploadView(LoginRequiredMixin, View):
@@ -259,6 +265,11 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
             images = []
             relative_path = request.POST.get('relative_path', '')
 
+            # Check if the user is in the Editor group
+            is_editor = request.user.groups.filter(name='Editor').exists()
+            if is_editor:
+                relative_path = 'Edited/' + relative_path if relative_path else 'Edited'
+
             for f in request.FILES.getlist('image'):
                 file_list.append(f.name)
 
@@ -328,16 +339,37 @@ class CreateOrderImageGroupView(LoginRequiredMixin, View):
 
 
 # View to display all images related to an order
+from django.contrib.auth.models import Group
+
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
 
     def get(self, request, pk):
         order = get_object_or_404(Order, pk=pk)
-        images = order.image.all().order_by('uploaded_at') 
         
-        # Converting images or videos to thumbnails
+        # Verifique se o filtro para as fotos enviadas pelo Editor foi ativado
+        filter_by_editor = request.GET.get('filter', '') == 'editor'
+
+        if filter_by_editor:
+            # Obtenha o grupo "Editor"
+            editor_group = Group.objects.get(name='Editor')
+            
+            # Filtre as ações de upload feitas por usuários do grupo Editor
+            editor_user_ids = editor_group.user_set.values_list('id', flat=True)
+            user_actions = UserAction.objects.filter(
+                user_id__in=editor_user_ids, 
+                action_type='upload',  # Assumindo que o 'upload' é registrado no campo action_type
+                order=order
+            ).values_list('order_image_id', flat=True)  # Obtém IDs das imagens enviadas pelos editores
+
+            # Filtrar as imagens relacionadas às ações dos editores
+            images = order.image.filter(id__in=user_actions).order_by('uploaded_at')
+        else:
+            images = order.image.all().order_by('uploaded_at')
+
+        # Convertendo as imagens ou vídeos para miniaturas
         for image in images:
-            if not image.converted_image:  # Check if the thumbnail already exists
+            if not image.converted_image:  # Verifica se a miniatura já existe
                 image.convert_media()
 
         paginator = Paginator(images, 21) 
@@ -355,7 +387,6 @@ class OrderImageListView(LoginRequiredMixin, View):
             'image_count': image_count,
             'scan_url': scan_url  
         })
-
 
 class ToggleImageSelectionView(View):
     def post(self, request, image_id):

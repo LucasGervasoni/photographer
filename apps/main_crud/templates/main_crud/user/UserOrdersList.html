@@ -154,14 +154,25 @@
       </td>
       {% endif %}
       <td colspan="2">
-        {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
-        {% if order.order_status == "Uploaded" or order.order_status == "Production" or order.order_status == "Completed" %}
-        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
-        {% else %}
+    {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
+    {% if order.order_status == "Uploaded" or order.order_status == "Production" or order.order_status == "Completed" %}
+        <div class="download-section">
+            {% if order.has_edited_files %}
+            <select id="folder-select-{{ order.id }}" class="form-control mb-2">
+                <option value="default">Default images</option>
+                <option value="edited" selected>Edited images</option>
+            </select>
+            {% endif %}
+            <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
+                Download
+            </a>
+        </div>
+    {% else %}
         <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
-        {% endif %}
-        {% endif %}
-      </td>
+    {% endif %}
+    {% endif %}
+</td>
+
     </tr>
     {% endfor %}
   </table>
@@ -233,90 +244,71 @@
 
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('.download-btn').forEach(function (button) {
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        const orderId = this.getAttribute('data-order-id');
-        const downloadUrl = `/orders/${orderId}/download/`;
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const orderId = this.getAttribute('data-order-id');
+            const downloadUrl = `/orders/${orderId}/download/`;
 
-        // Set the file name you want to use
-        const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
-        const zipFilename = `order_${addressSafe}.zip`;
-
-        // Show the progress pop-up
-        showPopup('popup-progress');
-
-        // Perform the download request via Fetch API
-        fetch(downloadUrl)
-          .then(response => {
-            if (response.ok) {
-              return response.blob();
-            } else {
-              throw new Error('Download error');
+            // Check if the user selected the "Edited" folder
+            const folderSelect = document.getElementById(`folder-select-${orderId}`);
+            let folderType = 'default';
+            if (folderSelect) {
+                folderType = folderSelect.value;
             }
-          })
-          .then(blob => {
-            // Create a temporary link element
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = zipFilename;  // Set the file name here
 
-            // Append link to the body
-            document.body.appendChild(a);
+            // Set the file name you want to use
+            const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
+            const zipFilename = `order_${addressSafe}.zip`;
 
-            // Trigger download by clicking the link
-            a.click();
+            // Modify the download URL based on the folder selection
+            const finalDownloadUrl = folderType === 'edited' ? `${downloadUrl}?folder=edited` : downloadUrl;
 
-            // Cleanup: Remove the link and revoke the object URL
-            a.remove();
-            window.URL.revokeObjectURL(url);
+            // Show the progress pop-up
+            showPopup('popup-progress');
 
-            // Show the success pop-up
-            showPopup('popup-success');
-          })
-          .catch(error => {
-            // Error in connection or request processing
-            showPopup('popup-error');
-          })
-          .finally(() => {
-            // Close the progress pop-up
-            closePopup('popup-progress');
-          });
-      });
+            // Perform the download request via Fetch API
+            fetch(finalDownloadUrl)
+              .then(response => {
+                  if (response.ok) {
+                      return response.blob();
+                  } else {
+                      throw new Error('Download error');
+                  }
+              })
+              .then(blob => {
+                  // Create a temporary link element
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.style.display = 'none';
+                  a.href = url;
+                  a.download = zipFilename;  // Set the file name here
+
+                  // Append link to the body
+                  document.body.appendChild(a);
+
+                  // Trigger download by clicking the link
+                  a.click();
+
+                  // Cleanup: Remove the link and revoke the object URL
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
+
+                  // Show the success pop-up
+                  showPopup('popup-success');
+              })
+              .catch(error => {
+                  // Error in connection or request processing
+                  showPopup('popup-error');
+              })
+              .finally(() => {
+                  // Close the progress pop-up
+                  closePopup('popup-progress');
+              });
+        });
     });
-
-    // Copy scan URL
-    document.querySelectorAll('.copy-scan-btn').forEach(function (button) {
-      button.addEventListener('click', function () {
-        const orderId = this.getAttribute('data-order-id');
-        const urlElement = document.getElementById(`scan-url-${orderId}`);
-
-        // Create a temporary input element
-        const tempInput = document.createElement('input');
-        tempInput.style.position = 'absolute';
-        tempInput.style.left = '-9999px';
-        tempInput.value = urlElement.textContent;
-        document.body.appendChild(tempInput);
-
-        // Select the text and copy it to clipboard
-        tempInput.select();
-        document.execCommand('copy');
-
-        // Remove the temporary input
-        document.body.removeChild(tempInput);
-
-        // Change button appearance to show it's been copied
-        this.classList.add('copied-btn');
-        this.textContent = 'Copied';
-
-        // Optionally, disable the button after copying
-        this.disabled = true;
-      });
-    });
-  });
+});
 
   function showPopup(popupId) {
     document.getElementById(popupId).classList.remove('d-none');

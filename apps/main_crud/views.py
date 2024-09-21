@@ -6,7 +6,7 @@ from django.views.generic.edit import UpdateView, CreateView, DeleteView
 from apps.main_crud.models import Order, OrderEditorAssignment
 from django.contrib.auth.models import Group
 from apps.main_crud.forms import OrderForm  
-from apps.pictures.models import OrderImageGroup
+from apps.pictures.models import OrderImage, OrderImageGroup
 from django.db.models import OuterRef, Subquery 
 from django.urls import reverse, reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -135,6 +135,10 @@ class OrderDeleteView(GroupRequiredMixin,LoginRequiredMixin,DeleteView):
         return context
 
 #List Orders for user
+from django.db.models import Exists, OuterRef, Subquery
+from django.db.models import Q
+from django.utils.dateparse import parse_date
+
 class UserPageOrders(LoginRequiredMixin, ListView):
     login_url = reverse_lazy('login')
     model = Order
@@ -184,6 +188,16 @@ class UserPageOrders(LoginRequiredMixin, ListView):
         ).exclude(Q(scan_url='') | Q(scan_url='null')).order_by('-created_at').values('scan_url')[:1]
 
         queryset = queryset.annotate(latest_scan_url=Subquery(latest_scan_url))
+
+        # Annotate whether the "Edited" folder has any files for each order
+        edited_folder_exists = Subquery(
+            OrderImage.objects.filter(
+                group__order=OuterRef('pk'),
+                image__icontains='/Edited/'
+            ).values('pk')[:1]
+        )
+
+        queryset = queryset.annotate(has_edited_files=Exists(edited_folder_exists))
 
         # Prefetch related OrderEditorAssignment for editor assignment handling
         queryset = queryset.prefetch_related('ordereditorassignment')

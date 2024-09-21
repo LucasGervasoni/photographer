@@ -173,10 +173,6 @@ class OrderImage(models.Model):
                 except Exception as e:
                     print(f"Error processing HEIC/HEVC file: {e}")
                     return None
-                
-            elif file_extension in ['jpg', 'jpeg']:
-                # Process JPG/JPEG files
-                image = Image.open(self.image).convert('RGB')  # Ensure the image is in 'RGB' mode
 
             else:
                 # If not a supported format, return None
