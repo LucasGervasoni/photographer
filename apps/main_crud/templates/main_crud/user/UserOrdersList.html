@@ -92,8 +92,16 @@
       <td>{{ order.order_created_at }}</td>
       <td class="d-flex align-items-center justify-content-center">
         <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
+        {% if not request.user|has_group:"Editor" %}
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
-        {% if request.user.is_superuser or request.user|has_group:"Photographer" or request.user|has_group:"Editor" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
+        {% endif %}
+        {% if request.user|has_group:"Editor" %}
+        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
+          Download
+        </a>
+        <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">Upload</a>
+        {% endif %}
+        {% if request.user.is_superuser or request.user|has_group:"Photographer" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
         {% if order.order_status == "Uploaded" or order.order_status == "Production" or order.order_status == "Completed" %}
         <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">+ Files</a>
         {% else %}
@@ -154,13 +162,13 @@
       </td>
       {% endif %}
       <td colspan="2">
-    {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
+    {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
     {% if order.order_status == "Uploaded" or order.order_status == "Production" or order.order_status == "Completed" %}
         <div class="download-section">
             {% if order.has_edited_files %}
             <select id="folder-select-{{ order.id }}" class="form-control mb-2">
-                <option value="default">Default images</option>
-                <option value="edited" selected>Edited images</option>
+                <option value="default">Default Folder</option>
+                <option value="edited">Edited images</option>
             </select>
             {% endif %}
             <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">

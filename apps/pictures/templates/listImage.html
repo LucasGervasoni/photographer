@@ -64,7 +64,7 @@
     {% endif %}
     {% else %}
     {% endif %}
-    {% if request.user.is_superuser or request.user|has_group:"Editor" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
+    {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
     <form method="GET" action="">
       <label for="folder-select">Filter:</label>
       <select name="filter" id="folder-select" class="form-control mb-2" onchange="this.form.submit()">
@@ -147,14 +147,13 @@
           <p>No images available.</p>
           {% endif %}
           <a class="btn btn-info btn-block" href="{% url 'userOrders--page' %}">Back to Orders</a>
-          {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" or request.user|has_group:"Editor" %}
+          {% if request.user.is_superuser or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
+          <h6 class="mt-2 mb-2">Choose the Original files or Edited files to be download</h6>
           <select id="folder-select-{{ order.id }}" class="form-control mb-2">
-            <option value="default">Default images</option>
-            <option value="edited" selected>Edited images</option>
-        </select>
+            <option value="default">Original images</option>
+            <option value="edited">Edited images</option>
+          </select>
           <a href="#" class="btn btn-outline-dark btn-block download-btn" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
-          {% else %}
-          <a href="#" class="btn btn-outline-dark btn-block disabled" aria-disabled="true">Download</a>
           {% endif %}
         </div>
       </div>
@@ -291,67 +290,73 @@
     // Script for downloading selected images
     document.querySelectorAll('.download-btn').forEach(function (button) {
         button.addEventListener('click', function (event) {
-            event.preventDefault();
+            event.preventDefault(); // Evitar comportamento padrão do link
+
             const orderId = this.getAttribute('data-order-id');
             const downloadUrl = `/orders/${orderId}/download/`;
 
-            // Check if the user selected the "Edited" folder
+            // Verificar se o usuário selecionou a pasta "Edited"
             const folderSelect = document.getElementById(`folder-select-${orderId}`);
-            let folderType = 'default';
+            let folderType = 'default'; // Padrão para "default"
             if (folderSelect) {
-                folderType = folderSelect.value;
+                folderType = folderSelect.value; // Definir valor com base no select
             }
 
-            // Set the file name you want to use
-            const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
+            // Obter o nome seguro do endereço da ordem
+            const addressSafe = this.getAttribute('data-order-address');
             const zipFilename = `order_${addressSafe}.zip`;
 
-            // Modify the download URL based on the folder selection
-            const finalDownloadUrl = folderType === 'edited' ? `${downloadUrl}?folder=edited` : downloadUrl;
+            // Modificar a URL do download com base na pasta selecionada
+            let finalDownloadUrl;
+            if (folderType === 'edited') {
+                finalDownloadUrl = `${downloadUrl}?folder=edited`; // Se o usuário escolheu "edited"
+            } else {
+                finalDownloadUrl = downloadUrl; // Caso contrário, mantém o padrão
+            }
 
-            // Show the progress pop-up
+            // Exibir o pop-up de progresso
             showPopup('popup-progress');
 
-            // Perform the download request via Fetch API
+            // Executar a requisição Fetch para realizar o download
             fetch(finalDownloadUrl)
-              .then(response => {
-                  if (response.ok) {
-                      return response.blob();
-                  } else {
-                      throw new Error('Download error');
-                  }
-              })
-              .then(blob => {
-                  // Create a temporary link element
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.style.display = 'none';
-                  a.href = url;
-                  a.download = zipFilename;  // Set the file name here
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob(); // Retornar o blob para download
+                    } else {
+                        throw new Error('Erro no download');
+                    }
+                })
+                .then(blob => {
+                    // Criar link temporário para o download
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = zipFilename;  // Definir nome do arquivo
 
-                  // Append link to the body
-                  document.body.appendChild(a);
+                    // Adicionar link ao DOM e simular clique
+                    document.body.appendChild(a);
+                    a.click();
 
-                  // Trigger download by clicking the link
-                  a.click();
+                    // Remover link e revogar URL temporária
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
 
-                  // Cleanup: Remove the link and revoke the object URL
-                  a.remove();
-                  window.URL.revokeObjectURL(url);
-
-                  // Show the success pop-up
-                  showPopup('popup-success');
-              })
-              .catch(error => {
-                  // Error in connection or request processing
-                  showPopup('popup-error');
-              })
-              .finally(() => {
-                  // Close the progress pop-up
-                  closePopup('popup-progress');
-              });
+                    // Exibir pop-up de sucesso
+                    showPopup('popup-success');
+                })
+                .catch(error => {
+                    // Exibir erro no caso de falha
+                    console.error('Erro ao realizar o download:', error);
+                    showPopup('popup-error');
+                })
+                .finally(() => {
+                    // Fechar o pop-up de progresso
+                    closePopup('popup-progress');
+                });
         });
     });
+
 
     // Copy scan URL
     document.querySelectorAll('.copy-scan-btn').forEach(function (button) {

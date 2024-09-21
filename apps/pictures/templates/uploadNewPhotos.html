@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load group_tags %}
 
 {% block title%}
 <title>Spotlight - Upload</title>
@@ -144,11 +145,13 @@
             <input class="fileInput" type="file" accept="*" webkitdirectory directory name="image" multiple data-path>
         </div>
 
+        {% if not request.user|has_group:"Editor" %}
         <!-- Editor Note -->
         <div class="form-group w-50">
             <label for="id_editor_note">Editor Note:</label>
             <textarea class="form-control" name="editor_note" id="id_editor_note" cols="40" rows="3"></textarea>
         </div>
+        {% endif %}
 
         <!-- Selected Service -->
         <div class="form-group w-50">

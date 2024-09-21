@@ -28,6 +28,7 @@ from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 import boto3
 import tarfile
+from django.contrib.auth.models import Group
 from botocore.config import Config
 import logging
 
@@ -339,7 +340,6 @@ class CreateOrderImageGroupView(LoginRequiredMixin, View):
 
 
 # View to display all images related to an order
-from django.contrib.auth.models import Group
 
 class OrderImageListView(LoginRequiredMixin, View):
     login_url = reverse_lazy('login')
