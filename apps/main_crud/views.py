@@ -188,6 +188,14 @@ class UserPageOrders(LoginRequiredMixin, ListView):
         ).exclude(Q(scan_url='') | Q(scan_url='null')).order_by('-created_at').values('scan_url')[:1]
 
         queryset = queryset.annotate(latest_scan_url=Subquery(latest_scan_url))
+        
+         # Anotar com o caminho do arquivo ZIP mais recente
+        latest_zip_path = OrderImageGroup.objects.filter(
+            order=OuterRef('pk'),
+            zip_file_path__isnull=False
+        ).exclude(Q(zip_file_path='') | Q(zip_file_path='null')).order_by('-created_at').values('zip_file_path')[:1]
+
+        queryset = queryset.annotate(latest_zip_path=Subquery(latest_zip_path))
 
         # Annotate whether the "Edited" folder has any files for each order
         edited_folder_exists = Subquery(

@@ -103,13 +103,14 @@ class OrderImage(models.Model):
     
     def compress_and_convert(self):
         """
-        Converte a imagem carregada para JPEG, salva e permite que o Bunny Optimizer a converta para WebP.
+        Converte uma cópia da imagem carregada para WebP, comprimida para um tamanho menor que 1MB, sem modificar a imagem original.
         """
         try:
-            file_extension = self.image.name.split('.')[-1].lower()
+            # Mantém o arquivo original sem modificações
+            original_file_extension = self.image.name.split('.')[-1].lower()
 
-            # Processa imagens HEIC/HEVC e outros formatos não suportados diretamente
-            if file_extension in ['heic', 'heif', 'hevc']:
+            # Processa a imagem original e prepara a conversão
+            if original_file_extension in ['heic', 'heif', 'hevc']:
                 with self.image.open('rb') as image_file:
                     heif_image = pillow_heif.read_heif(image_file.read())
                     image = Image.frombytes(
@@ -119,35 +120,46 @@ class OrderImage(models.Model):
                         "raw",
                         heif_image.mode,
                         heif_image.stride,
-                    ).convert('RGB')  # Certifica que a imagem está no modo RGB
-            elif file_extension in ['raw', 'dng', 'arw']:
-                # Process RAW files using rawpy
+                    ).convert('RGB')  # Converte para RGB
+            elif original_file_extension in ['raw', 'dng', 'arw']:
                 with rawpy.imread(self.image) as raw:
                     rgb = raw.postprocess()
 
-                image = Image.fromarray(rgb).convert('RGB')  # Certifica que a imagem está no modo RGB
+                image = Image.fromarray(rgb).convert('RGB')  # Converte para RGB
             else:
-                # Se não for HEIC/HEVC ou RAW, abre e converte a imagem para RGB
+                # Abre o arquivo e converte para RGB (não altera o arquivo original)
                 image = Image.open(self.image).convert('RGB')
 
-            # Cria um buffer para salvar a imagem convertida como JPEG
-            image_io = BytesIO()
-            image.save(image_io, format='JPEG', quality=85)
+            # Cria um buffer para salvar a imagem convertida como WebP
+            quality = 50  # Inicia com uma qualidade de 85
+            while True:
+                image_io = BytesIO()
+                image.save(image_io, format='WEBP', quality=quality)
 
-            # Gera o caminho correto para salvar o arquivo JPEG
+                # Verifica o tamanho do arquivo WebP
+                webp_size = image_io.tell()
+
+                # Se o arquivo for menor que 1MB, sai do loop
+                if webp_size <= 1 * 512 * 512 or quality <= 10:
+                    break
+
+                # Reduz a qualidade se o arquivo for maior que 1MB
+                quality -= 5
+
+            # Gera o caminho correto para salvar o arquivo WebP convertido
             file_basename = os.path.splitext(os.path.basename(self.image.name))[0]
-            order_folder = self.get_order_address_folder()  # Retorna o caminho sem 'converted_images'
-            converted_image_path = os.path.join('converted_images', order_folder, f'{file_basename}.jpg')
+            order_folder = self.get_order_address_folder()  # Retorna o caminho correto
+            converted_image_path = os.path.join('converted_images', order_folder, f'{file_basename}.webp')
 
-            # Salva a imagem convertida no campo `converted_image`
+            # Salva a imagem convertida no campo `converted_image` (não afeta o campo `image`)
             self.converted_image.save(converted_image_path, ContentFile(image_io.getvalue()), save=False)
             self.save()
 
-            # Retorna a URL da imagem convertida, agora salva como JPEG
+            # Retorna a URL da imagem convertida, agora salva como WebP
             return default_storage.url(self.converted_image.name)
 
         except Exception as e:
-            print(f"Error converting image to JPEG: {e}")
+            print(f"Error converting image to WebP: {e}")
             return None
 
     def convert_video_to_thumbnail(self):
