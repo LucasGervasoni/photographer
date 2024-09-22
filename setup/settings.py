@@ -82,28 +82,28 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-#HEROKU
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'd27qtj21sfr1b0',
-#         'USER': 'uekvi0ou38jfmr',
-#         'PASSWORD': 'p473912e85023c0677a816c0e3f3bc8d3b1e07fc01eed9d5d2d76b4b919598e4f',
-#         'HOST': 'c3nv2ev86aje4j.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
-#         'PORT': 5432,
-#         'CONN_MAX_AGE': 600,
-#         'OPTIONS': {
-#             'connect_timeout': 60,
-#         },
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
+#HEROKU
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'd27qtj21sfr1b0',
+        'USER': 'uekvi0ou38jfmr',
+        'PASSWORD': 'p473912e85023c0677a816c0e3f3bc8d3b1e07fc01eed9d5d2d76b4b919598e4f',
+        'HOST': 'c3nv2ev86aje4j.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com',
+        'PORT': 5432,
+        'CONN_MAX_AGE': 600,
+        'OPTIONS': {
+            'connect_timeout': 60,
+        },
+    }
+}
 
 
 # AWS
