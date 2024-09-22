@@ -1,3 +1,4 @@
+from io import BytesIO
 from django.db import models
 from apps.main_crud.models import Order
 import os
@@ -100,90 +101,53 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
     
-    def compress_webp(self, image, max_size_mb=1, quality=85):
-        """
-        Compress the image to WebP format and ensure it does not exceed max_size_mb.
-        The image will be resized if necessary. The quality parameter adjusts the compression level.
-        """
-        
-        image_io = ContentFile(b'')
-        image.save(image_io, format='WEBP', quality=quality, optimize=True)
-
-        # Check the size of the image in MB
-        size_in_mb = image_io.tell() / (512 * 512)
-        
-        if size_in_mb > max_size_mb:
-            # If the file is larger than max_size_mb, resize it
-            width, height = image.size
-            resize_factor = (max_size_mb / size_in_mb) ** 0.5  # Reduce both width and height proportionally
-            new_width = int(width * resize_factor)
-            new_height = int(height * resize_factor)
-            
-            # Resize the image using LANCZOS resampling
-            image = image.resize((new_width, new_height), Image.LANCZOS)
-
-            # Save the resized image as WebP with reduced quality
-            image_io = ContentFile(b'')
-            image.save(image_io, format='WEBP', quality=quality, optimize=True)
-
-        return image_io
-
-    def save_compressed_image(self, image, file_basename, quality=85):
-        """
-        Save the compressed WebP image using Django's default storage and return the URL.
-        Verifies if the file already exists before saving.
-        """
-        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.webp')
-
-        # Se o arquivo não existir, faz a compressão e salva
-        compressed_image = self.compress_webp(image, max_size_mb=1, quality=quality)
-        
-        self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
-        self.save()
-
-        return default_storage.url(self.converted_image.name)
-
     def compress_and_convert(self):
         """
-        Handle the conversion and compression of the image to WebP.
+        Converte a imagem carregada para JPEG, salva e permite que o Bunny Optimizer a converta para WebP.
         """
         try:
             file_extension = self.image.name.split('.')[-1].lower()
-            
-            if file_extension in ['raw', 'dng', 'arw']:
+
+            # Processa imagens HEIC/HEVC e outros formatos não suportados diretamente
+            if file_extension in ['heic', 'heif', 'hevc']:
+                with self.image.open('rb') as image_file:
+                    heif_image = pillow_heif.read_heif(image_file.read())
+                    image = Image.frombytes(
+                        heif_image.mode,
+                        heif_image.size,
+                        heif_image.data,
+                        "raw",
+                        heif_image.mode,
+                        heif_image.stride,
+                    ).convert('RGB')  # Certifica que a imagem está no modo RGB
+            elif file_extension in ['raw', 'dng', 'arw']:
                 # Process RAW files using rawpy
                 with rawpy.imread(self.image) as raw:
                     rgb = raw.postprocess()
 
-                image = Image.fromarray(rgb).convert('RGB')  # Ensure the image is in 'RGB' mode
-
-            elif file_extension in ['hevc', 'heic']:
-                try:
-                    # Abrir o arquivo no modo binário usando o backend de armazenamento
-                    with self.image.open('rb') as image_file:
-                        heif_image = pillow_heif.read_heif(image_file.read())
-                        image = Image.frombytes(
-                            heif_image.mode,
-                            heif_image.size,
-                            heif_image.data,
-                            "raw",
-                            heif_image.mode,
-                            heif_image.stride,
-                        ).convert('RGB')  # Ensure the image is in 'RGB' mode
-                except Exception as e:
-                    print(f"Error processing HEIC/HEVC file: {e}")
-                    return None
-
+                image = Image.fromarray(rgb).convert('RGB')  # Certifica que a imagem está no modo RGB
             else:
-                # If not a supported format, return None
-                return None
+                # Se não for HEIC/HEVC ou RAW, abre e converte a imagem para RGB
+                image = Image.open(self.image).convert('RGB')
 
-            # Save the compressed image and return the URL
-            image_name_without_extension = os.path.splitext(os.path.basename(self.image.name))[0]
-            return self.save_compressed_image(image, image_name_without_extension)
+            # Cria um buffer para salvar a imagem convertida como JPEG
+            image_io = BytesIO()
+            image.save(image_io, format='JPEG', quality=85)
+
+            # Gera o caminho correto para salvar o arquivo JPEG
+            file_basename = os.path.splitext(os.path.basename(self.image.name))[0]
+            order_folder = self.get_order_address_folder()  # Retorna o caminho sem 'converted_images'
+            converted_image_path = os.path.join('converted_images', order_folder, f'{file_basename}.jpg')
+
+            # Salva a imagem convertida no campo `converted_image`
+            self.converted_image.save(converted_image_path, ContentFile(image_io.getvalue()), save=False)
+            self.save()
+
+            # Retorna a URL da imagem convertida, agora salva como JPEG
+            return default_storage.url(self.converted_image.name)
 
         except Exception as e:
-            print(f"Error during image compression and conversion: {e}")
+            print(f"Error converting image to JPEG: {e}")
             return None
 
     def convert_video_to_thumbnail(self):

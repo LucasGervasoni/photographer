@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap4",
     "import_export",
     "storages",
+    "django_bunny_storage",
 ]
 
 
@@ -81,12 +82,12 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 #HEROKU
 # DATABASES = {
@@ -106,20 +107,20 @@ WSGI_APPLICATION = 'setup.wsgi.application'
 
 
 # AWS
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': 5432,
-        'CONN_MAX_AGE': 600,
-        'OPTIONS': {
-            'connect_timeout': 60,
-        },
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.getenv('DB_NAME'),
+#         'USER': os.getenv('DB_USER'),
+#         'PASSWORD': os.getenv('DB_PASSWORD'),
+#         'HOST': os.getenv('DB_HOST'),
+#         'PORT': 5432,
+#         'CONN_MAX_AGE': 600,
+#         'OPTIONS': {
+#             'connect_timeout': 60,
+#         },
+#     }
+# }
 
 
 # Password validation
@@ -156,47 +157,47 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-# AWS S3 configuration for storing static, media, and converted images files
-AWS_STORAGE_BUCKET_NAME =os.getenv('AWS_STORAGE_BUCKET_NAME')
-AWS_ACCESS_KEY_ID =os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY =os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_S3_REGION_NAME =os.getenv('AWS_S3_REGION_NAME')
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-AWS_S3_SIGNATURE_NAME = 's3v4'
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-}
+# BunnyCDN Storage configuration for storing static, media, and converted images files
+BUNNY_USERNAME = os.getenv('BUNNY_USERNAME')
+BUNNY_PASSWORD = os.getenv("BUNNY_PASSWORD")
+BUNNY_STORAGE_ZONE_NAME = os.getenv('BUNNY_STORAGE_ZONE_NAME')
+BUNNY_API_KEY = os.getenv('BUNNY_API_KEY')
+BUNNY_REGION = os.getenv('BUNNY_REGION')  # Defina a região do BunnyCDN onde está sua Storage Zone
+BUNNY_CDN_URL = f'spotlight.b-cdn.net/'
 
-AWS_S3_FILE_OVERWRITE = False
-
-AWS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-}
-
-AWS_QUERYSTRING_AUTH = False
-
-USE_S3 = True 
 # Custom storage backends for static and media files
-S3_ACCELERATE_ENDPOINT = 'spotlight-prod-us-west-1-static-media.s3-accelerate.amazonaws.com'
+# Configurando URLs e paths para BunnyCDN
+USE_BUNNYCDN = True
+
 # Static files (CSS, JavaScript, Images)
 STATICFILES_LOCATION = 'static'
-STATICFILES_STORAGE = 'custom_storages.StaticStorage'
-STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+STATICFILES_STORAGE = 'custom_storages.StaticStorage'  # Ajuste o backend customizado para BunnyCDN
+STATIC_URL = 'la.storage.bunnycdn.com/spot-storage/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "setup/static")
+    os.path.join(BASE_DIR, "setup/static"),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Diretório local onde os arquivos estáticos serão coletados
 
 # Media files (uploaded files)
 MEDIAFILES_LOCATION = 'media'
-DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'
-MEDIA_URL = f'media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_FILE_STORAGE = 'custom_storages.MediaStorage'# Altere o backend customizado para BunnyCDN
+MEDIA_URL = 'la.storage.bunnycdn.com/spot-storage/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Local onde os arquivos de mídia são salvos localmente
 
 # Converted images storage
-CONVERTED_IMAGES_DIR = os.path.join(settings.MEDIA_ROOT, 'converted_images')
-CONVERTED_IMAGES_URL = f'{settings.MEDIA_URL}converted_images/'
+CONVERTED_IMAGES_DIR = os.path.join(MEDIA_ROOT, 'converted_images')
+CONVERTED_IMAGES_URL = f'{MEDIA_URL}converted_images/'
 os.makedirs(CONVERTED_IMAGES_DIR, exist_ok=True)
+
+# Headers and CacheControl (equivalente ao AWS_S3_OBJECT_PARAMETERS)
+BUNNY_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'CacheControl': 'max-age=86400',  # Configuração de cache
+}
+
+# Desabilitar a autenticação via querystring, similar ao AWS_QUERYSTRING_AUTH = False
+BUNNY_QUERYSTRING_AUTH = False
+
 
 #Authentication
 LOGIN_REDIRECT_URL = 'userOrders--page'
