@@ -163,7 +163,7 @@ BUNNY_PASSWORD = os.getenv("BUNNY_PASSWORD")
 BUNNY_STORAGE_ZONE_NAME = os.getenv('BUNNY_STORAGE_ZONE_NAME')
 BUNNY_API_KEY = os.getenv('BUNNY_API_KEY')
 BUNNY_REGION = os.getenv('BUNNY_REGION')  # Defina a região do BunnyCDN onde está sua Storage Zone
-BUNNY_CDN_URL = f'https://spotlight.b-cdn.net/'
+BUNNY_CDN_URL = os.getenv('BUNNY_CDN_URL')
 
 # Custom storage backends for static and media files
 # Configurando URLs e paths para BunnyCDN
