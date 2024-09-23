@@ -1,9 +1,10 @@
 from django.urls import path
-from apps.pictures.views import  OrderImageListView, OrderImageUploadView, PhotographerImageUploadView, FilesListView, FileDeleteView, LogListView, LogDeleteView, CreateOrderImageGroupView, ToggleImageSelectionView
+from apps.pictures.views import  OrderImageListView, OrderImageUploadView, PhotographerImageUploadView, FilesListView, FileDeleteView, LogListView, LogDeleteView, CreateOrderImageGroupView, ToggleImageSelectionView,CreateZipView
 
 urlpatterns = [
     #UPLOAD
     path('orders/<int:pk>/upload/', OrderImageUploadView.as_view(), name='order_image_upload'),
+    path('create-zip/<int:group_id>/', CreateZipView.as_view(), name='create-zip'),
     path('orders/<int:pk>/upload_photographer/', PhotographerImageUploadView.as_view(), name='order_image_upload_photographer'),
     path('order/<int:pk>/create-group/', CreateOrderImageGroupView.as_view(), name='create_order_image_group'),
     #LIST

@@ -250,8 +250,10 @@
             var files = Array.from(document.querySelector('.fileInput').files);
             files = files.filter(file => file.name !== '.DS_Store');
             files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
             var selectedServices = Array.from(servicesField.querySelectorAll('input[type="checkbox"]:checked'))
                 .map(checkbox => checkbox.value);
+
             if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                 if (scanUrlField.value === "") {
                     alert('Please provide a valid 3D scan URL.');
@@ -263,27 +265,44 @@
                     return;
                 }
             }
+
             // Display new progress card
             uploadProgressCard.style.display = 'block';
             totalFiles = files.length; // Store total files count
             totalFileCount.textContent = totalFiles; // Update the total file count in the progress card
             currentFileCount.textContent = 0; // Reset current file count
             startTime = Date.now(); // Start time for time estimation
+
             uploadForm.querySelectorAll('input, button, textarea').forEach(function (element) {
                 element.disabled = true;
             });
+
             try {
+                let groupId = null; // Variável para armazenar o group_id
+
                 if (files.length === 0) {
                     try {
-                        await submitFormWithoutFiles(formData, uploadForm.action);
-                        showSuccessAlert();  // Redirect after success
+                        let response = await submitFormWithoutFiles(formData, uploadForm.action);
+                        if (response && response.status === 200) {
+                            let data = JSON.parse(response.responseText);
+                            groupId = data.group_id;  // Captura o group_id da resposta
+                            showSuccessAlert(groupId);  // Redirect after success
+                        } else {
+                            console.error('Erro ao enviar o formulário sem arquivos.');
+                        }
                     } catch (error) {
                         alert(error.message || 'Error submitting form.');
                     }
                 } else if (selectedServices.includes('3d scan') && selectedServices.length === 1) {
                     formData.append('scan_url', scanUrlField.value);
-                    await uploadFileWithRetries(null, formData, uploadForm.action);
-                    showSuccessAlert();  // Redirect after success
+                    let response = await uploadFileWithRetries(null, formData, uploadForm.action);
+                    if (response && response.status === 200) {
+                        let data = JSON.parse(response.responseText);
+                        groupId = data.group_id;  // Captura o group_id da resposta
+                        showSuccessAlert(groupId);  // Redirect after success
+                    } else {
+                        console.error('Erro ao enviar o formulário para upload de 3D scan.');
+                    }
                 } else {
                     for (let i = 0; i < files.length; i++) {
                         let file = files[i];
@@ -292,10 +311,25 @@
                             : '';  
                         formData.append('relative_path', relativePath);
                         createFileItem(file.name, i); // Create file progress item in the card
-                        await uploadFileWithRetries(file, formData, uploadForm.action, i);
+                        
+                        // Aqui colocamos o bloco try-catch que você perguntou
+                        try {
+                            let response = await uploadFileWithRetries(file, formData, uploadForm.action, i);
+                            if (response && response.status === 200) {  // Verifica o status na resposta
+                                let data = JSON.parse(response.responseText);  // Converte o texto da resposta para JSON
+                                if (data.group_id) {
+                                    groupId = data.group_id;  // Armazena o group_id da resposta
+                                }
+                            } else {
+                                console.error(`Erro ao fazer upload do arquivo: ${file.name}`);
+                            }
+                        } catch (error) {
+                            console.error('Erro durante o upload:', error.message);
+                        }
+                        
                         formData.delete('relative_path');
                     }
-                    showSuccessAlert();  // Redirect after success
+                    showSuccessAlert(groupId);  // Redirect after success
                 }
             } catch (error) {
                 alert(error.message || 'Error during upload.');
@@ -307,10 +341,37 @@
             }
         };
 
-        function showSuccessAlert() {
-            // Redirection to the userOrders--page after successful upload
-            window.location.href = "{% url 'userOrders--page' %}";
+
+        function showSuccessAlert(groupId) {
+            console.log("Chamando a função para criar o ZIP após o upload. groupId:", groupId);
+            if (groupId) {
+                createZipBeforeRedirect(groupId);  // Chama a criação do ZIP
+            } else {
+                console.error("groupId não está disponível.");
+            }
         }
+
+        async function createZipBeforeRedirect(groupId) {
+            try {
+                let response = await fetch(`/create-zip/${groupId}/`, {  
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    console.log('ZIP creation initiated successfully.');
+                    window.location.href = "{% url 'userOrders--page' %}";
+                } else {
+                    console.error('Failed to initiate ZIP creation.');
+                }
+            } catch (error) {
+                console.error('Error during ZIP creation request:', error);
+            }
+        }
+
 
         // Create a new file item in the progress card
         function createFileItem(fileName, fileId) {
@@ -347,14 +408,15 @@
 
         async function uploadFileWithRetries(file, formData, actionUrl, fileId, retries = 0) {
             try {
-                await uploadFileAsync(file, formData, actionUrl, fileId);
+                let response = await uploadFileAsync(file, formData, actionUrl, fileId); // Captura a resposta da função
+                return response; // Retorna a resposta
             } catch (error) {
                 if (retries < retryLimit) {
                     const delay = Math.pow(2, retries) * 1000; // Exponential backoff
                     await new Promise(resolve => setTimeout(resolve, delay));
-                    return uploadFileWithRetries(file, formData, actionUrl, fileId, retries + 1);
+                    return uploadFileWithRetries(file, formData, actionUrl, fileId, retries + 1); // Retry
                 } else {
-                    throw error;
+                    throw error; // Se exceder o número de tentativas, lança o erro
                 }
             }
         }
@@ -363,30 +425,35 @@
             return new Promise((resolve, reject) => {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
-                xhr.timeout = baseTimeout + (file ? (file.size / (1024 * 1024)) * 1000 : 0); 
+                xhr.timeout = baseTimeout + (file ? (file.size / (1024 * 1024)) * 1000 : 0);
+                
                 xhr.upload.onprogress = function (event) {
                     if (event.lengthComputable) {
                         var percentComplete = Math.round((event.loaded / event.total) * 100);
                         updateFileProgress(fileId, percentComplete);
                     }
                 };
+                
                 xhr.onload = function () {
                     if (xhr.status === 200) {
                         currentFileCount.textContent = parseInt(currentFileCount.textContent) + 1; // Increment file count
                         calculateRemainingTime(); // Calculate the remaining time
                         markFileComplete(fileId);
-                        resolve();
+                        resolve(xhr); // Retorna o objeto XMLHttpRequest como resposta
                     } else {
                         reject(new Error('Error during upload.'));
                     }
                 };
+                
                 xhr.onerror = function () {
                     reject(new Error('Upload failed.'));
                 };
+                
                 xhr.ontimeout = function () {
                     reject(new Error('Upload timed out.'));
                 };
-                // Modified section to append necessary form data for the file
+                
+                // Modificar a seção para anexar os dados do formulário corretamente
                 var uploadData = new FormData();
                 uploadData.append('csrfmiddlewaretoken', formData.get('csrfmiddlewaretoken'));
                 uploadData.append('image', file);
@@ -396,7 +463,8 @@
                 uploadData.append('photos_sent', formData.get('photos_sent'));
                 uploadData.append('photos_returned', formData.get('photos_returned'));
                 uploadData.append('relative_path', formData.get('relative_path'));
-                xhr.send(uploadData); // Send the modified upload data
+                
+                xhr.send(uploadData); // Envia os dados do formulário modificados
             });
         }
 
@@ -417,22 +485,27 @@
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', actionUrl, true);
                 xhr.timeout = baseTimeout;
+                
                 xhr.onload = function () {
                     if (xhr.status === 200) {
-                        resolve();
+                        resolve(xhr); // Retorna o objeto XMLHttpRequest como resposta
                     } else {
                         reject(new Error('Error submitting form.'));
                     }
                 };
+                
                 xhr.onerror = function () {
                     reject(new Error('Form submission failed.'));
                 };
+                
                 xhr.ontimeout = function () {
                     reject(new Error('Form submission timed out.'));
                 };
-                xhr.send(formData);
+                
+                xhr.send(formData); // Envia o formulário
             });
         }
+
     });
 </script>
 
