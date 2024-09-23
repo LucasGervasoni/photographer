@@ -279,44 +279,42 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Perform the download request via Fetch API
             fetch(finalDownloadUrl)
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();  // Expecting JSON response containing the zip_url
-                    } else {
-                        throw new Error('Download error');
-                    }
-                })
-                .then(data => {
-                    // URL to the zip file from the server
-                    const zipUrl = data.zip_url;
+              .then(response => {
+                  if (response.ok) {
+                      return response.blob();
+                  } else {
+                      throw new Error('Download error');
+                  }
+              })
+              .then(blob => {
+                  // Create a temporary link element
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.style.display = 'none';
+                  a.href = url;
+                  a.download = zipFilename;  // Set the file name here
 
-                    // Create a temporary link element
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = zipUrl;
-                    a.download = zipFilename;  // Set the file name here
+                  // Append link to the body
+                  document.body.appendChild(a);
 
-                    // Append link to the body
-                    document.body.appendChild(a);
+                  // Trigger download by clicking the link
+                  a.click();
 
-                    // Trigger download by clicking the link
-                    a.click();
+                  // Cleanup: Remove the link and revoke the object URL
+                  a.remove();
+                  window.URL.revokeObjectURL(url);
 
-                    // Cleanup: Remove the link
-                    document.body.removeChild(a);
-
-                    // Show the success pop-up
-                    showPopup('popup-success');
-                })
-                .catch(error => {
-                    // Error in connection or request processing
-                    console.error('Error downloading the file:', error);
-                    showPopup('popup-error');
-                })
-                .finally(() => {
-                    // Close the progress pop-up
-                    closePopup('popup-progress');
-                });
+                  // Show the success pop-up
+                  showPopup('popup-success');
+              })
+              .catch(error => {
+                  // Error in connection or request processing
+                  showPopup('popup-error');
+              })
+              .finally(() => {
+                  // Close the progress pop-up
+                  closePopup('popup-progress');
+              });
         });
     });
 });
