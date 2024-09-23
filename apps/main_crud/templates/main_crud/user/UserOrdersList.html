@@ -96,9 +96,11 @@
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
         {% endif %}
         {% if request.user|has_group:"Editor" %}
-        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
-          Download
-        </a>
+        {% if order.latest_zip_path %}
+              <a href="{{ order.latest_zip_path|replace:'//,/' }}" class="btn btn-outline-dark download-btn mr-2" download>
+                  Download
+              </a>
+            {% endif %}
         <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">Upload</a>
         <a href="{% url 'order_images' order.id %}?filter=editor" class="btn btn-outline-info ml-2">View Edited</a>
         {% endif %}
