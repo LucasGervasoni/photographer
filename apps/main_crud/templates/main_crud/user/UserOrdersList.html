@@ -96,11 +96,9 @@
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
         {% endif %}
         {% if request.user|has_group:"Editor" %}
-        {% if order.latest_zip_path %}
-              <a href="{{ order.latest_zip_path|replace:'//,/' }}" class="btn btn-outline-dark download-btn mr-2" download>
-                  Download
-              </a>
-            {% endif %}
+        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
+          Download
+        </a>
         <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">Upload</a>
         <a href="{% url 'order_images' order.id %}?filter=editor" class="btn btn-outline-info ml-2">View Edited</a>
         {% endif %}
@@ -174,11 +172,9 @@
                 <option value="edited">Edited images</option>
             </select>
             {% endif %}
-            {% if order.latest_zip_path %}
-              <a href="{{ order.latest_zip_path|replace:'//,/' }}" class="btn btn-outline-dark download-btn mr-2" download>
-                  Download
-              </a>
-            {% endif %}
+            <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
+                Download
+            </a>
         </div>
     {% else %}
         <a href="#" class="btn btn-outline-dark disabled" aria-disabled="true">Download</a>
@@ -257,6 +253,82 @@
 
 
 <script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.download-btn').forEach(function (button) {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const orderId = this.getAttribute('data-order-id');
+            const downloadUrl = `/orders/${orderId}/download/`;
+
+            // Check if the user selected the "Edited" folder
+            const folderSelect = document.getElementById(`folder-select-${orderId}`);
+            let folderType = 'default';
+            if (folderSelect) {
+                folderType = folderSelect.value;
+            }
+
+            // Set the file name you want to use
+            const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
+            const zipFilename = `order_${addressSafe}.zip`;
+
+            // Modify the download URL based on the folder selection
+            const finalDownloadUrl = folderType === 'edited' ? `${downloadUrl}?folder=edited` : downloadUrl;
+
+            // Show the progress pop-up
+            showPopup('popup-progress');
+
+            // Perform the download request via Fetch API
+            fetch(finalDownloadUrl)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();  // Expecting JSON response containing the zip_url
+                    } else {
+                        throw new Error('Download error');
+                    }
+                })
+                .then(data => {
+                    // URL to the zip file from the server
+                    const zipUrl = data.zip_url;
+
+                    // Create a temporary link element
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = zipUrl;
+                    a.download = zipFilename;  // Set the file name here
+
+                    // Append link to the body
+                    document.body.appendChild(a);
+
+                    // Trigger download by clicking the link
+                    a.click();
+
+                    // Cleanup: Remove the link
+                    document.body.removeChild(a);
+
+                    // Show the success pop-up
+                    showPopup('popup-success');
+                })
+                .catch(error => {
+                    // Error in connection or request processing
+                    console.error('Error downloading the file:', error);
+                    showPopup('popup-error');
+                })
+                .finally(() => {
+                    // Close the progress pop-up
+                    closePopup('popup-progress');
+                });
+        });
+    });
+});
+
+  function showPopup(popupId) {
+    document.getElementById(popupId).classList.remove('d-none');
+  }
+
+  function closePopup(popupId) {
+    document.getElementById(popupId).classList.add('d-none');
+  }
+
 function submitOrderStatusForm(selectElement) {
     const form = selectElement.closest('form');
     const orderId = form.getAttribute('data-order-id');

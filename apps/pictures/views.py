@@ -1,5 +1,7 @@
 
+import tempfile
 import threading
+import time
 import uuid
 from django.shortcuts import render, get_object_or_404, redirect
 import requests
@@ -41,7 +43,144 @@ logger = logging.getLogger(__name__)
 
 # Download
 
+class OrderImageDownloadView(LoginRequiredMixin, View):
+    login_url = reverse_lazy('login')
 
+    def get(self, request, pk):
+        order = get_object_or_404(Order, pk=pk)
+        folder = request.GET.get('folder', 'default')
+
+        if folder == 'edited':
+            # Filtra imagens da pasta "Edited"
+            images = order.image.filter(image__icontains='/Edited/', selected_for_exclusion=False)
+        else:
+            # Comportamento padrão
+            images = order.image.filter(selected_for_exclusion=False)
+
+        # Registra a ação de download
+        UserAction.objects.create(
+            user=request.user,
+            action_type='download',
+            order=order
+        )
+
+        address_safe = slugify(order.address)
+        zip_filename = f'order_{address_safe}.zip'
+
+        response = StreamingHttpResponse(
+            self.stream_zip_file_from_bunny(images),
+            content_type='application/zip'
+        )
+        response['Content-Disposition'] = f'attachment; filename={zip_filename}'
+        response['Content-Transfer-Encoding'] = 'binary'
+
+        return response
+
+    def stream_zip_file_from_bunny(self, images):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w') as zip_file:
+            for image in images:
+                file_name = image.image.name  # Caminho do arquivo no BunnyCDN
+
+                print(f"Verificando arquivo: {file_name}")  # Depuração 1: Verificar nome do arquivo
+
+                # Verifica se o arquivo existe no BunnyCDN antes de fazer o download
+                if not self.check_file_exists_in_bunnycdn(file_name):
+                    print(f"Arquivo não encontrado no BunnyCDN: {file_name}")  # Depuração 2: Arquivo não encontrado
+                    continue
+
+                # Baixa o arquivo do BunnyCDN e o adiciona ao zip
+                file_content = self.download_file_from_bunnycdn(file_name)
+                if file_content:
+                    print(f"Arquivo baixado com sucesso: {file_name}")  # Depuração 3: Arquivo baixado com sucesso
+                    print(f"Tamanho do arquivo baixado: {len(file_content)} bytes")  # Depuração 4: Ver tamanho do arquivo
+
+                    relative_path = self.get_relative_path(file_name)
+                    unique_name = self.get_unique_filename(zip_file, relative_path)
+                    zip_file.writestr(unique_name, file_content)
+                else:
+                    print(f"Erro ao baixar o arquivo: {file_name}")  # Depuração 5: Erro ao baixar arquivo
+
+        buffer.seek(0)
+        print(f"Tamanho do buffer do ZIP: {buffer.getbuffer().nbytes} bytes")  # Depuração 6: Ver tamanho do ZIP gerado
+        while chunk := buffer.read(1024):
+            yield chunk
+
+    def get_relative_path(self, file_path):
+        base_dir = 'media/'
+        if file_path.startswith(base_dir):
+            return file_path[len(base_dir):]
+        return file_path
+
+    def get_unique_filename(self, zip_file, filename):
+        counter = 1
+        unique_name = filename
+        while unique_name in zip_file.namelist():
+            name, ext = os.path.splitext(filename)
+            unique_name = f"{name}_{counter}{ext}"
+            counter += 1
+        return unique_name
+
+    def normalize_path(self, path):
+        """Normaliza o caminho para evitar barras duplas."""
+        return path.replace('//', '/').strip()
+
+    def download_file_from_bunnycdn(self, file_name):
+        """Baixa o arquivo diretamente do BunnyCDN."""
+        url = self.ensure_valid_bunnycdn_url(file_name)
+
+
+        headers = {
+            "AccessKey": settings.BUNNY_PASSWORD
+        }
+
+        try:
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                return response.content  # Retorna o conteúdo do arquivo
+            else:
+                print(f"Erro ao baixar o arquivo {file_name} do BunnyCDN: {response.status_code}")
+                return None
+        except requests.exceptions.RequestException as e:
+            print(f"Erro na requisição: {e}")
+            return None
+
+    def check_file_exists_in_bunnycdn(self, file_name):
+        """Verifica se o arquivo existe no BunnyCDN."""
+        url = self.ensure_valid_bunnycdn_url(file_name)
+
+        headers = {
+            "AccessKey": settings.BUNNY_PASSWORD
+        }
+
+        try:
+            response = requests.head(url, headers=headers)
+            return response.status_code == 200  # Retorna True se o arquivo existir
+        except requests.exceptions.RequestException as e:
+            print(f"Erro ao verificar existência do arquivo: {e}")
+            return False
+        
+    def ensure_valid_url(self, url):
+        """Adiciona o esquema 'https://' à URL, caso ela não tenha."""
+        if not url.startswith('https://'):
+            return 'https://' + url
+        return url
+
+    def ensure_valid_bunnycdn_url(self, file_name):
+        """Gera a URL correta para o BunnyCDN, incluindo o caminho de mídia necessário."""
+        base_url = settings.BUNNY_CDN_URL  # Assumindo que essa é a URL base, como 'https://spot-storage.b-cdn.net/'
+        file_name = self.normalize_path(file_name)  # Normaliza o caminho
+
+        # Certifique-se de que o caminho tenha dois "media"
+        if not file_name.startswith('media/media'):
+            file_name = f"media/media/{file_name.lstrip('media/')}"
+        
+        # Constrói a URL final
+        url = f"{base_url}/{file_name}"
+
+        # Certifica que a URL sempre tenha 'https://'
+        return self.ensure_valid_url(url)
 
 # Upload 
 
@@ -122,7 +261,7 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             ]
             UserAction.objects.bulk_create(user_actions)
 
-            return JsonResponse({'status': 'success', 'group_id': image_group.id, 'message': 'Upload completed successfully.'})
+            return JsonResponse({'status': 'success', 'message': 'Images and/or 3D scan uploaded successfully.'})
         
         return JsonResponse({'status': 'error', 'message': 'Error uploading files. Please try again.'})
 
@@ -134,121 +273,6 @@ class OrderImageUploadView(LoginRequiredMixin, View):
             order_image.compress_and_convert()
         except Exception as e:
             print(f"Error during image conversion in background: {e}")
-
-    def create_zip_in_background(self, image_group):
-        """
-        Função para criar o arquivo ZIP dos uploads sem filtrar imagens com base em pastas.
-        """
-        try:
-
-            # Cria um buffer em memória para o ZIP
-            zip_buffer = io.BytesIO()
-            zip_filename = f"{slugify(image_group.order.address)}.zip"
-
-            # Obtenha todas as imagens relacionadas ao grupo
-            images = image_group.images.filter(selected_for_exclusion=False)
-
-            # Verifica se há imagens
-            if images.count() == 0:
-                print("Nenhuma imagem disponível para inclusão no ZIP.")
-                return
-
-            # Cria o arquivo ZIP no buffer
-            with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-                for image in images:
-                    image_url = self.ensure_valid_bunnycdn_url(image.image.url)
-
-                    # Faz o download do arquivo da CDN
-                    file_content = self.download_file_from_bunnycdn(image_url)
-                    if file_content:
-                        file_name = os.path.basename(image_url)
-                        zip_file.writestr(file_name, file_content)
-                    else:
-                        print(f"Falha ao baixar a imagem da URL: {image_url}")
-
-            # Verifica o tamanho do buffer após a criação do ZIP
-            if zip_buffer.getbuffer().nbytes == 0:
-                print("O buffer do ZIP está vazio. Nenhum arquivo foi adicionado.")
-                return
-
-            # Move o cursor para o início do buffer
-            zip_buffer.seek(0)
-
-            # Faz o upload do ZIP para o BunnyCDN
-            self.upload_zip_to_bunny(zip_buffer, zip_filename)
-
-            # Atualiza o caminho do arquivo ZIP no banco de dados
-            bunny_url = f"{settings.BUNNY_CDN_URL}media/zips/{zip_filename}"
-            image_group.zip_file_path = bunny_url
-            image_group.save()
-
-        except Exception as e:
-            print(f"Erro durante a criação ou upload do ZIP: {e}")
-            
-    def ensure_valid_bunnycdn_url(self, url):
-            """
-            Adiciona o esquema 'https://' à URL, caso ela não tenha.
-            """
-            if not url.startswith('http://') and not url.startswith('https://'):
-                return f"https://{url.lstrip('/')}"
-
-            return url
-
-    def download_file_from_bunnycdn(self, file_url):
-            """
-            Faz o download de um arquivo a partir do BunnyCDN usando a URL.
-            """
-            try:
-                headers = {
-                    "AccessKey": settings.BUNNY_PASSWORD
-                }
-                response = requests.get(file_url, headers=headers)
-                if response.status_code == 200:
-                    return response.content  # Retorna o conteúdo do arquivo
-                else:
-                    print(f"Erro ao baixar o arquivo {file_url} do BunnyCDN: {response.status_code}")
-                    return None
-            except requests.exceptions.RequestException as e:
-                print(f"Erro durante o download do arquivo: {e}")
-                return None
-            
-    def upload_zip_to_bunny(self, zip_buffer, zip_filename):
-        """
-        Função para fazer upload do ZIP para o BunnyCDN na zona de armazenamento.
-        """
-        try:
-            # URL de upload correta na zona de armazenamento do BunnyCDN
-            upload_url = f"https://la.storage.bunnycdn.com/spot-storage/media/zips/{zip_filename}"
-
-            # Certifica-se de que a URL de upload tenha o esquema correto
-            upload_url = self.ensure_valid_bunnycdn_url(upload_url)
-
-            # Cabeçalhos de autenticação para o BunnyCDN
-            headers = {
-                "AccessKey": settings.BUNNY_PASSWORD  # Certifique-se de que sua chave de acesso esteja correta
-            }
-
-            # Faz o upload do arquivo para o BunnyCDN
-            response = requests.put(upload_url, data=zip_buffer.getvalue(), headers=headers)
-
-
-        except requests.exceptions.RequestException as e:
-            print(f"Erro durante o upload para o BunnyCDN: {e}")
-
-
-class CreateZipView(View):
-    """
-    View responsável por iniciar a criação do ZIP quando solicitada via AJAX.
-    """
-    def post(self, request, group_id):
-        try:
-            image_group = get_object_or_404(OrderImageGroup, id=group_id)
-            thread = threading.Thread(target=OrderImageUploadView().create_zip_in_background, args=(image_group,))
-            thread.start()
-            return JsonResponse({'status': 'success', 'message': 'ZIP creation initiated.'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': f"Error initiating ZIP creation: {e}"})
-
 
 
 class PhotographerImageUploadView(LoginRequiredMixin, View):
