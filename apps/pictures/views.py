@@ -138,6 +138,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
             counter += 1
         return unique_name
 
+
     def download_file_from_bunnycdn(self, file_name):
         """Baixa o arquivo diretamente do BunnyCDN."""
         url = self.ensure_valid_bunnycdn_url(file_name)
@@ -186,7 +187,13 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
 
     def upload_zip_to_bunnycdn(self, zip_filename, zip_content):
         """Faz o upload do arquivo ZIP para o BunnyCDN e retorna a URL para download."""
-        upload_url = f"https://la.storage.bunnycdn.com/spot-storage/media/zips/{zip_filename}"
+        
+        # Obtém um nome único para o arquivo ZIP
+        unique_zip_filename = self.get_unique_zip_filename(zip_filename)
+
+        # URL de upload com o nome único
+        upload_url = f"https://la.storage.bunnycdn.com/spot-storage/media/zips/{unique_zip_filename}"
+        
         headers = {
             "AccessKey": settings.BUNNY_PASSWORD
         }
@@ -194,7 +201,7 @@ class OrderImageDownloadView(LoginRequiredMixin, View):
         try:
             response = requests.put(upload_url, data=zip_content.getvalue(), headers=headers)
             if response.status_code == 201:
-                return f'https://spotlight.b-cdn.net/media/zips/{zip_filename}'
+                return f'https://spotlight.b-cdn.net/media/zips/{unique_zip_filename}'  # Retorna a URL para download
             else:
                 return None
         except requests.exceptions.RequestException:
