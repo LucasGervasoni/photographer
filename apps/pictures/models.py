@@ -67,6 +67,16 @@ class OrderImageGroup(models.Model):
     scan_url = models.CharField(max_length=200, blank=True, null=True)
     created_by_view = models.CharField(max_length=100, blank=True, null=True)
     zip_file_path = models.CharField(max_length=255, blank=True, null=True)
+    all_converted = models.BooleanField(default=False)
+    
+    def check_all_converted(self):
+        """
+        Verifica se todas as imagens associadas ao grupo foram convertidas.
+        """
+        all_converted = all(image.converted_image for image in self.images.all())
+        self.all_converted = all_converted
+        self.save()
+        return all_converted
 
     def __str__(self):
         return f"Group for {self.order} - Created at {self.created_at}"

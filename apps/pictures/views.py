@@ -367,7 +367,9 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
                 image_group.order = order
                 image_group.created_by_view = 'PhotographerImageUploadView'
                 image_group.scan_url = scan_url  # Ensures that the 3D scan URL is saved
-
+                
+                # Marca o grupo como não convertido
+                image_group.all_converted = False
                 image_group.save()
 
                 request.session['current_file_list'] = []
@@ -422,6 +424,10 @@ class PhotographerImageUploadView(LoginRequiredMixin, View):
         Função para realizar a compressão e conversão da imagem em um thread separado.
         """
         order_image.compress_and_convert()
+        
+        # Verifica se todas as imagens do grupo foram convertidas
+        # Verifica se todas as imagens do grupo foram convertidas
+        order_image.group.check_all_converted()
 
 
 
