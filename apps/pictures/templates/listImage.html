@@ -9,6 +9,11 @@
 
 {% block content %}
 <style>
+  .btnn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none; /* Impede qualquer interação */
+}
 
 .hidden{
   display: none !important;
@@ -188,7 +193,7 @@
             <option value="default">Original images</option>
             <option value="edited">Edited images</option>
           </select>
-          <a href="#" class="btn btn-outline-dark btn-block download-btn" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
+          <a href="#" class="btnn btn btn-outline-dark btn-block download-btn" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">Download</a>
           {% endif %}
         </div>
       </div>
@@ -324,73 +329,87 @@
 
     // Script for downloading selected images
     document.querySelectorAll('.download-btn').forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            event.preventDefault(); // Evitar comportamento padrão do link
+    button.addEventListener('click', function (event) {
+        event.preventDefault();
 
-            const orderId = this.getAttribute('data-order-id');
-            const downloadUrl = `/orders/${orderId}/download/`;
+        // Desabilitar o botão imediatamente ao clicar
+        button.disabled = true;
+        button.classList.add('disabled');  // Adiciona uma classe de desabilitado para garantir o estilo
+        button.textContent = "Downloading..."; // Atualiza o texto do botão para mostrar que o download está em andamento
+        
+        const orderId = this.getAttribute('data-order-id');
+        let downloadUrl = `/orders/${orderId}/download/`;
+  
+        // Verifica a pasta selecionada
+        const folderSelect = document.getElementById(`folder-select-${orderId}`);
+        let folderType = 'default';
+        if (folderSelect) {
+            folderType = folderSelect.value;
+        }
 
-            // Verificar se o usuário selecionou a pasta "Edited"
-            const folderSelect = document.getElementById(`folder-select-${orderId}`);
-            let folderType = 'default'; // Padrão para "default"
-            if (folderSelect) {
-                folderType = folderSelect.value; // Definir valor com base no select
-            }
+        // Verifica o checkbox de exclusão de imagens marcadas como "selected_for_exclusion"
+        const excludeSelect = document.getElementById(`exclude-images-${orderId}`);
+        let excludeImages = 'false';  // Por padrão, não excluir
+        if (excludeSelect && excludeSelect.checked) {
+            excludeImages = 'true';
+        }
 
-            // Obter o nome seguro do endereço da ordem
-            const addressSafe = this.getAttribute('data-order-address');
-            const zipFilename = `order_${addressSafe}.zip`;
-
-            // Modificar a URL do download com base na pasta selecionada
-            let finalDownloadUrl;
-            if (folderType === 'edited') {
-                finalDownloadUrl = `${downloadUrl}?folder=edited`; // Se o usuário escolheu "edited"
-            } else {
-                finalDownloadUrl = downloadUrl; // Caso contrário, mantém o padrão
-            }
-
-            // Exibir o pop-up de progresso
-            showPopup('popup-progress');
-
-            // Executar a requisição Fetch para realizar o download
-            fetch(finalDownloadUrl)
-                .then(response => {
-                    if (response.ok) {
-                        return response.blob(); // Retornar o blob para download
-                    } else {
-                        throw new Error('Erro no download');
-                    }
-                })
-                .then(blob => {
-                    // Criar link temporário para o download
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = zipFilename;  // Definir nome do arquivo
-
-                    // Adicionar link ao DOM e simular clique
-                    document.body.appendChild(a);
-                    a.click();
-
-                    // Remover link e revogar URL temporária
-                    a.remove();
-                    window.URL.revokeObjectURL(url);
-
-                    // Exibir pop-up de sucesso
-                    showPopup('popup-success');
-                })
-                .catch(error => {
-                    // Exibir erro no caso de falha
-                    console.error('Erro ao realizar o download:', error);
-                    showPopup('popup-error');
-                })
-                .finally(() => {
-                    // Fechar o pop-up de progresso
-                    closePopup('popup-progress');
-                });
+        // Atualiza a URL final com os parâmetros de pasta e exclusão
+        const params = new URLSearchParams({
+            folder: folderType,
+            exclude: excludeImages
         });
-    });
+        const finalDownloadUrl = `${downloadUrl}?${params.toString()}`;
+
+        const addressSafe = this.getAttribute('data-order-address');
+        const zipFilename = `order_${addressSafe}.zip`;
+
+        showPopup('popup-progress');
+
+        fetch(finalDownloadUrl)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Erro no download');
+                }
+            })
+            .then(data => {
+                if (data.url) {
+                    // Fecha o popup de progresso e exibe o popup de sucesso
+                    closePopup('popup-progress');
+                    showPopup('popup-success');
+
+                    // Cria um botão de download dinamicamente
+                    const newDownloadButton = document.createElement('a');
+                    newDownloadButton.href = data.url;
+                    newDownloadButton.download = zipFilename;
+                    newDownloadButton.style.display = 'none';
+
+                    // Adiciona o botão ao body
+                    document.body.appendChild(newDownloadButton);
+
+                    // Simula o clique no botão para disparar o download automaticamente
+                    newDownloadButton.click();
+
+                    // Remove o botão após o clique
+                    newDownloadButton.remove();
+                } else {
+                    throw new Error('URL não recebida');
+                }
+            })
+            .catch(error => {
+                closePopup('popup-progress');
+                showPopup('popup-error');
+            })
+            .finally(() => {
+                // Habilita o botão de download novamente após o download ou erro
+                button.disabled = false;
+                button.classList.remove('disabled');  // Remove a classe desabilitada para restaurar o estilo
+                button.textContent = "Download";  // Retorna o texto original do botão
+            });
+      });
+  });
 
 
     // Copy scan URL

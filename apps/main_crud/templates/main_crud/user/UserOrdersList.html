@@ -10,6 +10,12 @@
 
 {% block content %}
 <style>
+.btnn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none; /* Impede qualquer interação */
+}
+
   .status-circle {
   display: inline-block;
   width: 15px;
@@ -135,7 +141,7 @@
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
         {% endif %}
         {% if request.user|has_group:"Editor" %}
-        <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
+        <a href="#" class="btnn btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
           Download
         </a>
         <a href="{% url 'order_image_upload_photographer' order.pk %}" class="btn btn-outline-secondary ml-2">Upload</a>
@@ -211,7 +217,7 @@
                 <option value="edited">Edited images</option>
             </select>
             {% endif %}
-            <a href="#" class="btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
+            <a href="#" class="btnn btn btn-outline-dark download-btn mr-2" data-order-id="{{ order.pk }}" data-order-address="{{ order.address }}">
                 Download
             </a>
         </div>
@@ -293,144 +299,176 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll('.download-btn').forEach(function (button) {
-        button.addEventListener('click', function (event) {
-            event.preventDefault();
-            const orderId = this.getAttribute('data-order-id');
-            const downloadUrl = `/orders/${orderId}/download/`;
+  document.querySelectorAll('.download-btn').forEach(function (button) {
+    button.addEventListener('click', function (event) {
+        event.preventDefault();
 
-            // Check if the user selected the "Edited" folder
-            const folderSelect = document.getElementById(`folder-select-${orderId}`);
-            let folderType = 'default';
-            if (folderSelect) {
-                folderType = folderSelect.value;
-            }
+        // Desabilitar o botão imediatamente ao clicar
+        button.disabled = true;
+        button.classList.add('disabled');  // Adiciona uma classe de desabilitado para garantir o estilo
+        button.textContent = "Downloading..."; // Atualiza o texto do botão para mostrar que o download está em andamento
+        
+        const orderId = this.getAttribute('data-order-id');
+        let downloadUrl = `/orders/${orderId}/download/`;
+  
+        // Verifica a pasta selecionada
+        const folderSelect = document.getElementById(`folder-select-${orderId}`);
+        let folderType = 'default';
+        if (folderSelect) {
+            folderType = folderSelect.value;
+        }
 
-            // Set the file name you want to use
-            const addressSafe = this.getAttribute('data-order-address'); // Assuming the address is in the attribute
-            const zipFilename = `order_${addressSafe}.zip`;
+        // Verifica o checkbox de exclusão de imagens marcadas como "selected_for_exclusion"
+        const excludeSelect = document.getElementById(`exclude-images-${orderId}`);
+        let excludeImages = 'false';  // Por padrão, não excluir
+        if (excludeSelect && excludeSelect.checked) {
+            excludeImages = 'true';
+        }
 
-            // Modify the download URL based on the folder selection
-            const finalDownloadUrl = folderType === 'edited' ? `${downloadUrl}?folder=edited` : downloadUrl;
-
-            // Show the progress pop-up
-            showPopup('popup-progress');
-
-            // Perform the download request via Fetch API
-            fetch(finalDownloadUrl)
-              .then(response => {
-                  if (response.ok) {
-                      return response.blob();
-                  } else {
-                      throw new Error('Download error');
-                  }
-              })
-              .then(blob => {
-                  // Create a temporary link element
-                  const url = window.URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.style.display = 'none';
-                  a.href = url;
-                  a.download = zipFilename;  // Set the file name here
-
-                  // Append link to the body
-                  document.body.appendChild(a);
-
-                  // Trigger download by clicking the link
-                  a.click();
-
-                  // Cleanup: Remove the link and revoke the object URL
-                  a.remove();
-                  window.URL.revokeObjectURL(url);
-
-                  // Show the success pop-up
-                  showPopup('popup-success');
-              })
-              .catch(error => {
-                  // Error in connection or request processing
-                  showPopup('popup-error');
-              })
-              .finally(() => {
-                  // Close the progress pop-up
-                  closePopup('popup-progress');
-              });
+        // Atualiza a URL final com os parâmetros de pasta e exclusão
+        const params = new URLSearchParams({
+            folder: folderType,
+            exclude: excludeImages
         });
-    });
+        const finalDownloadUrl = `${downloadUrl}?${params.toString()}`;
+
+        const addressSafe = this.getAttribute('data-order-address');
+        const zipFilename = `order_${addressSafe}.zip`;
+
+        showPopup('popup-progress');
+
+        fetch(finalDownloadUrl)
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Erro no download');
+                }
+            })
+            .then(data => {
+                if (data.url) {
+                    // Fecha o popup de progresso e exibe o popup de sucesso
+                    closePopup('popup-progress');
+                    showPopup('popup-success');
+
+                    // Cria um botão de download dinamicamente
+                    const newDownloadButton = document.createElement('a');
+                    newDownloadButton.href = data.url;
+                    newDownloadButton.download = zipFilename;
+                    newDownloadButton.style.display = 'none';
+
+                    // Adiciona o botão ao body
+                    document.body.appendChild(newDownloadButton);
+
+                    // Simula o clique no botão para disparar o download automaticamente
+                    newDownloadButton.click();
+
+                    // Remove o botão após o clique
+                    newDownloadButton.remove();
+                } else {
+                    throw new Error('URL não recebida');
+                }
+            })
+            .catch(error => {
+                closePopup('popup-progress');
+                showPopup('popup-error');
+            })
+            .finally(() => {
+                // Habilita o botão de download novamente após o download ou erro
+                button.disabled = false;
+                button.classList.remove('disabled');  // Remove a classe desabilitada para restaurar o estilo
+                button.textContent = "Download";  // Retorna o texto original do botão
+            });
+      });
+  });
+
 });
 
-  function showPopup(popupId) {
-    document.getElementById(popupId).classList.remove('d-none');
+
+
+
+    function showPopup(popupId) {
+      const popupElement = document.getElementById(popupId);
+      if (popupElement) {
+          popupElement.classList.remove('d-none');
+          console.log(`Showing ${popupId}`);
+      }
+    }
+  
+    function closePopup(popupId) {
+      const popupElement = document.getElementById(popupId);
+      if (popupElement) {
+          popupElement.classList.add('d-none');
+          console.log(`Closing ${popupId}`);
+      }
+    }
+  
+  function submitOrderStatusForm(selectElement) {
+      const form = selectElement.closest('form');
+      const orderId = form.getAttribute('data-order-id');
+      const formData = new FormData(form);
+  
+      fetch(form.action, {
+          method: 'POST',
+          headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+          },
+          body: formData
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+          return response.json();
+      })
+      .then(data => {
+          // Mostrar um alerta de sucesso quando o status do pedido for atualizado
+          alert('Order status updated successfully!');
+  
+          // Mostrar ou ocultar o formulário de atribuição de editor com base no novo status
+          const assignEditorWrapper = document.getElementById(`assign-editor-wrapper-${orderId}`);
+          const selectedStatus = selectElement.value;
+  
+          if (selectedStatus === 'Production' || selectedStatus === 'Completed') {
+              assignEditorWrapper.classList.remove('d-none');
+          } else {
+              assignEditorWrapper.classList.add('d-none');
+          }
+      })
+      .catch(error => {
+          console.error('There was a problem with the fetch operation:', error);
+      });
   }
-
-  function closePopup(popupId) {
-    document.getElementById(popupId).classList.add('d-none');
+  
+  function submitAssignEditorForm(buttonElement) {
+      const form = buttonElement.closest('form');
+      const orderId = form.getAttribute('data-order-id');
+      const formData = new FormData(form);
+  
+      fetch(form.action, {
+          method: 'POST',
+          headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+          },
+          body: formData
+      })
+      .then(response => {
+          if (!response.ok) {
+              throw new Error('Network response was not ok');
+          }
+          return response.json();
+      })
+      .then(data => {
+          // Recarregar a página automaticamente após atribuir o editor
+          window.location.reload();
+      })
+      .catch(error => {
+          console.error('There was a problem with the fetch operation:', error);
+      });
   }
-
-function submitOrderStatusForm(selectElement) {
-    const form = selectElement.closest('form');
-    const orderId = form.getAttribute('data-order-id');
-    const formData = new FormData(form);
-
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-        },
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Mostrar um alerta de sucesso quando o status do pedido for atualizado
-        alert('Order status updated successfully!');
-
-        // Mostrar ou ocultar o formulário de atribuição de editor com base no novo status
-        const assignEditorWrapper = document.getElementById(`assign-editor-wrapper-${orderId}`);
-        const selectedStatus = selectElement.value;
-
-        if (selectedStatus === 'Production' || selectedStatus === 'Completed') {
-            assignEditorWrapper.classList.remove('d-none');
-        } else {
-            assignEditorWrapper.classList.add('d-none');
-        }
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
-}
-
-function submitAssignEditorForm(buttonElement) {
-    const form = buttonElement.closest('form');
-    const orderId = form.getAttribute('data-order-id');
-    const formData = new FormData(form);
-
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-        },
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        // Recarregar a página automaticamente após atribuir o editor
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
-}
-
-</script>
+  
+  </script>
+  
 {% endblock %}
