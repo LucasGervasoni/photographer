@@ -97,8 +97,10 @@
     {% if order.orderimagegroup_set.exists %}
     <h4>Editor Notes:</h4>
     <div class="border pt-4 pb-4 col-md-6 mb-2">
-    {% for group in order.orderimagegroup_set.all %}
-      <span class="card-body">{{ group.editor_note }}</span>
+      {% for group in order.orderimagegroup_set.all %}
+      {% if group.editor_note and group.editor_note != "null" %}
+        <span class="card-body">{{ group.editor_note }}</span>
+      {% endif %}
     {% endfor %}
     </div>
     {% endif %}
