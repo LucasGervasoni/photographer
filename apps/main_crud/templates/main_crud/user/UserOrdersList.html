@@ -139,7 +139,7 @@
         {% if order.orderimagegroup_set.last.all_converted %}
         <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
         {% else %}
-        <a href="#" class="btn btn-disabled mr-2" disabled>Assets</a>
+        <a href="#" class="btn btn-outline-info disabled mr-2" disabled>Assets</a>
         {% endif %}      
         {% if not request.user|has_group:"Editor" %}
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
@@ -152,7 +152,7 @@
         {% if order.orderimagegroup_set.last.all_converted %}
         <a href="{% url 'order_images' order.id %}?filter=editor" class="btn btn-outline-info ml-2">View Edited</a>
       {% else %}
-        <a href="#" class="btn btn-disabled mr-2" disabled>View Edited</a>
+        <a href="#" class="btn btn-outline-info disabled mr-2" disabled>View Edited</a>
       {% endif %}  
         {% endif %}
         {% if request.user.is_superuser or request.user|has_group:"Photographer" or request.user|has_group:"Admin" or request.user|has_group:"Manager" %}
