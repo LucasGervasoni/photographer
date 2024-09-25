@@ -140,11 +140,7 @@
       <td>{{ order.address }}</td>
       <td>{{ order.order_created_at }}</td>
       <td class="d-flex align-items-center justify-content-center">
-        {% if order.orderimagegroup_set.last.all_converted %}
         <a href="{% url 'order_images' order.id %}" class="btn btn-outline-info mr-2">Assets</a>
-        {% else %}
-        <a href="#" class="btn btn-outline-info disabled mr-2" disabled>Assets</a>
-        {% endif %}
         <a onclick="info('listInfo')" class="btn btn-outline-info viewInfo" id="view">View</a>
         {% if not request.user.is_superuser %}
         {% if order.order_status == "Production" or order.order_status == "Completed" %}
