@@ -93,7 +93,7 @@ class OrderImage(models.Model):
     photos_sent = models.CharField(verbose_name="Assets to be uploaded", max_length=150)
     photos_returned = models.CharField(verbose_name="Assets to be returned", max_length=150, default="0")
     group = models.ForeignKey(OrderImageGroup, on_delete=models.CASCADE, related_name='images')
-    converted_image = models.ImageField(upload_to='converted_images/', blank=True, null=True)
+    converted_image = models.ImageField(upload_to='converted_images/', blank=True, null=True, max_length=500)
     selected_for_exclusion = models.BooleanField(default=False)
     
     def __str__(self):
