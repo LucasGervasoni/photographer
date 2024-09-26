@@ -111,6 +111,35 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
     
+    def compress_webp(self, image, max_size_mb=1, quality=85):
+        """
+        Compress the image to WebP format and ensure it does not exceed max_size_mb.
+        The image will be resized if necessary. The quality parameter adjusts the compression level.
+        """
+        
+        image_io = ContentFile(b'')
+        image.save(image_io, format='WEBP', quality=quality, optimize=True)
+
+        # Check the size of the image in MB
+        size_in_mb = image_io.tell() / (512 * 512)
+        
+        if size_in_mb > max_size_mb:
+            # If the file is larger than max_size_mb, resize it
+            width, height = image.size
+            resize_factor = (max_size_mb / size_in_mb) ** 0.5  # Reduce both width and height proportionally
+            new_width = int(width * resize_factor)
+            new_height = int(height * resize_factor)
+            
+            # Resize the image using LANCZOS resampling
+            image = image.resize((new_width, new_height), Image.LANCZOS)
+
+            # Save the resized image as WebP with reduced quality
+            image_io = ContentFile(b'')
+            image.save(image_io, format='WEBP', quality=quality, optimize=True)
+
+        return image_io
+
+    
     def save_compressed_image(self, image, file_basename, quality=85):
         """
         Save the compressed WebP image using Django's default storage and return the URL.
