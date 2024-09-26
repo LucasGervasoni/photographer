@@ -111,6 +111,21 @@ class OrderImage(models.Model):
         order_address = self.order.address  # Assuming 'address' is a field in the Order model
         return os.path.join(order_address, 'converted_image')
     
+    def save_compressed_image(self, image, file_basename, quality=85):
+        """
+        Save the compressed WebP image using Django's default storage and return the URL.
+        Verifies if the file already exists before saving.
+        """
+        converted_image_path = os.path.join('converted_images', self.get_order_address_folder(), f'{file_basename}.webp')
+
+        # Se o arquivo não existir, faz a compressão e salva
+        compressed_image = self.compress_webp(image, max_size_mb=1, quality=quality)
+        
+        self.converted_image.name = default_storage.save(converted_image_path, compressed_image)
+        self.save()
+
+        return default_storage.url(self.converted_image.name)
+    
     def compress_and_convert(self):
         """
         Converte uma cópia da imagem carregada para WebP, comprimida para um tamanho menor que 1MB, sem modificar a imagem original.
